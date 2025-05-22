@@ -7,7 +7,9 @@ function App() {
 
   return (
     <>
-      <Footer></Footer>
+    <div>
+      
+    </div>
     </>
   )
 }
