@@ -4,11 +4,11 @@ import Login from './components/Login';
 import Header from './components/Header/Header'
 
 function App() {
+
   return (
     <>
-      <div className="App">
-      <Header/>
-      {/* <Login /> */}
+      <div>
+        
       </div>
     </>
   )
