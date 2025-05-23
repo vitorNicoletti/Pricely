@@ -1,0 +1,206 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body, html {
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.loginContainer {
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(to right, #f7931e 50%, #fefdf6 50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.loginCard {
+  width: 620px;
+  max-width: 100vw;
+  background: white;
+  padding: 40px 35px;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.loginHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  margin-bottom: 30px;
+}
+
+.highlight {
+  color: #f7931e;
+}
+
+.signupLink {
+  text-align: right;
+  line-height: 1.4;
+}
+
+.signupLink a {
+  color: #f7931e;
+  text-decoration: none;
+  margin-left: 5px;
+}
+
+.tabSelector {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.tabSelector button {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  background-color: white;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.tabSelector button:hover {
+  background-color: #f4f4f4;
+}
+
+.activeTab {
+  background-color: #f7931e;
+  color: white;
+  border-color: #f7931e;
+}
+
+
+h1 {
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+
+.inputRow {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.inputRow > div {
+  flex: 1;
+  min-width: 250px;
+}
+
+
+label {
+  font-size: 14px;
+  margin-top: 10px;
+  display: block;
+}
+
+input[type="text"], input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  margin-bottom: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.passwordInput {
+  position: relative;
+}
+
+.eyeIcon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.forgotPassword {
+  text-align: right;
+  margin-bottom: 20px;
+}
+
+.forgotPassword a {
+  color: #333;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.loginBtn {
+  width: 100%;
+  background-color: #f7931e;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.divider {
+  text-align: center;
+  margin: 20px 0;
+  color: #999;
+}
+
+.socialButtons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.iconBtn {
+  padding: 10px;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.socialButtons img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.errorMessage {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+
+@media (max-width: 600px) {
+  .loginContainer{
+    height: 120vh;
+  }
+
+  .loginCard{
+    width: 100%;
+  }
+
+  .inputRow {
+    flex-direction: column;
+    gap: 0px;
+  }
+
+  .inputRow > div {
+    width: 100%;
+  }
+}
