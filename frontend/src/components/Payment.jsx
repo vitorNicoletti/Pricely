@@ -206,7 +206,16 @@ function Payment() {
           <div>
             <label>País</label>
             <select>
+              <option value="brasil">Alemanha</option>
               <option value="brasil">Brasil</option>
+              <option value="brasil">Canadá</option>
+              <option value="brasil">China</option>
+              <option value="brasil">Estados Unidos</option>
+              <option value="brasil">França</option>
+              <option value="brasil">Japão</option>
+              <option value="brasil">Itália</option>
+              <option value="brasil">Índia</option>
+              <option value="brasil">Reino Unido</option>
             </select>
           </div>
           <div>
