@@ -205,17 +205,17 @@ function Payment() {
         <div className="form-row">
           <div>
             <label>País</label>
-            <select>
-              <option value="brasil">Alemanha</option>
+            <select defaultValue={"brasil"}>
+              <option value="alemanha">Alemanha</option>
               <option value="brasil">Brasil</option>
-              <option value="brasil">Canadá</option>
-              <option value="brasil">China</option>
-              <option value="brasil">Estados Unidos</option>
-              <option value="brasil">França</option>
-              <option value="brasil">Japão</option>
-              <option value="brasil">Itália</option>
-              <option value="brasil">Índia</option>
-              <option value="brasil">Reino Unido</option>
+              <option value="canada">Canadá</option>
+              <option value="china">China</option>
+              <option value="eua">Estados Unidos</option>
+              <option value="franca">França</option>
+              <option value="japao">Japão</option>
+              <option value="itelia">Itália</option>
+              <option value="india">Índia</option>
+              <option value="eu">Reino Unido</option>
             </select>
           </div>
           <div>
