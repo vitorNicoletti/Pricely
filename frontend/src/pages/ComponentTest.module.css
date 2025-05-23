@@ -1,7 +1,7 @@
 .divgamer {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-self: center;
-    background-color: black;
     padding: 10px;
 }
