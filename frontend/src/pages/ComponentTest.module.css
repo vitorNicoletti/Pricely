@@ -1,0 +1,7 @@
+.divgamer {
+    display: flex;
+    align-items: center;
+    justify-self: center;
+    background-color: black;
+    padding: 10px;
+}
