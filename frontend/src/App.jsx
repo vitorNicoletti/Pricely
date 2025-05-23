@@ -1,13 +1,13 @@
 import './App.css'
 
 
-import Footer from './components/Footer.jsx'
+import Payment from './components/Payment.jsx'
 
 function App() {
 
   return (
     <>
-      <Footer></Footer>
+      <Payment></Payment>
     </>
   )
 }
