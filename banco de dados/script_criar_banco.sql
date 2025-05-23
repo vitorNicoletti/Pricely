@@ -72,17 +72,12 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`fornecedor` (
   `id_usuario` INT NOT NULL,
   `razao_social` VARCHAR(200) NOT NULL,
   `nome_fantasia` VARCHAR(200) NULL,
-  `cnpj` VARCHAR(11) NOT NULL,
+  `cnpj` VARCHAR(14) NOT NULL,
   `inscricao_estadual` VARCHAR(45) NULL,
   `inscricao_municipal` VARCHAR(45) NULL,
   `logradouro` VARCHAR(150) NOT NULL,
   `numero` VARCHAR(10) NOT NULL,
   `complemento` VARCHAR(150) NULL,
-  `banco` VARCHAR(200) NULL,
-  `agencia` VARCHAR(45) NULL,
-  `conta` VARCHAR(45) NULL,
-  `tipo_conta` VARCHAR(45) NULL,
-  `pix` VARCHAR(200) NULL,
   `rep_nome` VARCHAR(200) NULL,
   `rep_cpf` VARCHAR(12) NULL,
   `rep_telefone` VARCHAR(15) NULL,
@@ -321,6 +316,27 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`grupo_promocao` (
   CONSTRAINT `fk_gfk_oferta`
     FOREIGN KEY (`id_oferta`)
     REFERENCES `Pricely`.`oferta` (`id_oferta`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `Pricely`.`info_bancaria`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `Pricely`.`info_bancaria` (
+  `id_info_banco` INT NOT NULL,
+  `banco` VARCHAR(100) NOT NULL,
+  `agencia` VARCHAR(50) NOT NULL,
+  `conta` VARCHAR(50) NOT NULL,
+  `tipo_conta` VARCHAR(50) NOT NULL,
+  `pix` VARCHAR(50) NULL,
+  `id_user` INT NOT NULL,
+  PRIMARY KEY (`id_info_banco`),
+  INDEX `fk_banco_user_idx` (`id_user` ASC) VISIBLE,
+  CONSTRAINT `fk_banco_user`
+    FOREIGN KEY (`id_user`)
+    REFERENCES `Pricely`.`usuario` (`id_usuario`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
