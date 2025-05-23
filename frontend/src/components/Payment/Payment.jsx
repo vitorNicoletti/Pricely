@@ -1,5 +1,8 @@
 import { useState } from "react";
 import "./Payment.css";
+import mastercard from "../../assets/mastercard.svg"
+import amex from "../../assets/amex.svg"
+import visa from "../../assets/visa.svg"
 
 function getCardBrand(number) {
   if (/^4/.test(number)) return "visa";
@@ -170,9 +173,9 @@ function Payment() {
             maxLength={19}
           />
           <div className="card-icons">
-            {cardBrand === "visa" && <img src="visa.svg" alt="Visa" />}
-            {cardBrand === "mastercard" && <img src="mastercard.svg" alt="Mastercard" />}
-            {cardBrand === "amex" && <img src="amex.svg" alt="Amex" />}
+            {cardBrand === "visa" && <img src={visa} alt="Visa" />}
+            {cardBrand === "mastercard" && <img src={mastercard} alt="Mastercard" />}
+            {cardBrand === "amex" && <img src={amex} alt="Amex" />}
           </div>
         </div>
         {errors.cardNumber && <span className="error">{errors.cardNumber}</span>}
