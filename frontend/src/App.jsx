@@ -1,4 +1,10 @@
+import { useState } from 'react'
 import './App.css'
+import Login from './components/Login/Login.jsx';
+import Header from './components/Header/Header'
+
+
+import Footer from './components/Footer/Footer.jsx'
 
 
 import Payment from './components/Payment/Payment.jsx'
