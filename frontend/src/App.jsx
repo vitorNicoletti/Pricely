@@ -8,6 +8,7 @@ import Catalogo from './components/Catalog/Catalog.jsx'
 import Footer from './components/Footer/Footer.jsx'
 
 
+
 import Payment from './components/Payment/Payment.jsx'
 
 function App() {
