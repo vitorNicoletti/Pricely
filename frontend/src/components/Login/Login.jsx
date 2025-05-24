@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import '../styles/Login.css';
-import googleLogo from '../assets/google.svg';
-import facebookLogo from '../assets/facebook.png';
-import appleLogo from '../assets/apple.svg';
+import './Login.css';
+import googleLogo from '../../assets/google.svg';
+import facebookLogo from '../../assets/facebook.png';
+import appleLogo from '../../assets/apple.svg';
 
 function Login() {
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
