@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../Header/Header';
 import Footer from '../Footer/Footer';
 import styles from './Catalog.module.css';
+import ProductCard from '../ProductCard/ProductCard';
 
 const Catalog = () => {
-  const itemsPerPage = 4;
+  const [itemsPerPage, setItemsPerPage] = useState(4);
   const [currentPage, setCurrentPage] = useState(1);
   const [locationFilter, setLocationFilter] = useState('');
   const [ratingFilter, setRatingFilter] = useState('');
@@ -18,7 +19,7 @@ const Catalog = () => {
       discount: false,
       price: 3.0,
       unit: 'unidade',
-      image: 'null',
+      image: null,
       description: 'Coca-cola distribuidora',
     },
     {
@@ -29,7 +30,7 @@ const Catalog = () => {
       discount: false,
       price: 50.0,
       unit: 'unidade',
-      image: 'null',
+      image: null,
       description: 'Distribuidora de brinquedos',
     },
     {
@@ -40,7 +41,7 @@ const Catalog = () => {
       discount: true,
       price: 20.0,
       unit: 'unidade',
-      image: 'null',
+      image: null,
       description: 'Descrição do produto 3',
     },
     {
@@ -51,7 +52,7 @@ const Catalog = () => {
       discount: false,
       price: 35.0,
       unit: 'unidade',
-      image: 'null',
+      image: null,
       description: 'Descrição do produto 4',
     },
     {
@@ -62,19 +63,48 @@ const Catalog = () => {
       discount: false,
       price: 12.0,
       unit: 'unidade',
-      image: 'null',
+      image: null,
+      description: 'Descrição do produto 5',
+    },
+    {
+      id: 5,
+      title: 'Produto 5',
+      rating: 4.1,
+      location: 'RIO DE JANEIRO',
+      discount: false,
+      price: 12.0,
+      unit: 'unidade',
+      image: null,
+      description: 'Descrição do produto 5',
+    },
+    {
+      id: 5,
+      title: 'Produto 5',
+      rating: 4.1,
+      location: 'RIO DE JANEIRO',
+      discount: false,
+      price: 12.0,
+      unit: 'unidade',
+      image: null,
       description: 'Descrição do produto 5',
     },
   ];
 
-  const filteredProducts = products.filter(p => {
+  // Filtro
+  const filteredProducts = products.filter((p) => {
     return (
       (locationFilter === '' || p.location === locationFilter) &&
       (ratingFilter === '' || p.rating >= parseFloat(ratingFilter))
     );
   });
 
+  // Reinicia para página 1 ao mudar filtro
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [locationFilter, ratingFilter, itemsPerPage]);
+
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -84,7 +114,7 @@ const Catalog = () => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
-  const uniqueLocations = [...new Set(products.map(p => p.location))];
+  const uniqueLocations = [...new Set(products.map((p) => p.location))];
 
   return (
     <div>
@@ -109,14 +139,20 @@ const Catalog = () => {
               <span className="material-icons">view_list</span>
             </div>
             <div className={styles.resultInfo}>
-              Mostrando 1–7 de 32 resultados
+                Mostrando {paginatedProducts.length} de {filteredProducts.length} produtos
             </div>
           </div>
 
           <div className={styles.rightGroup}>
             <label className={styles.label}>
               Mostrar
-              <input type="number" className={styles.inputSmall}  />
+              <input
+                type="number"
+                min={1}
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className={styles.inputSmall}
+              />
             </label>
             <label className={styles.label}>
               Ordenar por
@@ -133,30 +169,37 @@ const Catalog = () => {
         {/* Produtos à direita */}
         <section className={styles.productsArea}>
           <div className={styles.productsList}>
-            {paginatedProducts.map(product => (
-              <div key={product.id} className={styles.card}>
-                <img src={product.image} alt={product.title} className={styles.image} />
-                <div className={styles.info}>
-                  <h3>{product.title}</h3>
-                  <p>⭐ {product.rating} • {product.location}</p>
-                  <p className={styles.price}>R$ {product.price.toFixed(2)} <span>por {product.unit}</span></p>
-                  <p className={styles.description}>{product.description}</p>
-                </div>
-              </div>
+            {paginatedProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
           <div className={styles.pagination}>
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={styles.pageButton}
+            >
+              Prev
+            </button>
             {Array.from({ length: totalPages }, (_, i) => (
               <button
                 key={i}
                 onClick={() => goToPage(i + 1)}
-                className={`${styles.pageButton} ${currentPage === i + 1 ? styles.active : ''}`}
+                className={`${styles.pageButton} ${
+                  currentPage === i + 1 ? styles.active : ''
+                }`}
               >
                 {i + 1}
               </button>
             ))}
-            <button onClick={() => goToPage(currentPage + 1)} className={styles.pageButton}>Next</button>
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={styles.pageButton}
+            >
+              Next
+            </button>
           </div>
         </section>
       </main>
