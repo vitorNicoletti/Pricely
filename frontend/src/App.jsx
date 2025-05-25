@@ -8,6 +8,7 @@ import Footer from './components/Footer/Footer.jsx'
 
 
 import Payment from './components/Payment/Payment.jsx'
+import Detalhes from './components/Detalhes/Detalhes.jsx';
 
 function App() {
 
