@@ -9,6 +9,7 @@
   display: flex;
   gap: 2rem;
   margin-bottom: 2rem;
+  position: relative;
 }
 
 .produto-imagem-container {
@@ -201,6 +202,16 @@ input[type="number"] {
 
 .cor-pedidos {
   color: gray;
+}
+
+.icone-favorito {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  z-index: 10;
 }
 
 @media (max-width: 768px) {

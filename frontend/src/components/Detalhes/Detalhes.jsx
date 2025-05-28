@@ -3,11 +3,13 @@ import cocacola from "../../assets/coca-cola.png";
 import avatarRegina from "../../assets/avatar-regina.png";
 import avatarCarlos from "../../assets/avatar-carlos.png";
 import avatarRicardo from "../../assets/avatar-ricardo.png";
+import favoritoIcone from "../../assets/favoritos.png";
 
 function Detalhes() {
   return (
     <div className="detalhes-container">
       <div className="produto-info">
+        <img src={favoritoIcone} alt="Favorito" className="icone-favorito" />
         <div className="produto-imagem-container">
           <img src={cocacola} alt="Coca-cola 2L" className="produto-imagem" />
         </div>
