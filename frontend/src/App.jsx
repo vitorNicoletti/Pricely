@@ -3,8 +3,6 @@ import './App.css'
 import Login from './components/Login/Login.jsx';
 import Header from './components/Header/Header'
 import Catalogo from './components/Catalog/Catalog.jsx'
-
-
 import Footer from './components/Footer/Footer.jsx'
 
 
