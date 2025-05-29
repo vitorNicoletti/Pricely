@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const Routes = require('./routes/catalogo');
+const Routes = require('./Routes/catalogo');
 
 dotenv.config(); // Carrega variáveis do .env
 

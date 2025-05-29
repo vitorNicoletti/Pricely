@@ -44,7 +44,7 @@ function Detalhes() {
             <h2>{product.title}</h2>
             <span className="produto-promocao">Sale</span>
             <p className="produto-preco">
-              R$ <strong>{product.price.toFixed(2)}</strong>
+              R$ <strong>{product.preco_unidade.toFixed(2)}</strong>
             </p>
             <p className="produto-minimo">Minimum order: 50</p>
 
