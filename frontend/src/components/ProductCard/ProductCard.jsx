@@ -1,6 +1,12 @@
+import { useNavigate } from 'react-router-dom';
 import style from "./ProductCard.module.css";
 
 function ProductCard({ product }) {
+  const navigate = useNavigate();
+
+  const loadDetails = () => {
+    navigate(`/details/${product.id}`, { state: { product } });
+  };
   return (
     <div className={style.card}>
       <div className={style.img_div}>
@@ -34,7 +40,7 @@ function ProductCard({ product }) {
         <button className={style.btn}>
           <i class="fa-solid fa-cart-shopping" />
         </button>
-        <a href="/detalhes" className={style.btn}>Ver Detalhes</a>
+        <button onClick={loadDetails} className={style.btn}>Ver Detalhes</button>
       </div>
     </div>
   );
