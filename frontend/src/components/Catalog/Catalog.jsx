@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import api from '../../api';
 import Header from '../Header/Header';
 import Footer from '../Footer/Footer';
 import styles from './Catalog.module.css';
@@ -12,6 +13,18 @@ const Catalog = () => {
   const [locationFilter, setLocationFilter] = useState('');
   const [ratingFilter, setRatingFilter] = useState('');
 
+/* //Essa é o correto que vai ser implementado depois
+    useEffect(() => {
+    api.get('/products')
+      .then(response => {
+        setProducts(response.data);
+      })
+      .catch(error => {
+        console.error('Erro ao buscar produtos:', error);
+      });
+  }, []);
+*/
+  
   useEffect(() => {
     axios.get('https://fakestoreapi.com/products') // API fake, é para trocar para a nossa do backend provavel 3000
       .then(response => {
