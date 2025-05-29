@@ -10,12 +10,11 @@ const Catalog = () => {
   const [products, setProducts] = useState([]);
   const [itemsPerPage, setItemsPerPage] = useState(4);
   const [currentPage, setCurrentPage] = useState(1);
-  const [locationFilter, setLocationFilter] = useState('');
   const [ratingFilter, setRatingFilter] = useState('');
 
-/* //Essa é o correto que vai ser implementado depois
+//Essa é o correto que vai ser implementado depois
     useEffect(() => {
-    api.get('/products')
+    api.get('/')
       .then(response => {
         setProducts(response.data);
       })
@@ -23,8 +22,8 @@ const Catalog = () => {
         console.error('Erro ao buscar produtos:', error);
       });
   }, []);
-*/
-  
+
+  /*
   useEffect(() => {
     axios.get('https://fakestoreapi.com/products') // API fake, é para trocar para a nossa do backend provavel 3000
       .then(response => {
@@ -41,17 +40,16 @@ const Catalog = () => {
         console.error('Erro ao buscar produtos:', error);
       });
   }, []);
-
+*/
   const filteredProducts = products.filter((p) => {
     return (
-      (locationFilter === '' || p.location === locationFilter) &&
       (ratingFilter === '' || parseFloat(p.rating) >= parseFloat(ratingFilter))
     );
   });
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [locationFilter, ratingFilter, itemsPerPage]);
+  }, [ratingFilter, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
@@ -64,7 +62,7 @@ const Catalog = () => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
-  const uniqueLocations = [...new Set(products.map((p) => p.location))];
+  
 
   return (
     <div>
@@ -90,15 +88,6 @@ const Catalog = () => {
           </div>
 
           <div className={styles.rightGroup}>
-            <label className={styles.label}>
-              Local:
-              <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)} className={styles.select}>
-                <option value="">Todos</option>
-                {uniqueLocations.map((loc) => (
-                  <option key={loc} value={loc}>{loc}</option>
-                ))}
-              </select>
-            </label>
             <label className={styles.label}>
               Nota mínima:
               <input
@@ -127,7 +116,7 @@ const Catalog = () => {
         <section className={styles.productsArea}>
           <div className={styles.productsList}>
             {paginatedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id_produto} product={product} />
             ))}
           </div>
 

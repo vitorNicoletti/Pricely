@@ -16,10 +16,10 @@ function Header() {
         <a href="/help">Fale Conosco</a>
       </div>
       <div className={style.navbar}>
-        <i class="fa-regular fa-user" />
+        <i className="fa-regular fa-user" />
         <i className="fa-solid fa-magnifying-glass" />
-        <i class="fa-regular fa-heart" />
-        <i class="fa-solid fa-cart-shopping" />
+        <i className="fa-regular fa-heart" />
+        <i className="fa-solid fa-cart-shopping" />
       </div>
     </div>
   );
