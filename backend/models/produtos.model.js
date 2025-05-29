@@ -3,10 +3,11 @@ const Arquivos = require('./arquivos.model.js');
 const Promocao = require('./promocao.model.js');
 const Oferta = require('./oferta.model.js');
 const { Fornecedor } = require('./fornecedor.model.js');
+const AvaliacaoProduto = require('./avaliacao_produto.model.js');
 
 const Produtos = {
   /**
-   * Retorna todos os produtos, incluindo imagem, promoções e nome do fornecedor para cada promoção
+   * Retorna todos os produtos, incluindo imagem, promoções, nome do fornecedor e avaliação média
    */
   getAll: (callback) => {
     const sql = 'SELECT * FROM produto';
@@ -22,7 +23,7 @@ const Produtos = {
   },
 
   /**
-   * Retorna um produto por ID, incluindo imagem, promoções e nome do fornecedor
+   * Retorna um produto por ID, incluindo imagem, promoções, nome do fornecedor e avaliação média
    */
   getById: (id, callback) => {
     const sql = 'SELECT * FROM produto WHERE id_produto = ?';
@@ -37,7 +38,7 @@ const Produtos = {
 };
 
 /**
- * Função auxiliar para enriquecer um objeto produto com imagem, promoções e fornecedor
+ * Função auxiliar para enriquecer um objeto produto com imagem, promoções, fornecedor e avaliação média
  */
 function _enrichProduto(produto, done) {
   // 1) imagem
@@ -48,19 +49,21 @@ function _enrichProduto(produto, done) {
     Promocao.getPromocoesByProduct(produto.id_produto, (errPromo, promocoes) => {
       if (errPromo || !promocoes) {
         produto.promocoes = [];
-        return done();
+        // mesmo sem promoções, busca avaliação
+        return fetchRating(produto, done);
       }
       if (promocoes.length === 0) {
         produto.promocoes = [];
-        return done();
+        return fetchRating(produto, done);
       }
-      let count = promocoes.length;
+
+      let countPromo = promocoes.length;
       produto.promocoes = [];
       promocoes.forEach((promo) => {
         Oferta.getIdFornecedorByOferta(promo.id_oferta, (errFor, id_fornecedor) => {
           if (errFor || !id_fornecedor) {
             produto.promocoes.push({ ...promo, id_fornecedor: null, nome_fornecedor: null });
-            if (--count === 0) done();
+            if (--countPromo === 0) fetchRating(produto, done);
           } else {
             Fornecedor.getNome(id_fornecedor, (errNome, nome) => {
               produto.promocoes.push({
@@ -68,7 +71,7 @@ function _enrichProduto(produto, done) {
                 id_fornecedor,
                 nome_fornecedor: errNome ? null : nome
               });
-              if (--count === 0) done();
+              if (--countPromo === 0) fetchRating(produto, done);
             });
           }
         });
@@ -83,6 +86,16 @@ function _enrichProduto(produto, done) {
       afterImage(errArq ? null : arquivo);
     });
   }
+}
+
+/**
+ * Busca avaliação média do produto e adiciona ao objeto
+ */
+function fetchRating(produto, done) {
+  AvaliacaoProduto.getAvaliacaoPorProduto(produto.id_produto, (errAvg, media) => {
+    produto.avaliacao_media = errAvg ? null : media;
+    done();
+  });
 }
 
 module.exports = Produtos;
