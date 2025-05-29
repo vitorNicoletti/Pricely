@@ -10,7 +10,7 @@ function Header() {
         <img className={style.logo_img} src={logo_img} alt="logo" />
       </div>
       <div className={style.navbar}>
-        <a href="/home">Home</a>
+        <a href="/">Home</a>
         <a href="/shop">Shop</a>
         <a href="/about">Sobre</a>
         <a href="/help">Fale Conosco</a>
