@@ -1,5 +1,3 @@
--- MySQL Workbench Forward Engineering
-
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
@@ -8,9 +6,6 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,N
 -- Schema Pricely
 -- -----------------------------------------------------
 
--- -----------------------------------------------------
--- Schema Pricely
--- -----------------------------------------------------
 CREATE SCHEMA IF NOT EXISTS `Pricely` DEFAULT CHARACTER SET utf8 ;
 USE `Pricely` ;
 
@@ -24,9 +19,17 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`usuario` (
   `salt` VARCHAR(200) NULL,
   `dataCadastro` DATETIME NOT NULL,
   `telefone` VARCHAR(45) NULL,
-  PRIMARY KEY (`id_usuario`))
-ENGINE = InnoDB;
-
+  `perfil_arquivo_id` INT NULL,
+  `documento_arquivo_id`     INT NULL,
+  PRIMARY KEY (`id_usuario`),
+  CONSTRAINT `fk_usuario_perfil_arquivo`
+    FOREIGN KEY (`perfil_arquivo_id`)
+    REFERENCES `Pricely`.`arquivos` (`id`),
+  CONSTRAINT `fk_usuario_documento_arquivo`
+    FOREIGN KEY (`documento_arquivo_id`)
+    REFERENCES `Pricely`.`arquivos` (`id`)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------
 -- Table `Pricely`.`seguindo`
@@ -36,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`seguindo` (
   `id_usuario_seguido` INT NOT NULL,
   `dataCadastro` DATETIME NOT NULL,
   PRIMARY KEY (`id_usuario_seguidor`, `id_usuario_seguido`),
-  INDEX `fk_seguindo_2_idx` (`id_usuario_seguido` ASC) VISIBLE,
+  INDEX `fk_seguindo_2_idx` (`id_usuario_seguido` ASC),
   CONSTRAINT `fk_seguindo_1`
     FOREIGN KEY (`id_usuario_seguidor`)
     REFERENCES `Pricely`.`usuario` (`id_usuario`)
@@ -49,7 +52,25 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`seguindo` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
-
+-- -----------------------------------------------------
+-- Table `Pricely`.`carteira`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `Pricely`.`carteira` (
+  `id_carteira`        INT            NOT NULL AUTO_INCREMENT,
+  `saldo`              DECIMAL(15,2)  NOT NULL DEFAULT 0.00,
+  `ultima_atualizacao` DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                           ON UPDATE CURRENT_TIMESTAMP,
+  `id_usuario`         INT            NOT NULL,
+  PRIMARY KEY (`id_carteira`),
+  KEY `idx_carteira_usuario` (`id_usuario`),
+  CONSTRAINT `fk_carteira_usuario`
+    FOREIGN KEY (`id_usuario`)
+    REFERENCES `Pricely`.`usuario` (`id_usuario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4;
+  
 -- -----------------------------------------------------
 -- Table `Pricely`.`vendedor`
 -- -----------------------------------------------------
@@ -64,7 +85,6 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`vendedor` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
 -- Table `Pricely`.`fornecedor`
 -- -----------------------------------------------------
@@ -72,47 +92,23 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`fornecedor` (
   `id_usuario` INT NOT NULL,
   `razao_social` VARCHAR(200) NOT NULL,
   `nome_fantasia` VARCHAR(200) NULL,
-  `cnpj` VARCHAR(11) NOT NULL,
+  `cnpj` VARCHAR(14) NOT NULL,
   `inscricao_estadual` VARCHAR(45) NULL,
   `inscricao_municipal` VARCHAR(45) NULL,
   `logradouro` VARCHAR(150) NOT NULL,
   `numero` VARCHAR(10) NOT NULL,
   `complemento` VARCHAR(150) NULL,
-  `banco` VARCHAR(200) NULL,
-  `agencia` VARCHAR(45) NULL,
-  `conta` VARCHAR(45) NULL,
-  `tipo_conta` VARCHAR(45) NULL,
-  `pix` VARCHAR(200) NULL,
   `rep_nome` VARCHAR(200) NULL,
   `rep_cpf` VARCHAR(12) NULL,
   `rep_telefone` VARCHAR(15) NULL,
   PRIMARY KEY (`id_usuario`),
-  UNIQUE INDEX `CNPJ_UNIQUE` (`cnpj` ASC) VISIBLE,
+  UNIQUE INDEX `CNPJ_UNIQUE` (`cnpj` ASC),
   CONSTRAINT `fk_fornecedor_1`
     FOREIGN KEY (`id_usuario`)
     REFERENCES `Pricely`.`usuario` (`id_usuario`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `Pricely`.`url_documento`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `Pricely`.`url_documento` (
-  `id_doc` INT NOT NULL,
-  `dataCadastro` DATETIME NOT NULL,
-  `link` VARCHAR(200) NOT NULL,
-  `id_fornecedor` INT NOT NULL,
-  PRIMARY KEY (`id_doc`),
-  INDEX `fk_url_documento_1_idx` (`id_fornecedor` ASC) VISIBLE,
-  CONSTRAINT `fk_url_documento_1`
-    FOREIGN KEY (`id_fornecedor`)
-    REFERENCES `Pricely`.`fornecedor` (`id_usuario`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
 
 -- -----------------------------------------------------
 -- Table `Pricely`.`pedido`
@@ -126,8 +122,9 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`pedido` (
   `complemento` VARCHAR(150) NULL,
   `id_vendedor` INT NOT NULL,
   `cep` VARCHAR(10) NOT NULL,
+  `metodo_pagamento` ENUM('carteira', 'pix', 'cartao', 'boleto') NOT NULL DEFAULT 'carteira',
   PRIMARY KEY (`id_pedido`),
-  INDEX `fk_pedido_1_idx` (`id_vendedor` ASC) VISIBLE,
+  INDEX `fk_pedido_1_idx` (`id_vendedor` ASC),
   CONSTRAINT `fk_pedido_1`
     FOREIGN KEY (`id_vendedor`)
     REFERENCES `Pricely`.`vendedor` (`id_usuario`)
@@ -135,26 +132,26 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`pedido` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
-
 -- -----------------------------------------------------
 -- Table `Pricely`.`produto`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `Pricely`.`produto` (
-  `id_produto` INT NOT NULL,
-  `nome` VARCHAR(300) NOT NULL,
-  `descricao` VARCHAR(1000) NULL,
-  `preco_unidade` DOUBLE NOT NULL,
-  `estado` VARCHAR(50) NULL,
-  `id_fornecedor` INT NOT NULL,
+  `id_produto`       INT      NOT NULL,
+  `nome`             VARCHAR(300)  NOT NULL,
+  `descricao`        VARCHAR(1000) NULL,
+  `preco_unidade`    DOUBLE   NOT NULL,
+  `estado`           VARCHAR(50)   NULL,
+  `id_fornecedor`    INT      NOT NULL,
+  `imagem_arquivo_id` INT     NULL,
   PRIMARY KEY (`id_produto`),
-  INDEX `fk_produto_1_idx` (`id_fornecedor` ASC) VISIBLE,
-  CONSTRAINT `fk_produto_1`
+  CONSTRAINT `fk_produto_fornecedor`
     FOREIGN KEY (`id_fornecedor`)
-    REFERENCES `Pricely`.`fornecedor` (`id_usuario`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
-
+    REFERENCES `Pricely`.`fornecedor` (`id_usuario`),
+  CONSTRAINT `fk_produto_imagem_arquivo`
+    FOREIGN KEY (`imagem_arquivo_id`)
+    REFERENCES `Pricely`.`arquivos` (`id`)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------
 -- Table `Pricely`.`avaliacao`
@@ -174,7 +171,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`avaliacao_fornecedor` (
   `id_avaliacao` INT NOT NULL,
   `id_fornecedor` INT NOT NULL,
   PRIMARY KEY (`id_avaliacao`),
-  INDEX `fk_fornecedor_idx` (`id_fornecedor` ASC) VISIBLE,
+  INDEX `fk_fornecedor_idx` (`id_fornecedor` ASC),
   CONSTRAINT `fk_avaliacao`
     FOREIGN KEY (`id_avaliacao`)
     REFERENCES `Pricely`.`avaliacao` (`id_avaliacao`)
@@ -195,7 +192,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`avaliacao_produto` (
   `id_avaliacao` INT NOT NULL,
   `id_produto` INT NOT NULL,
   PRIMARY KEY (`id_avaliacao`),
-  INDEX `fk_produto_idx` (`id_produto` ASC) VISIBLE,
+  INDEX `fk_produto_idx` (`id_produto` ASC),
   CONSTRAINT `fk_avaliacao_p`
     FOREIGN KEY (`id_avaliacao`)
     REFERENCES `Pricely`.`avaliacao` (`id_avaliacao`)
@@ -237,11 +234,11 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`compra` (
   `id_avaliacao_produto` INT NULL,
   `id_conjunto` INT NULL,
   PRIMARY KEY (`id_compra`),
-  INDEX `fk_compra_1_idx` (`id_pedido` ASC) VISIBLE,
-  INDEX `fk_compra_2_idx` (`id_produto` ASC) VISIBLE,
-  INDEX `fk_aval_fornecedor_idx` (`id_avaliacao_fornecedor` ASC) VISIBLE,
-  INDEX `fk_aval_produto_idx` (`id_avaliacao_produto` ASC) VISIBLE,
-  INDEX `fk_conjunto_idx` (`id_conjunto` ASC) VISIBLE,
+  INDEX `fk_compra_1_idx` (`id_pedido` ASC),
+  INDEX `fk_compra_2_idx` (`id_produto` ASC),
+  INDEX `fk_aval_fornecedor_idx` (`id_avaliacao_fornecedor` ASC),
+  INDEX `fk_aval_produto_idx` (`id_avaliacao_produto` ASC),
+  INDEX `fk_conjunto_idx` (`id_conjunto` ASC),
   CONSTRAINT `fk_compra_1`
     FOREIGN KEY (`id_pedido`)
     REFERENCES `Pricely`.`pedido` (`id_pedido`)
@@ -278,7 +275,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`oferta` (
   `dataCadastro` DATETIME NOT NULL,
   `id_fornecedor` INT NOT NULL,
   PRIMARY KEY (`id_oferta`),
-  INDEX `fk_oferta_fornecedor1_idx` (`id_fornecedor` ASC) VISIBLE,
+  INDEX `fk_oferta_fornecedor1_idx` (`id_fornecedor` ASC),
   CONSTRAINT `fk_oferta_fornecedor1`
     FOREIGN KEY (`id_fornecedor`)
     REFERENCES `Pricely`.`fornecedor` (`id_usuario`)
@@ -294,7 +291,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`produto_oferta` (
   `id_oferta` INT NOT NULL,
   `id_produto` INT NOT NULL,
   PRIMARY KEY (`id_oferta`, `id_produto`),
-  INDEX `fk_produto_idx` (`id_produto` ASC) VISIBLE,
+  INDEX `fk_produto_idx` (`id_produto` ASC),
   CONSTRAINT `fk_oferta`
     FOREIGN KEY (`id_oferta`)
     REFERENCES `Pricely`.`oferta` (`id_oferta`)
@@ -317,7 +314,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`grupo_promocao` (
   `desc_porcentagem` INT NOT NULL,
   `id_oferta` INT NOT NULL,
   PRIMARY KEY (`idgrupo_promocao`),
-  INDEX `fk_grupo_promocao_oferta1_idx` (`id_oferta` ASC) VISIBLE,
+  INDEX `fk_grupo_promocao_oferta1_idx` (`id_oferta` ASC),
   CONSTRAINT `fk_gfk_oferta`
     FOREIGN KEY (`id_oferta`)
     REFERENCES `Pricely`.`oferta` (`id_oferta`)
@@ -325,6 +322,38 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`grupo_promocao` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `Pricely`.`info_bancaria`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `Pricely`.`info_bancaria` (
+  `id_info_banco` INT NOT NULL,
+  `banco` VARCHAR(100) NOT NULL,
+  `agencia` VARCHAR(50) NOT NULL,
+  `conta` VARCHAR(50) NOT NULL,
+  `tipo_conta` VARCHAR(50) NOT NULL,
+  `pix` VARCHAR(50) NULL,
+  `id_user` INT NOT NULL,
+  PRIMARY KEY (`id_info_banco`),
+  INDEX `fk_banco_user_idx` (`id_user` ASC),
+  CONSTRAINT `fk_banco_user`
+    FOREIGN KEY (`id_user`)
+    REFERENCES `Pricely`.`usuario` (`id_usuario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `Pricely`.`arquivos` 
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `Pricely`.`arquivos` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(255) NOT NULL,
+  `tipo` VARCHAR(100) NOT NULL,
+  `dados` LONGTEXT NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
