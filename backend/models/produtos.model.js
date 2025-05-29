@@ -1,62 +1,88 @@
-
 const db = require('../db.js');
 const Arquivos = require('./arquivos.model.js');
+const Promocao = require('./promocao.model.js');
+const Oferta = require('./oferta.model.js');
+const { Fornecedor } = require('./fornecedor.model.js');
 
 const Produtos = {
-  // 1) Pega todos os produtos, incluindo imagens
+  /**
+   * Retorna todos os produtos, incluindo imagem, promoções e nome do fornecedor para cada promoção
+   */
   getAll: (callback) => {
     const sql = 'SELECT * FROM produto';
     db.query(sql, (err, results) => {
       if (err) return callback(err);
+      if (!results || results.length === 0) return callback(null, []);
 
-      // Se não houver produtos, retorna array vazio
-      if (!results || results.length === 0) {
-        return callback(null, []);
-      }
-
-      // Para cada produto, buscar a imagem associada
-      let count = results.length;
-      results.forEach((produto) => {
-        const arquivoId = produto.imagem_arquivo_id;
-        if (!arquivoId) {
-          produto.imagem = null;
-          if (--count === 0) callback(null, results);
-        } else {
-          Arquivos.getArqPorId(arquivoId, (errArq, arquivo) => {
-            if (errArq) {
-              // Em caso de erro com um arquivo, podemos definir imagem como null
-              produto.imagem = null;
-            } else {
-              produto.imagem = arquivo;
-            }
-            if (--count === 0) callback(null, results);
-          });
-        }
-      });
+      let remaining = results.length;
+      results.forEach((produto) => _enrichProduto(produto, () => {
+        if (--remaining === 0) callback(null, results);
+      }));
     });
   },
 
-  // 2) Pega um produto por ID, incluindo a imagem (arquivo)
+  /**
+   * Retorna um produto por ID, incluindo imagem, promoções e nome do fornecedor
+   */
   getById: (id, callback) => {
     const sql = 'SELECT * FROM produto WHERE id_produto = ?';
     db.query(sql, [id], (err, results) => {
       if (err) return callback(err);
-      if (results.length === 0) return callback(null, null);
+      if (!results || results.length === 0) return callback(null, null);
 
       const produto = results[0];
-      const arquivoId = produto.imagem_arquivo_id;
-
-      if (!arquivoId) {
-        return callback(null, produto);
-      }
-
-      Arquivos.getArqPorId(arquivoId, (errArq, arquivo) => {
-        if (errArq) return callback(errArq);
-        produto.imagem = arquivo;
-        callback(null, produto);
-      });
+      _enrichProduto(produto, () => callback(null, produto));
     });
   }
 };
+
+/**
+ * Função auxiliar para enriquecer um objeto produto com imagem, promoções e fornecedor
+ */
+function _enrichProduto(produto, done) {
+  // 1) imagem
+  const arquivoId = produto.imagem_arquivo_id;
+  const afterImage = (image) => {
+    produto.imagem = image || null;
+    // 2) promoções
+    Promocao.getPromocoesByProduct(produto.id_produto, (errPromo, promocoes) => {
+      if (errPromo || !promocoes) {
+        produto.promocoes = [];
+        return done();
+      }
+      if (promocoes.length === 0) {
+        produto.promocoes = [];
+        return done();
+      }
+      let count = promocoes.length;
+      produto.promocoes = [];
+      promocoes.forEach((promo) => {
+        Oferta.getIdFornecedorByOferta(promo.id_oferta, (errFor, id_fornecedor) => {
+          if (errFor || !id_fornecedor) {
+            produto.promocoes.push({ ...promo, id_fornecedor: null, nome_fornecedor: null });
+            if (--count === 0) done();
+          } else {
+            Fornecedor.getNome(id_fornecedor, (errNome, nome) => {
+              produto.promocoes.push({
+                ...promo,
+                id_fornecedor,
+                nome_fornecedor: errNome ? null : nome
+              });
+              if (--count === 0) done();
+            });
+          }
+        });
+      });
+    });
+  };
+
+  if (!arquivoId) {
+    afterImage(null);
+  } else {
+    Arquivos.getArqPorId(arquivoId, (errArq, arquivo) => {
+      afterImage(errArq ? null : arquivo);
+    });
+  }
+}
 
 module.exports = Produtos;
