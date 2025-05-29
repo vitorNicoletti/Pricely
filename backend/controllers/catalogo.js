@@ -2,7 +2,7 @@ const Produtos = require('../models/produtos.model');
 
 
 function getProductDetails(req, res) {
-  const { id } = req.params;
+  const { id }  = req.params;
 
   // Valida ID
   if (!/^\d+$/.test(id)) {
@@ -26,7 +26,7 @@ function getProductDetails(req, res) {
 
 function getAllProducts(req, res) {
     console.log("aaa")
-    const { qnt } = req.body;
+    const { qnt } = req.body || {undefined};
 
     // Se quiser validar quantidade opcionalmente
     if (qnt !== undefined && isNaN(qnt)) {
