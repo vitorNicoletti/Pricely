@@ -24,7 +24,7 @@ function ProductCard({ product }) {
         <h2 className={style.nome_produto}>{product.nome}</h2>
         <div className={style.infos_esquerda_div}>
           <p className={style.estrela}>
-            <i className="fa-solid fa-star" /> {/* Sem rating no JSON */}
+            <i className="fa-solid fa-star" />{product.avaliacao_media}
           </p>
           <p>
             <i className="fa-solid fa-percent" />{" "}
