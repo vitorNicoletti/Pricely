@@ -8,18 +8,18 @@ function ProductCard({ product }) {
     navigate(`/details/${product.id_produto}`, { state: { product } });
   };
 
-  return (
+  return (  
     <div className={style.card}>
       <div className={style.img_div}>
-        <img
-          src={
-            product.imagem?.dados
-              ? `data:image/jpeg;base64,${product.imagem.dados}`
-              : "https://via.placeholder.com/150"
-          }
-          alt={`Imagem de ${product.nome}`}
-          className={style.img_produto}
-        />
+        {product.imagem?.dados && product.imagem?.tipo && (
+          
+    <img
+      src={`data:${product.imagem.tipo};base64,${product.imagem.dados}`}
+      alt={`Imagem de ${product.nome}`}
+      className={style.img_produto}
+    />
+
+  )}
       </div>
       <div className={style.card_texts}>
         <h2 className={style.nome_produto}>{product.nome}</h2>
