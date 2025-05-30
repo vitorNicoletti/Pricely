@@ -7,7 +7,6 @@ function ProductCard({ product }) {
   const loadDetails = () => {
     navigate(`/details/${product.id_produto}`, { state: { product } });
   };
-
   return (  
     <div className={style.card}>
       <div className={style.img_div}>
