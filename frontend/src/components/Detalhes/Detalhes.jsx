@@ -12,19 +12,19 @@ import Footer from "../Footer/Footer";
 
 function Detalhes() {
   const { id } = useParams();
-  const location = useLocation();
-
-  // pega o produto do estado se vier da navegação
-  const [product, setProduct] = useState(location.state?.product || null);
+  const [product, setProduct] = useState(null);
 
   useEffect(() => {
-    if (!product) {
-      // fallback: buscar da API pelo ID, se não tiver vindo via state
-      fetch(`https://suaapi.com/produtos/${id}`)
-        .then((res) => res.json())
-        .then((data) => setProduct(data));
-    }
-  }, [id, product]);
+    fetch(`http://localhost:3000/api/${id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Dados recebidos da API:", data);
+        setProduct(data);
+      })
+      .catch((err) => {
+        console.error("Erro ao buscar produto:", err);
+      });
+  }, [id]);
 
   return (
     <>
@@ -33,18 +33,19 @@ function Detalhes() {
         <div className="produto-info">
           <img src={favoritoIcone} alt="Favorito" className="icone-favorito" />
           <div className="produto-imagem-container">
-            <img
-              src={product.image || "https://via.placeholder.com/150"}
-              alt={`Imagem de ${product.title}`}
-              className="produto-imagem"
-            />
+            {product?.imagem.dados && product?.imagem.tipo && (
+              <img
+                src={`data:${product.imagem.tipo};base64,${product.imagem.dados}`}
+                alt={`Imagem de ${product.nome}`}
+              />
+            )}
           </div>
 
           <div className="produto-detalhes">
-            <h2>{product.title}</h2>
+            <h2>{product?.nome}</h2>
             <span className="produto-promocao">Sale</span>
             <p className="produto-preco">
-              R$ <strong>{product.preco_unidade.toFixed(2)}</strong>
+              R$ <strong>{product?.preco_unidade.toFixed(2)}</strong>
             </p>
             <p className="produto-minimo">Minimum order: 50</p>
 
@@ -52,9 +53,7 @@ function Detalhes() {
             <button className="confirmar-btn">Confirm</button>
 
             <div className="produto-estoque">
-              <p>
-               {product.description}
-              </p>
+              <p>{product?.descricao}</p>
             </div>
           </div>
         </div>

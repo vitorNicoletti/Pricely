@@ -5,7 +5,7 @@ function ProductCard({ product }) {
   const navigate = useNavigate();
 
   const loadDetails = () => {
-    navigate(`/details/${product.id_produto}`, { state: { product } });
+    navigate(`/details/${product.id_produto}`);
   };
 
   return (
