@@ -5,19 +5,19 @@
   font-family: Arial, sans-serif;
 }
 
-.about-container {
+.aboutContainer {
   max-width: 900px;
   margin: 0 auto;
 }
 
-.about-title {
+.aboutTitle {
   font-size: 36px;
   font-weight: bold;
   margin-bottom: 30px;
   color: #333;
 }
 
-.about-text {
+.aboutText {
   font-size: 16px;
   line-height: 1.8;
   margin-bottom: 20px;
