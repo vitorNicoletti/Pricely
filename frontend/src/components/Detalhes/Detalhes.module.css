@@ -16,6 +16,11 @@
   flex: 1;
 }
 
+.produtoImagem {
+  width: 400px;
+  height: 400px;
+}
+
 .produtoDetalhes {
   flex: 2;
 }
