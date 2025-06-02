@@ -1,19 +1,19 @@
-import "./Footer.css";
+import styles from "./Footer.module.css";
 
 function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer-container">
-        <div className="footer-column">
-          <h2 className="footer-title">Pricely</h2>
-          <address className="footer-address">
+    <footer className={styles.footer}>
+      <div className={styles.footerContainer}>
+        <div className={styles.footerColumn}>
+          <h2 className={styles.footerTitle}>Pricely</h2>
+          <address className={styles.footerAddress}>
             400 University Drive Suite 200 Coral Gables,<br />
             FL 33134 USA
           </address>
         </div>
 
-        <div className="footer-column">
-          <h3 className="footer-heading">Links</h3>
+        <div className={styles.footerColumn}>
+          <h3 className={styles.footerHeading}>Links</h3>
           <ul>
             <li><a href="#">Home</a></li>
             <li><a href="#">Shop</a></li>
@@ -22,8 +22,8 @@ function Footer() {
           </ul>
         </div>
 
-        <div className="footer-column">
-          <h3 className="footer-heading">Ajuda</h3>
+        <div className={styles.footerColumn}>
+          <h3 className={styles.footerHeading}>Ajuda</h3>
           <ul>
             <li><a href="#">Opções de Pagamento</a></li>
             <li><a href="#">Devoluções</a></li>
