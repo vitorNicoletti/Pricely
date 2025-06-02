@@ -34,7 +34,7 @@ function Detalhes() {
           <img src={favoritoIcone} alt="Favorito" className={style.iconeFavorito} />
           <div className={style.produtoImagemContainer}>
             {product?.imagem.dados && product?.imagem.tipo && (
-              <img
+              <img className={style.produtoImagem}
                 src={`data:${product.imagem.tipo};base64,${product.imagem.dados}`}
                 alt={`Imagem de ${product.nome}`}
               />
