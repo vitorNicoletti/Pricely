@@ -53,7 +53,11 @@ export default function SellerProfile() {
   return (
     <>
       <Header />
-      <div className={styles.backgroundImage}></div>
+      <div className={styles.backgroundImage}>
+        <h2>
+          <button className={styles.btn}>Coloque Sua Imagem AQUI!</button>
+        </h2>
+      </div>
       <div className={styles.profilePage}>
         <div className={styles.profileCardContainer}>
           <div className={styles.profileCard}>
@@ -66,7 +70,7 @@ export default function SellerProfile() {
                 />
               )}
               <div className={styles.iconBubble}>
-                <i className="fa-regular fa-comment-dots"></i>
+                <i className={`fa-regular fa-comments`}></i>
               </div>
             </div>
             <h2>{fornecedor.nomeFantasia}</h2>
@@ -126,9 +130,7 @@ export default function SellerProfile() {
           {selected === "sobre" && (
             <div className={styles.sobreSection}>
               <h3>Sobre o fornecedor</h3>
-              <p>
-                {fornecedor.nomeFantasia}
-              </p>
+              <p>{fornecedor.nomeFantasia}</p>
             </div>
           )}
         </div>
