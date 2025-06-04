@@ -6,6 +6,7 @@ import api from "../../api";
 
 export default function SellerProfile() {
   const [products, setProducts] = useState([]);
+  const [selected, setSelected] = useState("produtos");
 
   useEffect(() => {
     api
@@ -95,14 +96,41 @@ export default function SellerProfile() {
         </div>
         <div className={styles.productsContainer}>
           <div className={styles.sectionTitle}>
-            <button className={styles.btn}>Produtos</button>
-            <button className={styles.btn}>Sobre</button>
+            <button
+              className={selected === "produtos" ? styles.selected : ""}
+              onClick={() => setSelected("produtos")}
+            >
+              Produtos
+            </button>
+            <button
+              className={selected === "sobre" ? styles.selected : ""}
+              onClick={() => setSelected("sobre")}
+            >
+              Sobre
+            </button>
           </div>
-          <div className={styles.productsList}>
-            {products.map((product) => (
-              <ProductCard key={product.id_produto} product={product} />
-            ))}
-          </div>
+          {selected === "produtos" && (
+            <div className={styles.productsList}>
+              {products.length === 0 ? (
+                <p>Nenhum produto encontrado.</p>
+              ) : (
+                products.map((product) => (
+                  <ProductCard
+                    key={product.id_produto || product.id || product._id}
+                    product={product}
+                  />
+                ))
+              )}
+            </div>
+          )}
+          {selected === "sobre" && (
+            <div className={styles.sobreSection}>
+              <h3>Sobre o fornecedor</h3>
+              <p>
+                {fornecedor.nomeFantasia}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </>

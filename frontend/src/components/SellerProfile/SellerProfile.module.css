@@ -116,6 +116,14 @@
   
 }
 
+.sectionTitle button {
+  border: none;
+  border-bottom: solid 1px black;
+  background: none ;
+  font-size: large;
+  cursor: pointer;
+}
+
 .productsContainer {
   width: 100%;
 }
