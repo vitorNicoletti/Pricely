@@ -3,6 +3,9 @@ import Login from "./components/Login/Login.jsx";
 import Catalogo from "./components/Catalog/Catalog.jsx";
 import Payment from "./components/Payment/Payment.jsx";
 import Detalhes from "./components/Detalhes/Detalhes.jsx";
+import About from "./components/About/About.jsx";
+import Cadastro from "./components/Cadastro/Cadastro.jsx";
+import SellerProfile from "./components/SellerProfile/SellerProfile.jsx";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
@@ -17,8 +20,11 @@ function App() {
         <Routes>
           <Route path="/" element={<Catalogo />}></Route>
           <Route path="/login" element={<Login />}></Route>
+          <Route path="/cadastro" element={<Cadastro />}></Route>
           <Route path="/payment" element={<Payment />}></Route>
           <Route path="/details/:id" element={<Detalhes />}></Route>
+          <Route path="/about" element={<About />}></Route>
+          <Route path="/seller_test" element={<SellerProfile />}></Route>
         </Routes>
       </Router>
     </>

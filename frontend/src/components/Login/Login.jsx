@@ -43,7 +43,7 @@ function Login() {
             </span>
             <div className={styles.signupLink}>
               <span>Não possui conta?</span>
-              <a href="./Signup">Criar conta</a>
+              <a href="./cadastro">Criar conta</a>
             </div>
           </div>
 
