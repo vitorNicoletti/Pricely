@@ -1,30 +1,26 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import style from "./ProductCard.module.css";
 
 function ProductCard({ product }) {
   const navigate = useNavigate();
 
-  const loadDetails = () => {
-    navigate(`/details/${product.id_produto}`);
-  };
-  return (  
+  return (
     <div className={style.card}>
       <div className={style.img_div}>
         {product.imagem?.dados && product.imagem?.tipo && (
-          
-    <img
-      src={`data:${product.imagem.tipo};base64,${product.imagem.dados}`}
-      alt={`Imagem de ${product.nome}`}
-      className={style.img_produto}
-    />
-
-  )}
+          <img
+            src={`data:${product.imagem.tipo};base64,${product.imagem.dados}`}
+            alt={`Imagem de ${product.nome}`}
+            className={style.img_produto}
+          />
+        )}
       </div>
       <div className={style.card_texts}>
         <h2 className={style.nome_produto}>{product.nome}</h2>
         <div className={style.infos_esquerda_div}>
           <p className={style.estrela}>
-            <i className="fa-solid fa-star" />{product.avaliacao_media}
+            <i className="fa-solid fa-star" />
+            {product.avaliacao_media}
           </p>
           <p>
             <i className="fa-solid fa-percent" />{" "}
@@ -43,7 +39,12 @@ function ProductCard({ product }) {
         <button className={style.btn}>
           <i className="fa-solid fa-cart-shopping" />
         </button>
-        <button onClick={loadDetails} className={style.btn}>Ver Detalhes</button>
+        <button
+          onClick={() => navigate(`/details/${product.id_produto}`)}
+          className={style.btn}
+        >
+          Ver Detalhes
+        </button>
       </div>
     </div>
   );
