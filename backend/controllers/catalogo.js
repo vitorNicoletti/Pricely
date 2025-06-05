@@ -25,7 +25,6 @@ function getProductDetails(req, res) {
 }
 
 function getAllProducts(req, res) {
-    console.log("aaa")
     const { qnt } = req.body || {undefined};
 
     // Se quiser validar quantidade opcionalmente
@@ -35,12 +34,9 @@ function getAllProducts(req, res) {
 
     Produtos.getAll((err, results) => {
         if (err) {
-            console.log("ddddd")
             console.error('Erro ao buscar produtos:', err);
             return res.status(500).json({ message: 'Erro no servidor.' });
-            console.log("ddddd")
         }
-        console.log("cccc")
         // Se quiser limitar resultados pela quantidade (caso qnt exista):
         const limited = qnt ? results.slice(0, Number(qnt)) : results;
 

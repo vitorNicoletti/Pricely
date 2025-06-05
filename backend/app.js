@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const catalogoRouter = require('./routes/catalogo');
 const cadastroRouter = require('./routes/cadastro');
 const vendedorRoutes = require("./routes/vendedor");
+const fornecedorRoutes = require("./routes/fornecedor");
 const loginRouter = require('./routes/login');
 dotenv.config(); // Carrega variáveis do .env
 
@@ -13,8 +14,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
-app.use('/api', catalogoRouter);
+app.use("/api", catalogoRoutes);
+app.use("/api/vendedor", vendedorRoutes);
+app.use("/api/fornecedor", fornecedorRoutes);
 app.use('/api/cadastro',cadastroRouter )
 app.use('/api/login',loginRouter )
 
