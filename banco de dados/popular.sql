@@ -13,7 +13,7 @@ INSERT INTO `arquivos` (id, nome, tipo, dados) VALUES
 -- Usuarios
 -- -----------------------------------------------------
 INSERT INTO `usuario` (
-  id_usuario,
+  id_usuario, `dataCadastro`
   email,
   senha,
   salt,

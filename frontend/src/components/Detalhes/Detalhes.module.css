@@ -53,15 +53,6 @@ input[type="number"] {
   margin-right: 1rem;
 }
 
-.confirmarBtn {
-  background-color: orange;
-  color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
 .produtoEstoque {
   margin-top: 1rem;
   font-size: 0.95rem;
@@ -211,6 +202,49 @@ input[type="number"] {
   height: 38px;
   cursor: pointer;
   z-index: 10;
+}
+
+.card_fornecedor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.fornecedorInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nomeFornecedor {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.botoesFornecedor {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn {
+  background-color: orange;
+  color: white;
+}
+
+.btn:hover {
+  background-color: darkorange;
 }
 
 @media (max-width: 768px) {

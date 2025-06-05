@@ -13,6 +13,7 @@
 }
 
 .logo_img {
+    cursor: pointer;
     height: 100%;
 }
 
@@ -32,4 +33,14 @@
     cursor: pointer;
     font-size: x-large;
     padding: 0px 20px;
+}
+
+.icons_btn {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.icons_btn:hover {
+    color: #F2F2F2;
 }
