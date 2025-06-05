@@ -8,7 +8,7 @@ const Vendedor = {
     const usuarioId = await Usuario.create(email, senha);
 
     // 2. Insere o vendedor
-    const [result] = await db.execute(
+    const result = await db.execute(
       'INSERT INTO vendedor (id_usuario, cpfCnpj) VALUES (?, ?)',
       [usuarioId, cpfCnpj]
     );
