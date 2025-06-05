@@ -13,7 +13,7 @@ USE `Pricely` ;
 -- Table `Pricely`.`usuario`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `Pricely`.`usuario` (
-  `id_usuario` INT NOT NULL,
+  `id_usuario` INT NOT NULL AUTO_INCREMENT,
   `email` VARCHAR(100) NOT NULL,
   `senha` VARCHAR(200) NOT NULL,
   `salt` VARCHAR(200) NULL,
