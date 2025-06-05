@@ -8,6 +8,7 @@ import Cadastro from "./components/Cadastro/Cadastro.jsx";
 import SellerProfile from "./components/SellerProfile/SellerProfile.jsx";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import OrderTracking from "./components/OrderTracking/OrderTracking.jsx";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/details/:id" element={<Detalhes />}></Route>
           <Route path="/about" element={<About />}></Route>
           <Route path="/fornecedor/:id" element={<SellerProfile />}></Route>
+          <Route path="/rastreamento" element={<OrderTracking />}></Route>
         </Routes>
       </Router>
     </>
