@@ -2,7 +2,7 @@ const db = require('../db.js');
 const Arquivos = require('./arquivos.model.js');
 const Promocao = require('./promocao.model.js');
 const Oferta = require('./oferta.model.js');
-const { Fornecedor } = require('./fornecedor.model.js');
+const Fornecedor = require('./fornecedor.model.js');
 const AvaliacaoProduto = require('./avaliacao_produto.model.js');
 
 const Produtos = {

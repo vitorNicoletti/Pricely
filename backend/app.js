@@ -10,10 +10,11 @@ app.use(express.json());
 
 const catalogoRoutes = require("./routes/catalogo");
 const vendedorRoutes = require("./routes/vendedor");
-
-app.use("/api/vendedor", vendedorRoutes);
+const fornecedorRoutes = require("./routes/fornecedor");
 
 app.use("/api", catalogoRoutes);
+app.use("/api/vendedor", vendedorRoutes);
+app.use("/api/fornecedor", fornecedorRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

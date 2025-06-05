@@ -22,8 +22,6 @@ const Promocao = {
 
       // Se getOfertaByProduct retornou um objeto, extrai id_oferta
       const ofertaId = typeof oferta === 'number' ? oferta : oferta.id_oferta;
-      console.log("oferta id")
-      console.log(ofertaId)
       // 2) Buscar promoções no grupo_promocao
       const sql = 'SELECT * FROM grupo_promocao WHERE id_oferta = ?';
       db.query(sql, [ofertaId], (err, results) => {

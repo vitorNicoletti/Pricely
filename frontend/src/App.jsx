@@ -24,7 +24,7 @@ function App() {
           <Route path="/payment" element={<Payment />}></Route>
           <Route path="/details/:id" element={<Detalhes />}></Route>
           <Route path="/about" element={<About />}></Route>
-          <Route path="/seller_test" element={<SellerProfile />}></Route>
+          <Route path="/fornecedor/:id" element={<SellerProfile />}></Route>
         </Routes>
       </Router>
     </>
