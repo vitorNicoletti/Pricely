@@ -3,42 +3,26 @@ const Usuario = require('../models/usuario.model')
 const jwt = require('jsonwebtoken');
 
 
-async function createVendedor(req,res){
-    const {email,password, cpf} = req || {undefined,undefined,undefined} 
-    if(!email || !password || !cpf){
-        return res.status(400).json({ erro: 'Necessario os campos email senha e cpf' });
-    }
-
-    if(!validarCPF(cpf)){
-        return res.status(400).json({erro: 'CPF invalido'})
-    }
-    if(!validarEmail(email)){
-        return res.status(400).json({erro: 'email invalido'})
-    }
-    //podemos adicionar futuramente checagem de senha fraca, mas sem crise
-    
-
-}
 async function login(req,res){
-    const {email, password} = (req.body || {undefined})
-
+    const {email, senha} = (req.body || {undefined})
+    console.log(req.body)
     // Verificação básica de e-mail com regex
     
-    if (!emailValido) {
+    if (!validarEmail(email)) {
         return res.status(400).json({ erro: 'E-mail inválido' });
     }
-    const user = await Usuario.getUserByEmail(email)
-
+    let user = await Usuario.getUserByEmail(email)
+    
     if (!user){
         return res.status(401).json({erro: "Usuario não encontrado"})
     }
-    const senhaCorreta = await bcrypt.compare(password, user.senha);
+    user = user[0]
+    const senhaCorreta = await bcrypt.compare(senha, user.senha);
     if (!senhaCorreta) {
         return res.status(401).json({ erro: 'Senha incorreta' });
     }
-    else{
-        return gerarToken({id_usuario: user.id_usuario, email: user.email})
-    }
+    const token = gerarToken({id_usuario: user.id_usuario, email: user.email})
+    return res.status(200).json({message:"Sucesso ao logar",token:token})
 
 }
 
@@ -84,3 +68,5 @@ function validarCPF(cpf) {
 function validarEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
+
+module.exports = {login}
