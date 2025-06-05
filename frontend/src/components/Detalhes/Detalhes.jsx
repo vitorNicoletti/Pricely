@@ -60,14 +60,21 @@ function Detalhes() {
             <p className={style.produtoMinimo}>Minimum order: 50</p>
 
             <input type="number" placeholder="Quantity" defaultValue={25} />
-            <button className={style.btn}>Adicionar ao Carrinho</button>
+            <button
+              className={style.btn}
+              onClick={() => {
+                alert("TODO: ADICIONAR AO CARRINHO");
+              }}
+            >
+              Adicionar ao Carrinho
+            </button>
 
             <div className={style.produtoEstoque}>
               <p>{product?.descricao}</p>
             </div>
 
             <div className={style.card_fornecedor}>
-              {fornecedor?.imagem.dados && fornecedor?.imagem.tipo ? (
+              {fornecedor?.imagem?.dados && fornecedor?.imagem?.tipo ? (
                 <img
                   src={`data:${fornecedor.imagem.tipo};base64,${fornecedor.imagem.dados}`}
                   alt={`Imagem de ${fornecedor.nomeFantasia}`}
@@ -87,8 +94,25 @@ function Detalhes() {
                   {fornecedor?.nome_fantasia}
                 </h3>
                 <div className={style.botoesFornecedor}>
-                  <button className={style.btn} onClick={() => {alert("TODO: FUNCAO DE SEGUIR")}}>Seguir</button>
-                  <button className={style.btn} onClick={() => window.open(`/fornecedor/${fornecedor?.id_usuario}`, "_blank")}>Ver Página</button>
+                  <button
+                    className={style.btn}
+                    onClick={() => {
+                      alert("TODO: FUNCAO DE SEGUIR");
+                    }}
+                  >
+                    Seguir
+                  </button>
+                  <button
+                    className={style.btn}
+                    onClick={() =>
+                      window.open(
+                        `/fornecedor/${fornecedor?.id_usuario}`,
+                        "_blank"
+                      )
+                    }
+                  >
+                    Ver Página
+                  </button>
                 </div>
               </div>
             </div>
