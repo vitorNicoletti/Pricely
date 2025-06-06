@@ -59,3 +59,31 @@
   left:-100px;
   z-index: 999;
 }
+
+.navbar {
+    display: flex;
+    justify-content: center;
+    justify-items: center;
+    align-items: center;
+}
+.navbar a{
+    text-decoration: none;
+    color: black;
+    padding: 0px 20px;
+}
+
+.navbar i{
+    cursor: pointer;
+    font-size: x-large;
+    padding: 0px 20px;
+}
+
+.icons_btn {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.icons_btn:hover {
+    color: #F2F2F2;
+}

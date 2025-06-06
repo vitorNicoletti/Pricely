@@ -25,7 +25,7 @@ async function createVendedor(req,res){
         
         usuarios = await Usuario.getUserByEmail(email)
         if (usuarios){
-            if(usuarios.length>1){return res.status(400).json({erro: 'ja existe uma conta com esse email'})}
+            if(usuarios.length>=1){return res.status(400).json({erro: 'ja existe uma conta com esse email'})}
         }
 
     }

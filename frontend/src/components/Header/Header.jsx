@@ -12,6 +12,7 @@ function Header() {
     setIsOpen(!isOpen);
   };
 
+
   return (
     <div className={style.header}>
       <div className={style.logo_div}>
@@ -48,7 +49,6 @@ function Header() {
         <button className={style.icons_btn}>
           <i className="fa-solid fa-magnifying-glass" />
         </button>
-
       </div>
     </div>
   );
