@@ -7,9 +7,11 @@ import Catalogo from "./components/Catalog/Catalog.jsx";
 import Cadastro from "./components/Cadastro/Cadastro.jsx";
 import Detalhes from "./components/Detalhes/Detalhes.jsx";
 import SellerProfile from "./components/SellerProfile/SellerProfile.jsx";
+import OrderTracking from "./components/OrderTracking/OrderTracking.jsx";
+import UserProfile from "./UserProfile/UserProfile.jsx";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import OrderTracking from "./components/OrderTracking/OrderTracking.jsx";
+
 
 function App() {
   return (
@@ -29,6 +31,7 @@ function App() {
           <Route path="/fornecedor/:id" element={<SellerProfile />}></Route>
           <Route path="/cart/" element={<Cart />}></Route>
           <Route path="/rastreamento" element={<OrderTracking />}></Route>
+          <Route path="/profile" element={<UserProfile />}></Route>
         </Routes>
       </Router>
     </>
