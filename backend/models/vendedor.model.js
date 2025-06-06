@@ -1,47 +1,122 @@
-const db = require('../db');
-const Usuario = require('./usuario.model');
+const db = require("../db.js");
+const Arquivos = require("./arquivos.model.js");
+const Usuario = require("./usuario.model.js");
 
 const Vendedor = {
-  // Criação de vendedor com base em usuário
+  /**
+   * Criação de vendedor com base em usuário
+   * @returns {Promise<number>} → ID do usuário recém-criado
+   */
   createVendedor: async (email, senha, cpfCnpj) => {
     // 1. Cria o usuário
     const usuarioId = await Usuario.create(email, senha);
-
     // 2. Insere o vendedor
-    const result = await db.execute(
-      'INSERT INTO vendedor (id_usuario, cpfCnpj) VALUES (?, ?)',
+    await db.execute(
+      "INSERT INTO vendedor (id_usuario, cpfCnpj) VALUES (?, ?)",
       [usuarioId, cpfCnpj]
     );
-
     // 3. Retorna o ID do novo usuário (vendedor)
     return usuarioId;
   },
-  // TODO: Consertar funcoes a baixo, elas não seguem as regras de negócio.
-  // Funcao de buscar todos nao deveria existir, e buscar por id especifico, pode até existir
-  // mas so para o caso que uma pagina de outro usuario for acessada, não para o caso de pegar
-  // informações pessoais do cliente, além disso, quando for fazer direito uma funcao que pegue o usuario logado,
-  // tem que pegar mais informacoes, como por exemplo o saldo da carteira, a imagem de perfil, etc. 
-  // ou seja, as 2 funcoes abaixo nasceram velhas.
-  
-  // Buscar todos os vendedores
-  getAll: async () => {
-    const sql = 'SELECT * FROM vendedor';
-    return new Promise((resolve, reject) => {
-      db.query(sql, (err, results) => {
-        if (err) return reject(err);
-        resolve(results);
-      });
-    });
-  },
 
-  // Buscar vendedor por ID de usuário
-  getById: async (idUsuario) => {
-    const sql = 'SELECT * FROM vendedor WHERE id_usuario = ?';
-    return new Promise((resolve, reject) => {
-      db.query(sql, [idUsuario], (err, results) => {
-        if (err) return reject(err);
-        if (!results || results.length === 0) return resolve(null);
-        resolve(results[0]);
+  /**
+   * Retorna o perfil completo do vendedor (usuário+vendedor+carteira+info_bancaria+arquivos)
+   * @param {number} idUsuario
+   * @param {(err: Error|null, perfil: object|null) => void} callback
+   */
+  getById: (idUsuario, callback) => {
+    // 1) SELECT usuario + vendedor
+    const sqlUsuarioVendedor = `
+      SELECT 
+        u.id_usuario,
+        u.email,
+        u.dataCadastro,
+        u.telefone,
+        u.perfil_arquivo_id,
+        u.documento_arquivo_id,
+        v.cpfCnpj
+      FROM usuario AS u
+      INNER JOIN vendedor AS v
+        ON u.id_usuario = v.id_usuario
+      WHERE u.id_usuario = ?
+    `;
+    db.query(sqlUsuarioVendedor, [idUsuario], (err, results) => {
+      if (err) return callback(err);
+      if (!results || results.length === 0) {
+        // não existe registro em "vendedor" para esse usuário
+        return callback(null, null);
+      }
+      const row = results[0];
+      const perfil = {
+        id_usuario:         row.id_usuario,
+        email:              row.email,
+        dataCadastro:       row.dataCadastro,
+        telefone:           row.telefone,
+        perfil_arquivo_id:    row.perfil_arquivo_id,
+        documento_arquivo_id: row.documento_arquivo_id,
+        cpfCnpj:            row.cpfCnpj,
+        imagemPerfil:       null,
+        documentoPerfil:    null,
+        carteira:           null,
+        infoBancaria:       null
+      };
+
+      // 2) Buscar dados da carteira
+      const sqlCarteira = `
+        SELECT id_carteira, saldo, ultima_atualizacao 
+          FROM carteira 
+         WHERE id_usuario = ?
+      `;
+      db.query(sqlCarteira, [idUsuario], (err2, rowsCarteira) => {
+        if (err2) return callback(err2);
+        if (rowsCarteira && rowsCarteira.length > 0) {
+          perfil.carteira = rowsCarteira[0];
+        }
+
+        // 3) Buscar dados bancários
+        const sqlBancaria = `
+          SELECT id_info_banco, banco, agencia, conta, tipo_conta, pix 
+            FROM info_bancaria 
+           WHERE id_user = ?
+        `;
+        db.query(sqlBancaria, [idUsuario], (err3, rowsBancaria) => {
+          if (err3) return callback(err3);
+          if (rowsBancaria && rowsBancaria.length > 0) {
+            perfil.infoBancaria = rowsBancaria[0];
+          }
+
+          // 4) Se existir perfil_arquivo_id → buscar imagem de perfil
+          if (perfil.perfil_arquivo_id) {
+            Arquivos.getArqPorId(perfil.perfil_arquivo_id, (err4, arquivo) => {
+              if (!err4 && arquivo) {
+                perfil.imagemPerfil = arquivo;
+              }
+              // 5) Agora, se existir documento_arquivo_id → buscar documento
+              if (perfil.documento_arquivo_id) {
+                Arquivos.getArqPorId(perfil.documento_arquivo_id, (err5, docArq) => {
+                  if (!err5 && docArq) {
+                    perfil.documentoPerfil = docArq;
+                  }
+                  return callback(null, perfil);
+                });
+              } else {
+                return callback(null, perfil);
+              }
+            });
+          } else {
+            // 6) Caso não tenha perfil_arquivo_id, mas tenha documento_arquivo_id
+            if (perfil.documento_arquivo_id) {
+              Arquivos.getArqPorId(perfil.documento_arquivo_id, (err6, docArq2) => {
+                if (!err6 && docArq2) {
+                  perfil.documentoPerfil = docArq2;
+                }
+                return callback(null, perfil);
+              });
+            } else {
+              return callback(null, perfil);
+            }
+          }
+        });
       });
     });
   }

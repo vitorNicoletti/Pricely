@@ -22,7 +22,9 @@ function Header() {
       </div>
       <div className={style.navbar}>
         {/* TODO: Usar classes para os ícones no lugar dos botoes */}
-        <i className="fa-regular fa-user" />
+        <button className={style.icons_btn} onClick={() => navigate("/login")}>
+          <i className="fa-regular fa-user" />
+        </button>
         <i className="fa-solid fa-magnifying-glass" />
         <i className="fa-regular fa-heart" />
         <button className={style.icons_btn} onClick={() => navigate("/cart")}>
