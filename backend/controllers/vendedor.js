@@ -11,12 +11,11 @@ function getVendedorDetails(req, res) {
     idUsuario = Number(req.params.id);
   } else {
     // 2) Senão, busca no token
-    idUsuario = req.user && req.user.id;
+    idUsuario = req.user && req.user.id_usuario;
     if (!idUsuario) {
       return res.status(401).json({ message: "Não autorizado." });
     }
   }
-
   // 3) Chama o modelo (getById agora retorna todo o perfil)
   Vendedor.getById(idUsuario, (err, perfil) => {
     if (err) {
@@ -31,5 +30,5 @@ function getVendedorDetails(req, res) {
 }
 
 module.exports = {
-  getVendedorDetails
+  getVendedorDetails,
 };
