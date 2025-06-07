@@ -1,15 +1,16 @@
 const db = require('../db.js'); 
 
 const Arquivos = {
-    getArqPorId: (id,callback) => {
+    getArqPorId: async (id) => {
         const sql = 'SELECT * FROM arquivos WHERE id = ?';
-        db.query(sql, [id], (err, results) => {
-        if (err) return callback(err);
-        if (results.length === 0) return callback(null, null); // ou erro 404, se preferir
-        callback(null, results[0]);
-    });
+        return new Promise((resolve, reject) => {
+            db.query(sql, [id], (err, results) => {
+                if (err) return reject(err);
+                if (results.length === 0) return resolve(null); // ou você pode lançar um erro 404
+                resolve(results[0]);
+            });
+        });
     }
-
 }
 
-module.exports = Arquivos
+module.exports = Arquivos;
