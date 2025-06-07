@@ -12,15 +12,27 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import OrderTracking from "./components/OrderTracking/OrderTracking.jsx";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-      <div>
-        Projeto Limpo
-      </div>
+      <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      />
+      <Router>
+        <Routes>
+          <Route path="/" element={<Catalogo />}></Route>
+          <Route path="/login" element={<Login />}></Route>
+          <Route path="/cadastro" element={<Cadastro />}></Route>
+          <Route path="/payment" element={<Payment />}></Route>
+          <Route path="/details/:id" element={<Detalhes />}></Route>
+          <Route path="/about" element={<About />}></Route>
+          <Route path="/fornecedor/:id" element={<SellerProfile />}></Route>
+          <Route path="/cart/" element={<Cart />}></Route>
+          <Route path="/rastreamento" element={<OrderTracking />}></Route>
+        </Routes>
+      </Router>
     </>
-  )
+  );
 }
 
 export default App;
