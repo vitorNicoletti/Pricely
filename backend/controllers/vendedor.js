@@ -11,7 +11,7 @@ function getVendedorDetails(req, res) {
     idUsuario = Number(req.params.id);
   } else {
     // 2) Senão, busca no token
-    idUsuario = req.user && req.user.id;
+    idUsuario = req.user && req.user.id_usuario;
     if (!idUsuario) {
       return res.status(401).json({ message: "Não autorizado." });
     }
