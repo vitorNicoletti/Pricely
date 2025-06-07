@@ -1,35 +1,41 @@
-import { useState } from 'react';
-import styles from './Login.module.css';
-import googleLogo from '../../assets/google.svg';
-import facebookLogo from '../../assets/facebook.png';
-import appleLogo from '../../assets/apple.svg';
+import { useState } from "react";
+import styles from "./Login.module.css";
+import googleLogo from "../../assets/google.svg";
+import facebookLogo from "../../assets/facebook.png";
+import appleLogo from "../../assets/apple.svg";
+import { useNavigate } from "react-router-dom";
+import api from "../../api";
 
 function Login() {
-  const [usernameOrEmail, setUsernameOrEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [usernameOrEmail, setUsernameOrEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
-    const formData = new FormData();
-    formData.append('identifier', usernameOrEmail);
-    formData.append('password', password);
+    let login_data = {
+      email: usernameOrEmail,
+      senha: password,
+    };
+
+    setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/api/login', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        window.location.href = '/home';
-      } else {
-        alert(data.message || 'Erro ao fazer login.');
-      }
+      const response = await api.post("/login", login_data);
+      const data = response.data;
+      localStorage.setItem("authToken", data.token); // Armazena o token
+      setError("");
+      navigate("/");
     } catch (err) {
       console.error(err);
-      setError('Erro de conexão.');
+      if (err.response && err.response.data) {
+        setError(err.response.data.message || err.response.data.error || "Erro ao fazer login.");
+      } else {
+        setError(err.message || "Erro de conexão.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -73,20 +79,24 @@ function Login() {
             <a href="#">Esqueci minha senha</a>
           </div>
 
-          <button className={styles.loginBtn} onClick={handleLogin}>
-            Entrar
+          <button
+            className={styles.loginBtn}
+            onClick={handleLogin}
+            disabled={loading}
+          >
+            {loading ? "Entrando..." : "Entrar"}
           </button>
 
           <div className={styles.divider}>OU</div>
 
           <div className={styles.socialButtons}>
-            <button className={styles.iconBtn}>
+            <button className={styles.iconBtn} disabled={loading}>
               <img src={googleLogo} alt="Google" />
             </button>
-            <button className={styles.iconBtn}>
+            <button className={styles.iconBtn} disabled={loading}>
               <img src={facebookLogo} alt="Facebook" />
             </button>
-            <button className={styles.iconBtn}>
+            <button className={styles.iconBtn} disabled={loading}>
               <img src={appleLogo} alt="Apple" />
             </button>
           </div>

@@ -13,7 +13,7 @@ const ProfileModal = ({ user }) => {
           alt="Foto de perfil"
           className={style.avatar}
         />
-        <h2 className={style.name}>{user.name}</h2>
+        <h2 className={style.name}>{user.email}</h2>
         <button className={style.icons_btn}>
           <i className="fa-regular fa-heart" />
         </button>

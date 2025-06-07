@@ -19,6 +19,7 @@ const Vendedor = {
     return usuarioId;
   },
 
+
   /**
    * Retorna o perfil completo do vendedor (usuário+vendedor+carteira+info_bancaria+arquivos)
    * @param {number} idUsuario
