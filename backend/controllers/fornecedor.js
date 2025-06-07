@@ -1,4 +1,5 @@
 const Fornecedor = require("../models/fornecedor.model.js");
+const Vendedor   = require("../models/vendedor.model.js");
 
 function getFornecedorDetails(req, res) {
   const { id } = req.params;
@@ -20,7 +21,59 @@ function getFornecedorDetails(req, res) {
     return res.status(200).json(fornecedor);
   });
 }
+ 
+//2) Atualiza perfil do fornecedor logado
 
-module.exports = {
-  getFornecedorDetails
-};
+async function updateFornecedorProfile(req, res) {
+  const body  = req.body  || {};
+  const files = req.files || {};
+
+  // campos da tabela `fornecedor`
+  const campos = {
+    razaoSocial:        body.razaoSocial,
+    nomeFantasia:       body.nomeFantasia,
+    inscricaoEstadual:  body.inscricaoEstadual,
+    inscricaoMunicipal: body.inscricaoMunicipal,
+    logradouro:         body.logradouro,
+    numero:             body.numero,
+    complemento:        body.complemento,
+    repNome:            body.repNome,
+    repCpf:             body.repCpf,
+    repTelefone:        body.repTelefone
+  };
+
+  // campos da tabela `usuario` (via Vendedor.updateProfile)
+  const userDados = {
+    email:    body.email,
+    telefone: body.telefone,
+    senha:    body.senha
+  };
+
+  if (files.imagemPerfil && files.imagemPerfil[0]) {
+    const img = files.imagemPerfil[0];
+    userDados.imagemBase64 = img.buffer.toString("base64");
+    userDados.imagemTipo   = img.mimetype;
+  }
+
+  if (files.documentoPerfil && files.documentoPerfil[0]) {
+    const doc = files.documentoPerfil[0];
+    userDados.documentoBase64 = doc.buffer.toString("base64");
+    userDados.documentoTipo   = doc.mimetype;
+  }
+
+  try {
+    // 1) atualiza e-mail / telefone / senha / arquivos em `usuario`
+    await Vendedor.updateProfile(req.user.id, userDados);
+    // 2) atualiza dados específicos na tabela `fornecedor`
+    await Fornecedor.updateProfile(req.user.id, campos);
+    return res.status(200).json({ mensagem: "Perfil de fornecedor atualizado" });
+  } catch (e) {
+    console.error("Falha ao atualizar perfil de fornecedor:", e);
+    if (e.message === "Email já utilizado") {
+      return res.status(400).json({ erro: e.message });
+    }
+    return res.status(500).json({ erro: "Falha ao atualizar perfil" });
+  }
+}
+
+module.exports = {getFornecedorDetails,updateFornecedorProfile};
