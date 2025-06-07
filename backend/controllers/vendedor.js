@@ -16,7 +16,6 @@ function getVendedorDetails(req, res) {
       return res.status(401).json({ message: "Não autorizado." });
     }
   }
-
   // 3) Chama o modelo (getById agora retorna todo o perfil)
   Vendedor.getById(idUsuario, (err, perfil) => {
     if (err) {
@@ -31,5 +30,5 @@ function getVendedorDetails(req, res) {
 }
 
 module.exports = {
-  getVendedorDetails
+  getVendedorDetails,
 };

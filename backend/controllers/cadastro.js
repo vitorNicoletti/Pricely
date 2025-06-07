@@ -20,7 +20,7 @@ async function createVendedor(req, res) {
 
   // Validação de CPF ou CNPJ
   if (!validarCPF(cpfCnpj) && !validarCNPJ(cpfCnpj)) {
-    //return res.status(400).json({ erro: "CPF/CNPJ invalido" });
+    return res.status(400).json({ erro: "CPF/CNPJ invalido" });
   }
 
   // Validação de e-mail
