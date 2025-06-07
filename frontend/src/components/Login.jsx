@@ -1,29 +1,41 @@
 import { useState } from 'react';
+<<<<<<< Updated upstream:frontend/src/components/Login.jsx
 import styles from '../styles/Login.module.css';
 import googleLogo from '../assets/google.svg';
 import facebookLogo from '../assets/facebook.png';
 import appleLogo from '../assets/apple.svg';
+=======
+import { useNavigate } from "react-router-dom";
+import styles from './Login.module.css';
+import googleLogo from '../../assets/google.svg';
+import facebookLogo from '../../assets/facebook.png';
+import appleLogo from '../../assets/apple.svg';
+>>>>>>> Stashed changes:frontend/src/components/Login/Login.jsx
 
 function Login() {
+  const navigate = useNavigate();
+
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
-    const formData = new FormData();
-    formData.append('identifier', usernameOrEmail);
-    formData.append('password', password);
+    const body_data = {
+      'email': usernameOrEmail,
+      'senha': password,
+    };
 
     try {
       const response = await fetch('http://localhost:3000/api/login', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body_data),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        window.location.href = '/home';
+        navigate("/") 
       } else {
         alert(data.message || 'Erro ao fazer login.');
       }
