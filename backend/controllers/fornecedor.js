@@ -1,5 +1,6 @@
 const Fornecedor = require("../models/fornecedor.model.js");
 
+// 1) Busca detalhes do fornecedor por ID
 function getFornecedorDetails(req, res) {
   const { id } = req.params;
 
@@ -20,7 +21,30 @@ function getFornecedorDetails(req, res) {
     return res.status(200).json(fornecedor);
   });
 }
+ 
+//2) Atualiza perfil do fornecedor logado
 
-module.exports = {
-  getFornecedorDetails
-};
+async function updateFornecedorProfile(req, res) {
+  try {
+    const campos = {
+      razaoSocial:        req.body.razaoSocial,
+      nomeFantasia:       req.body.nomeFantasia,
+      inscricaoEstadual:  req.body.inscricaoEstadual,
+      inscricaoMunicipal: req.body.inscricaoMunicipal,
+      logradouro:         req.body.logradouro,
+      numero:             req.body.numero,
+      complemento:        req.body.complemento,
+      repNome:            req.body.repNome,
+      repCpf:             req.body.repCpf,
+      repTelefone:        req.body.repTelefone
+    };
+
+    await Fornecedor.updateProfile(req.user.id, campos);
+    return res.status(200).json({ mensagem: "Perfil de fornecedor atualizado" });
+  } catch (e) {
+    console.error("Falha ao atualizar perfil de fornecedor:", e);
+    return res.status(500).json({ erro: "Falha ao atualizar perfil" });
+  }
+}
+
+module.exports = {getFornecedorDetails,updateFornecedorProfile};
