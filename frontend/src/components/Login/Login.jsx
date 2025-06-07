@@ -1,35 +1,42 @@
-import { useState } from 'react';
-import styles from './Login.module.css';
-import googleLogo from '../../assets/google.svg';
-import facebookLogo from '../../assets/facebook.png';
-import appleLogo from '../../assets/apple.svg';
+import { useState } from "react";
+import styles from "./Login.module.css";
+import googleLogo from "../../assets/google.svg";
+import facebookLogo from "../../assets/facebook.png";
+import appleLogo from "../../assets/apple.svg";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
-  const [usernameOrEmail, setUsernameOrEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [usernameOrEmail, setUsernameOrEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
-    const formData = new FormData();
-    formData.append('identifier', usernameOrEmail);
-    formData.append('password', password);
+    let login_data = {
+      email: usernameOrEmail,
+      senha: password,
+    };
 
     try {
-      const response = await fetch('http://localhost:3000/api/login', {
-        method: 'POST',
-        body: formData,
+      const response = await fetch("http://localhost:3000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(login_data),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        window.location.href = '/home';
+        navigate("/");
+        localStorage.setItem("authToken", data.token); // Armazena o token
       } else {
-        alert(data.message || 'Erro ao fazer login.');
+        alert(data.message || "Erro ao fazer login.");
       }
     } catch (err) {
       console.error(err);
-      setError('Erro de conexão.');
+      setError("Erro de conexão.");
     }
   };
 

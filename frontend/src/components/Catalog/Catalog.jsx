@@ -23,24 +23,7 @@ const Catalog = () => {
       });
   }, []);
 
-  /*
-  useEffect(() => {
-    axios.get('https://fakestoreapi.com/products') // API fake, é para trocar para a nossa do backend provavel 3000
-      .then(response => {
-        const enrichedProducts = response.data.map((product, index) => ({ // Prenchendo dados faltantes
-          ...product,
-          location: ['CURITIBA', 'SÃO PAULO', 'RIO DE JANEIRO'][index % 3],
-          rating: (product.rating?.rate || (Math.random() * 5 + 1)).toFixed(1),
-          unit: 'unidade',
-          discount: Math.random() > 0.5,
-        }));
-        setProducts(enrichedProducts);
-      })
-      .catch(error => {
-        console.error('Erro ao buscar produtos:', error);
-      });
-  }, []);
-*/
+
   const filteredProducts = products.filter((p) => {
     return (
       (ratingFilter === '' || parseFloat(p.rating) >= parseFloat(ratingFilter))
