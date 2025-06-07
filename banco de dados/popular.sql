@@ -1,242 +1,361 @@
+-- MySQL Workbench Forward Engineering
 
-USE `Pricely`;
-
--- -----------------------------------------------------
--- Arquivos
--- -----------------------------------------------------
-INSERT INTO `arquivos` (id, nome, tipo, dados) VALUES
-  (1, 'perfil_alice.png', 'image/png', '<base64-perfil-alice>'),
-  (2, 'doc_alice.pdf',    'application/pdf', '<base64-doc-alice>'),
-  (3, 'produto100.jpg',   'image/jpeg', '<base64-produto100>');
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
 -- -----------------------------------------------------
--- Usuários
+-- Schema mydb
 -- -----------------------------------------------------
-INSERT INTO `usuario` (
-  id_usuario,
-  email,
-  senha,
-  salt,
-  dataCadastro,
-  telefone,
-  perfil_arquivo_id,
-  documento_arquivo_id
-) VALUES
-  ('alice@example.com', 'hash1', 'salt1', '2025-01-10 09:15:00', '5511912340001', 1, 2),
-  ('bob@example.com',   'hash2', 'salt2', '2025-02-20 14:30:00', '5521923450002', NULL, NULL),
-  ('carol@example.com', 'hash3', 'salt3', '2025-03-15 11:45:00', NULL, NULL, NULL);
-
-
+-- -----------------------------------------------------
+-- Schema Pricely
+-- -----------------------------------------------------
 
 -- -----------------------------------------------------
--- Seguindo
+-- Schema Pricely
 -- -----------------------------------------------------
-INSERT INTO `seguindo` (
-  id_usuario_seguidor,
-  id_usuario_seguido,
-  dataCadastro
-) VALUES
-  (1, 2, '2025-02-21 10:00:00'),
-  (1, 3, '2025-03-16 12:00:00'),
-  (2, 3, '2025-03-17 09:30:00');
+CREATE SCHEMA IF NOT EXISTS `Pricely` DEFAULT CHARACTER SET utf8mb3 ;
+USE `Pricely` ;
 
 -- -----------------------------------------------------
--- Carteira
+-- Table `Pricely`.`arquivos`
 -- -----------------------------------------------------
-INSERT INTO `carteira` (
-  id_carteira,
-  saldo,
-  ultima_atualizacao,
-  id_usuario
-) VALUES
-  (1, 1000.00, '2025-05-01 08:00:00', 1),
-  (2,  250.50, '2025-05-02 09:15:00', 2),
-  (3,   75.75, '2025-05-03 10:30:00', 3);
+CREATE TABLE IF NOT EXISTS `Pricely`.`arquivos` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(255) NOT NULL,
+  `tipo` VARCHAR(100) NOT NULL,
+  `dados` LONGTEXT NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 4
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
 
 -- -----------------------------------------------------
--- Vendedor
+-- Table `Pricely`.`avaliacao`
 -- -----------------------------------------------------
-INSERT INTO `vendedor` (
-  id_usuario,
-  cpfCnpj
-) VALUES
-  (2, '12345678901'),
-  (3, '10987654321');
+CREATE TABLE IF NOT EXISTS `Pricely`.`avaliacao` (
+  `id_avaliacao` INT NOT NULL AUTO_INCREMENT,
+  `texto_avaliacao` VARCHAR(500) NULL DEFAULT NULL,
+  `avaliacao` TINYINT NOT NULL,
+  PRIMARY KEY (`id_avaliacao`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
 
 -- -----------------------------------------------------
--- Fornecedor
+-- Table `Pricely`.`usuario`
 -- -----------------------------------------------------
-INSERT INTO `fornecedor` (
-  id_usuario,
-  razao_social,
-  nome_fantasia,
-  cnpj,
-  inscricao_estadual,
-  inscricao_municipal,
-  logradouro,
-  numero,
-  complemento,
-  rep_nome,
-  rep_cpf,
-  rep_telefone
-) VALUES
-  (1, 'Alpha Comércio Ltda',   'Alpha Store', '11122233000144',
-     '1234567890', '0987654321', 'Rua A', '100', NULL,
-     'Ana Silva', '11122233344', '551190000001'),
-  (2, 'Beta Distribuidora SA', 'Beta Distrib', '55566677000188',
-     '2233445566', '6655443322', 'Av. B', '200', 'Sala 5',
-     'Bruno Lima', '55566677788', '552192000002');
+CREATE TABLE IF NOT EXISTS `Pricely`.`usuario` (
+  `id_usuario` INT NOT NULL AUTO_INCREMENT,
+  `email` VARCHAR(100) NOT NULL,
+  `senha` VARCHAR(200) NOT NULL,
+  `salt` VARCHAR(200) NULL DEFAULT NULL,
+  `dataCadastro` DATETIME NOT NULL,
+  `telefone` VARCHAR(45) NULL DEFAULT NULL,
+  `perfil_arquivo_id` INT NULL DEFAULT NULL,
+  `documento_arquivo_id` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`id_usuario`),
+  INDEX `fk_usuario_perfil_arquivo` (`perfil_arquivo_id` ASC) VISIBLE,
+  INDEX `fk_usuario_documento_arquivo` (`documento_arquivo_id` ASC) VISIBLE,
+  CONSTRAINT `fk_usuario_documento_arquivo`
+    FOREIGN KEY (`documento_arquivo_id`)
+    REFERENCES `Pricely`.`arquivos` (`id`),
+  CONSTRAINT `fk_usuario_perfil_arquivo`
+    FOREIGN KEY (`perfil_arquivo_id`)
+    REFERENCES `Pricely`.`arquivos` (`id`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 21
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
 
 -- -----------------------------------------------------
--- Pedido
+-- Table `Pricely`.`fornecedor`
 -- -----------------------------------------------------
-INSERT INTO `pedido` (
-  id_pedido,
-  dataCadastro,
-  desconto,
-  rua,
-  numero,
-  complemento,
-  id_vendedor,
-  cep,
-  metodo_pagamento
-) VALUES
-  (100, '2025-05-05 10:00:00', 10, 'Rua A', '100', NULL, 2, '01000000', 'cartao'),
-  (101, '2025-05-10 15:30:00',  0, 'Av. B', '200', 'Apto 5', 3, '20000000', 'pix');
+CREATE TABLE IF NOT EXISTS `Pricely`.`fornecedor` (
+  `id_usuario` INT NOT NULL,
+  `razao_social` VARCHAR(200) NOT NULL,
+  `nome_fantasia` VARCHAR(200) NULL DEFAULT NULL,
+  `cnpj` VARCHAR(14) NOT NULL,
+  `inscricao_estadual` VARCHAR(45) NULL DEFAULT NULL,
+  `inscricao_municipal` VARCHAR(45) NULL DEFAULT NULL,
+  `logradouro` VARCHAR(150) NOT NULL,
+  `numero` VARCHAR(10) NOT NULL,
+  `complemento` VARCHAR(150) NULL DEFAULT NULL,
+  `rep_nome` VARCHAR(200) NULL DEFAULT NULL,
+  `rep_cpf` VARCHAR(12) NULL DEFAULT NULL,
+  `rep_telefone` VARCHAR(15) NULL DEFAULT NULL,
+  PRIMARY KEY (`id_usuario`),
+  UNIQUE INDEX `CNPJ_UNIQUE` (`cnpj` ASC) VISIBLE,
+  CONSTRAINT `fk_fornecedor_1`
+    FOREIGN KEY (`id_usuario`)
+    REFERENCES `Pricely`.`usuario` (`id_usuario`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
 
 -- -----------------------------------------------------
--- Produto
+-- Table `Pricely`.`avaliacao_fornecedor`
 -- -----------------------------------------------------
-INSERT INTO `produto` (
-  id_produto,
-  nome,
-  descricao,
-  preco_unidade,
-  estado,
-  id_fornecedor,
-  imagem_arquivo_id
-) VALUES
-  (100, 'Smartphone X', 'Tela 6.5" , 128GB, câmera 12MP', 1999.90, 'novo', 1, 3),
-  (101, 'Headphone Y', 'Bluetooth, noise-canceling',    499.50, 'novo', 1, NULL),
-  (102, 'Teclado Z',   'Mecânico, RGB',                   299.00, 'novo', 2, NULL);
+CREATE TABLE IF NOT EXISTS `Pricely`.`avaliacao_fornecedor` (
+  `id_avaliacao` INT NOT NULL,
+  `id_fornecedor` INT NOT NULL,
+  PRIMARY KEY (`id_avaliacao`),
+  INDEX `fk_fornecedor_idx` (`id_fornecedor` ASC) VISIBLE,
+  CONSTRAINT `fk_avaliacao`
+    FOREIGN KEY (`id_avaliacao`)
+    REFERENCES `Pricely`.`avaliacao` (`id_avaliacao`),
+  CONSTRAINT `fk_fornecedor`
+    FOREIGN KEY (`id_fornecedor`)
+    REFERENCES `Pricely`.`fornecedor` (`id_usuario`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
 
 -- -----------------------------------------------------
--- Avaliacao
+-- Table `Pricely`.`produto`
 -- -----------------------------------------------------
-INSERT INTO `avaliacao` (
-  id_avaliacao,
-  texto_avaliacao,
-  avaliacao
-) VALUES
-  (1, 'Excelente produto!',    5),
-  (2, 'Bom custo-benefício.',  4),
-  (3, 'Entrega atrasada.',     2),
-  (4, 'Qualidade razoável.',   3);
+CREATE TABLE IF NOT EXISTS `Pricely`.`produto` (
+  `id_produto` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(300) NOT NULL,
+  `descricao` VARCHAR(1000) NULL DEFAULT NULL,
+  `preco_unidade` DOUBLE NOT NULL,
+  `estado` VARCHAR(50) NULL DEFAULT NULL,
+  `id_fornecedor` INT NOT NULL,
+  `imagem_arquivo_id` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`id_produto`),
+  INDEX `fk_produto_fornecedor` (`id_fornecedor` ASC) VISIBLE,
+  INDEX `fk_produto_imagem_arquivo` (`imagem_arquivo_id` ASC) VISIBLE,
+  CONSTRAINT `fk_produto_fornecedor`
+    FOREIGN KEY (`id_fornecedor`)
+    REFERENCES `Pricely`.`fornecedor` (`id_usuario`),
+  CONSTRAINT `fk_produto_imagem_arquivo`
+    FOREIGN KEY (`imagem_arquivo_id`)
+    REFERENCES `Pricely`.`arquivos` (`id`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
 
 -- -----------------------------------------------------
--- Avaliacao_Fornecedor
+-- Table `Pricely`.`avaliacao_produto`
 -- -----------------------------------------------------
-INSERT INTO `avaliacao_fornecedor` (
-  id_avaliacao,
-  id_fornecedor
-) VALUES
-  (1, 1),
-  (3, 2);
+CREATE TABLE IF NOT EXISTS `Pricely`.`avaliacao_produto` (
+  `id_avaliacao` INT NOT NULL,
+  `id_produto` INT NOT NULL,
+  PRIMARY KEY (`id_avaliacao`),
+  INDEX `fk_produto_idx` (`id_produto` ASC) VISIBLE,
+  CONSTRAINT `fk_avaliacao_p`
+    FOREIGN KEY (`id_avaliacao`)
+    REFERENCES `Pricely`.`avaliacao` (`id_avaliacao`),
+  CONSTRAINT `fk_produto_aval`
+    FOREIGN KEY (`id_produto`)
+    REFERENCES `Pricely`.`produto` (`id_produto`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
 
 -- -----------------------------------------------------
--- Avaliacao_Produto
+-- Table `Pricely`.`carteira`
 -- -----------------------------------------------------
-INSERT INTO `avaliacao_produto` (
-  id_avaliacao,
-  id_produto
-) VALUES
-  (2, 100),
-  (4, 102);
+CREATE TABLE IF NOT EXISTS `Pricely`.`carteira` (
+  `id_carteira` INT NOT NULL AUTO_INCREMENT,
+  `saldo` DECIMAL(15,2) NOT NULL DEFAULT '0.00',
+  `ultima_atualizacao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `id_usuario` INT NOT NULL,
+  PRIMARY KEY (`id_carteira`),
+  INDEX `idx_carteira_usuario` (`id_usuario` ASC) VISIBLE,
+  CONSTRAINT `fk_carteira_usuario`
+    FOREIGN KEY (`id_usuario`)
+    REFERENCES `Pricely`.`usuario` (`id_usuario`))
+ENGINE = InnoDB
+AUTO_INCREMENT = 4
+DEFAULT CHARACTER SET = utf8mb4
+COLLATE = utf8mb4_0900_ai_ci;
+
 
 -- -----------------------------------------------------
--- Conjunto
+-- Table `Pricely`.`vendedor`
 -- -----------------------------------------------------
-INSERT INTO `conjunto` (
-  id_conjunto,
-  frete_max,
-  raio_metros,
-  longitude,
-  latitude
-) VALUES
-  (1, 20.00, 5000, '-46.633309','-23.550520'),
-  (2, 15.00, 3000, '-43.209373','-22.911014');
+CREATE TABLE IF NOT EXISTS `Pricely`.`vendedor` (
+  `id_usuario` INT NOT NULL,
+  `cpfCnpj` VARCHAR(14) NOT NULL,
+  PRIMARY KEY (`id_usuario`),
+  CONSTRAINT `fk_vendedor_1`
+    FOREIGN KEY (`id_usuario`)
+    REFERENCES `Pricely`.`usuario` (`id_usuario`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
 
 -- -----------------------------------------------------
--- Compra
+-- Table `Pricely`.`pedido`
 -- -----------------------------------------------------
-INSERT INTO `compra` (
-  id_compra,
-  preco_unidade,
-  quantidade,
-  frete_pago,
-  estado,
-  id_produto,
-  id_pedido,
-  id_avaliacao_fornecedor,
-  id_avaliacao_produto,
-  id_conjunto
-) VALUES
-  (500, 1999.90, 1, 20.00, 'entregue',    100, 100, 1, 2, 1),
-  (501,  499.50, 2, 10.00, 'em_transito', 101, 100, NULL, NULL, 1),
-  (502,  299.00, 1, 15.00, 'pendente',    102, 101, 3,    4, 2);
+CREATE TABLE IF NOT EXISTS `Pricely`.`pedido` (
+  `id_pedido` INT NOT NULL AUTO_INCREMENT,
+  `dataCadastro` DATETIME NOT NULL,
+  `desconto` INT NOT NULL,
+  `rua` VARCHAR(150) NULL DEFAULT NULL,
+  `numero` VARCHAR(10) NULL DEFAULT NULL,
+  `complemento` VARCHAR(150) NULL DEFAULT NULL,
+  `id_vendedor` INT NOT NULL,
+  `cep` VARCHAR(10) NOT NULL,
+  `metodo_pagamento` ENUM('carteira', 'pix', 'cartao', 'boleto') NOT NULL DEFAULT 'carteira',
+  `estado` VARCHAR(50) NOT NULL,
+  PRIMARY KEY (`id_pedido`),
+  INDEX `fk_pedido_1_idx` (`id_vendedor` ASC) VISIBLE,
+  CONSTRAINT `fk_pedido_1`
+    FOREIGN KEY (`id_vendedor`)
+    REFERENCES `Pricely`.`vendedor` (`id_usuario`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
 
 -- -----------------------------------------------------
--- Oferta
+-- Table `Pricely`.`conjunto`
 -- -----------------------------------------------------
-INSERT INTO `oferta` (
-  id_oferta,
-  dataCadastro,
-  id_fornecedor
-) VALUES
-  (10, '2025-04-01 08:00:00', 1),
-  (11, '2025-04-15 09:15:00', 2);
+CREATE TABLE IF NOT EXISTS `Pricely`.`conjunto` (
+  `id_conjunto` INT NOT NULL AUTO_INCREMENT,
+  `frete_max` DOUBLE NULL DEFAULT NULL,
+  `raio_metros` DOUBLE NOT NULL,
+  `longitude` VARCHAR(100) NOT NULL,
+  `latitude` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id_conjunto`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
 
 -- -----------------------------------------------------
--- Produto_Oferta
+-- Table `Pricely`.`compra`
 -- -----------------------------------------------------
-INSERT INTO `produto_oferta` (
-  id_oferta,
-  id_produto
-) VALUES
-  (10, 100),
-  (10, 101),
-  (11, 102);
+CREATE TABLE IF NOT EXISTS `Pricely`.`compra` (
+  `id_compra` INT NOT NULL AUTO_INCREMENT,
+  `preco_unidade` DOUBLE NOT NULL,
+  `quantidade` INT NOT NULL,
+  `frete_pago` DOUBLE NULL DEFAULT NULL,
+  `estado` VARCHAR(50) NULL DEFAULT NULL,
+  `id_produto` INT NOT NULL,
+  `id_pedido` INT NOT NULL,
+  `id_avaliacao_fornecedor` INT NULL DEFAULT NULL,
+  `id_avaliacao_produto` INT NULL DEFAULT NULL,
+  `id_conjunto` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`id_compra`),
+  INDEX `fk_compra_1_idx` (`id_pedido` ASC) VISIBLE,
+  INDEX `fk_compra_2_idx` (`id_produto` ASC) VISIBLE,
+  INDEX `fk_aval_fornecedor_idx` (`id_avaliacao_fornecedor` ASC) VISIBLE,
+  INDEX `fk_aval_produto_idx` (`id_avaliacao_produto` ASC) VISIBLE,
+  INDEX `fk_conjunto_idx` (`id_conjunto` ASC) VISIBLE,
+  CONSTRAINT `fk_aval_fornecedor`
+    FOREIGN KEY (`id_avaliacao_fornecedor`)
+    REFERENCES `Pricely`.`avaliacao_fornecedor` (`id_avaliacao`),
+  CONSTRAINT `fk_aval_produto`
+    FOREIGN KEY (`id_avaliacao_produto`)
+    REFERENCES `Pricely`.`avaliacao_produto` (`id_avaliacao`),
+  CONSTRAINT `fk_compra_1`
+    FOREIGN KEY (`id_pedido`)
+    REFERENCES `Pricely`.`pedido` (`id_pedido`),
+  CONSTRAINT `fk_compra_2`
+    FOREIGN KEY (`id_produto`)
+    REFERENCES `Pricely`.`produto` (`id_produto`),
+  CONSTRAINT `fk_conjunto`
+    FOREIGN KEY (`id_conjunto`)
+    REFERENCES `Pricely`.`conjunto` (`id_conjunto`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
 
 -- -----------------------------------------------------
--- Grupo_Promocao
+-- Table `Pricely`.`oferta`
 -- -----------------------------------------------------
-INSERT INTO `grupo_promocao` (
-  idgrupo_promocao,
-  quantidade,
-  desc_porcentagem,
-  id_oferta
-) VALUES
-  (100, 2,  5, 10),
-  (101, 3, 10, 11);
+CREATE TABLE IF NOT EXISTS `Pricely`.`oferta` (
+  `id_oferta` INT NOT NULL AUTO_INCREMENT,
+  `dataCadastro` DATETIME NOT NULL,
+  `id_fornecedor` INT NOT NULL,
+  PRIMARY KEY (`id_oferta`),
+  INDEX `fk_oferta_fornecedor1_idx` (`id_fornecedor` ASC) VISIBLE,
+  CONSTRAINT `fk_oferta_fornecedor1`
+    FOREIGN KEY (`id_fornecedor`)
+    REFERENCES `Pricely`.`fornecedor` (`id_usuario`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
 
 -- -----------------------------------------------------
--- Info_Bancaria
+-- Table `Pricely`.`grupo_promocao`
 -- -----------------------------------------------------
-INSERT INTO `info_bancaria` (
-  id_info_banco,
-  banco,
-  agencia,
-  conta,
-  tipo_conta,
-  pix,
-  id_user
-) VALUES
-  (1, 'Banco A', '0001', '12345-6', 'corrente', 'alice@pix', 1),
-  (2, 'Banco B', '0002', '65432-1', 'poupanca', NULL,        2);
+CREATE TABLE IF NOT EXISTS `Pricely`.`grupo_promocao` (
+  `idgrupo_promocao` INT NOT NULL AUTO_INCREMENT,
+  `quantidade` INT NOT NULL,
+  `desc_porcentagem` INT NOT NULL,
+  `id_oferta` INT NOT NULL,
+  PRIMARY KEY (`idgrupo_promocao`),
+  INDEX `fk_grupo_promocao_oferta1_idx` (`id_oferta` ASC) VISIBLE,
+  CONSTRAINT `fk_gfk_oferta`
+    FOREIGN KEY (`id_oferta`)
+    REFERENCES `Pricely`.`oferta` (`id_oferta`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
 
 -- -----------------------------------------------------
--- Restaura checks
+-- Table `Pricely`.`info_bancaria`
 -- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `Pricely`.`info_bancaria` (
+  `id_info_banco` INT NOT NULL AUTO_INCREMENT,
+  `banco` VARCHAR(100) NOT NULL,
+  `agencia` VARCHAR(50) NOT NULL,
+  `conta` VARCHAR(50) NOT NULL,
+  `tipo_conta` VARCHAR(50) NOT NULL,
+  `pix` VARCHAR(50) NULL DEFAULT NULL,
+  `id_user` INT NOT NULL,
+  PRIMARY KEY (`id_info_banco`),
+  INDEX `fk_banco_user_idx` (`id_user` ASC) VISIBLE,
+  CONSTRAINT `fk_banco_user`
+    FOREIGN KEY (`id_user`)
+    REFERENCES `Pricely`.`usuario` (`id_usuario`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `Pricely`.`produto_oferta`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `Pricely`.`produto_oferta` (
+  `id_oferta` INT NOT NULL,
+  `id_produto` INT NOT NULL,
+  PRIMARY KEY (`id_oferta`, `id_produto`),
+  INDEX `fk_produto_idx` (`id_produto` ASC) VISIBLE,
+  CONSTRAINT `fk_oferta`
+    FOREIGN KEY (`id_oferta`)
+    REFERENCES `Pricely`.`oferta` (`id_oferta`),
+  CONSTRAINT `fk_produto`
+    FOREIGN KEY (`id_produto`)
+    REFERENCES `Pricely`.`produto` (`id_produto`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `Pricely`.`seguindo`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `Pricely`.`seguindo` (
+  `id_usuario_seguidor` INT NOT NULL,
+  `id_usuario_seguido` INT NOT NULL,
+  `dataCadastro` DATETIME NOT NULL,
+  PRIMARY KEY (`id_usuario_seguidor`, `id_usuario_seguido`),
+  INDEX `fk_seguindo_2_idx` (`id_usuario_seguido` ASC) VISIBLE,
+  CONSTRAINT `fk_seguindo_1`
+    FOREIGN KEY (`id_usuario_seguidor`)
+    REFERENCES `Pricely`.`usuario` (`id_usuario`),
+  CONSTRAINT `fk_seguindo_2`
+    FOREIGN KEY (`id_usuario_seguido`)
+    REFERENCES `Pricely`.`usuario` (`id_usuario`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
+
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
