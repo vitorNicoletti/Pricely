@@ -21,7 +21,10 @@ async function login(req,res){
     if (!senhaCorreta) {
         return res.status(401).json({ erro: 'Senha incorreta' });
     }
-    const token = gerarToken({id_usuario: user.id_usuario, email: user.email})
+    // em vez de { user: { … } }, faça:
+    
+    const token = gerarToken({ id_usuario: user.id_usuario, email: user.email });
+
     return res.status(200).json({message:"Sucesso ao logar",token:token})
 
 }

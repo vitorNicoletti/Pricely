@@ -24,27 +24,6 @@ const Vendedor = {
   // ou seja, as 2 funcoes abaixo nasceram velhas.
   
   // Buscar todos os vendedores
-  getAll: async () => {
-    const sql = 'SELECT * FROM vendedor';
-    return new Promise((resolve, reject) => {
-      db.query(sql, (err, results) => {
-        if (err) return reject(err);
-        resolve(results);
-      });
-    });
-  },
 
-  // Buscar vendedor por ID de usuário
-  getById: async (idUsuario) => {
-    const sql = 'SELECT * FROM vendedor WHERE id_usuario = ?';
-    return new Promise((resolve, reject) => {
-      db.query(sql, [idUsuario], (err, results) => {
-        if (err) return reject(err);
-        if (!results || results.length === 0) return resolve(null);
-        resolve(results[0]);
-      });
-    });
-  }
-};
-
-module.exports = Vendedor;
+}
+module.exports = Vendedor

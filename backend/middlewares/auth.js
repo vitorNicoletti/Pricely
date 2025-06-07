@@ -1,3 +1,7 @@
+
+require('dotenv').config();
+
+const jwt = require('jsonwebtoken');
 function autenticarToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer token
@@ -6,6 +10,7 @@ function autenticarToken(req, res, next) {
 
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
         if (err) return res.sendStatus(403);
+
         req.user = user;
         next();
     });
