@@ -1,3 +1,4 @@
+
 USE `Pricely`;
 
 -- -----------------------------------------------------
@@ -12,6 +13,7 @@ INSERT INTO `arquivos` (id, nome, tipo, dados) VALUES
 -- Usuários
 -- -----------------------------------------------------
 INSERT INTO `usuario` (
+  id_usuario,
   email,
   senha,
   salt,
@@ -23,6 +25,7 @@ INSERT INTO `usuario` (
   ('alice@example.com', 'hash1', 'salt1', '2025-01-10 09:15:00', '5511912340001', 1, 2),
   ('bob@example.com',   'hash2', 'salt2', '2025-02-20 14:30:00', '5521923450002', NULL, NULL),
   ('carol@example.com', 'hash3', 'salt3', '2025-03-15 11:45:00', NULL, NULL, NULL);
+
 
 
 -- -----------------------------------------------------

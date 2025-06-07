@@ -1,0 +1,282 @@
+.detalhesContainer {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: sans-serif;
+}
+
+.produtoInfo {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.produtoImagemContainer {
+  flex: 1;
+}
+
+.produtoImagem {
+  width: 400px;
+  height: 400px;
+}
+
+.produtoDetalhes {
+  flex: 2;
+}
+
+.produtoPromocao {
+  background-color: #d4f5dd;
+  color: green;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  width: 50px;
+}
+
+.produtoPreco {
+  font-size: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.produtoMinimo {
+  color: gray;
+  font-size: 0.9rem;
+}
+
+input[type="number"] {
+  width: 100px;
+  padding: 0.3rem;
+  margin-top: 0.5rem;
+  margin-right: 1rem;
+}
+
+.produtoEstoque {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.avaliacoesSection {
+  margin-top: 3rem;
+}
+
+.avaliacoes {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.avaliacao {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 1rem;
+  flex: 1;
+  min-width: 250px;
+}
+
+.estrelas {
+  color: gold;
+  font-size: 1.2rem;
+}
+
+.autor {
+  font-size: 0.85rem;
+  color: gray;
+  margin-top: 0.5rem;
+  display: block;
+}
+
+.pedidosSection {
+  margin-top: 3rem;
+}
+
+.tabelaPedidos {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 1rem;
+  background-color: #fafafa;
+}
+
+.cabecalho {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.pedido {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.comprador {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.comprador img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.quantidade {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.resumo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ccc;
+}
+
+.progresso {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 50%;
+}
+
+.barra {
+  background: #eee;
+  height: 8px;
+  flex: 1;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.preenchida {
+  background: orange;
+  height: 100%;
+  border-radius: 5px;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.checkIcon {
+  background: orange;
+  color: white;
+  border-radius: 50%;
+  padding: 0.2rem 0.5rem;
+  font-weight: bold;
+}
+
+.imagemAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.divAvatar {
+  display: flex;
+  gap: 15px;
+}
+
+.corPedidos {
+  color: gray;
+}
+
+.iconeFavorito {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.card_fornecedor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.fornecedorInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nomeFornecedor {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.botoesFornecedor {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn {
+  background-color: orange;
+  color: white;
+}
+
+.btn:hover {
+  background-color: darkorange;
+}
+
+@media (max-width: 768px) {
+  .produtoInfo {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .produtoDetalhes {
+    width: 100%;
+  }
+
+  .avaliacoes {
+    flex-direction: column;
+  }
+
+  .resumo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .progresso {
+    width: 100%;
+  }
+
+  .tabelaPedidos .pedido {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .quantidade {
+    align-self: flex-end;
+    margin-top: 0.5rem;
+  }
+}

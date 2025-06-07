@@ -1,0 +1,127 @@
+.payment-container {
+  max-width: 720px;
+  margin: 60px auto;
+  padding: 20px;
+  background-color: white;
+  font-family: 'Arial', sans-serif;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.payment-mode,
+.payment-methods {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.payment-mode button,
+.payment-methods button {
+  flex: 1;
+  padding: 14px;
+  border: 2px solid #ddd;
+  background-color: white;
+  color: #4f5b76;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+.payment-mode button.active,
+.payment-methods button.active {
+  border-color: #0070f3;
+  background-color: #e6f0ff;
+}
+
+button:focus {
+  outline: none;
+}
+
+.card-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+}
+
+.card-form input,
+.card-form select {
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: white;
+  width: 100%;
+  box-sizing: border-box;
+  color: #999;
+}
+
+.card-form input::placeholder {
+  color: #999;
+}
+
+label,
+select {
+  color: #4f5b76;
+}
+
+label {
+  font-size: 15px;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.form-row > * {
+  flex: 1;
+}
+
+.form-row > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-input-wrapper {
+  position: relative;
+}
+
+.card-input-wrapper input {
+  padding-right: 60px;
+  margin-top: -10px;
+}
+
+.card-icons {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.card-icons img {
+  width: 24px;
+  height: auto;
+}
+
+.error {
+  color: red;
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+
+.card-form input:focus,
+.card-form select:focus {
+  outline: none;
+  border-color: #0070f3;
+  box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+}
