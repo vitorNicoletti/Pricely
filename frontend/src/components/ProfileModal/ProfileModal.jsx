@@ -7,9 +7,9 @@ const ProfileModal = ({ user }) => {
   return (
     <div className={style.modal} onClick={(e) => e.stopPropagation()}>
       <div className={style.center}>
-        {user.imagem?.dados && user.imagem?.tipo ? (
+        {user.imagemPerfil?.dados && user.imagemPerfil?.tipo ? (
           <img
-            src={`data:${user.imagem.tipo};base64,${user.imagem.dados}`}
+            src={`data:${user.imagemPerfil.tipo};base64,${user.imagemPerfil.dados}`}
             alt={`Imagem de ${user.email}`}
             className={style.avatar}
           />
@@ -20,7 +20,7 @@ const ProfileModal = ({ user }) => {
             className={style.avatar}
           />
         )}
-        <h2 className={style.name}>{user.email}</h2>
+        <p className={style.name}>{user.email}</p>
         <button className={style.icons_btn}>
           <i className="fa-regular fa-heart" />
         </button>

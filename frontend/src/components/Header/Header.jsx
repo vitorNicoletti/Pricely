@@ -46,9 +46,9 @@ function Header() {
         />
       </div>
       <div className={style.navbar}>
-        <a href="/">Home</a>
-        <a href="/about">Sobre</a>
-        <a href="/help">Fale Conosco</a>
+        <a onClick={() => navigate("/")}>Home</a>
+        <a onClick={() => navigate("/about")}>Sobre</a>
+        <a onClick={() => navigate("/help")}>Fale Conosco</a>
       </div>
       <div className={style.navbar}>
         {/* TODO: Usar classes para os ícones no lugar dos botoes */}
