@@ -1,6 +1,6 @@
-const db                   = require("../db.js");
+const db = require("../db.js");
 const Avaliacao_fornecedor = require("./avaliacao_fornecedor.model.js");
-const Arquivos             = require("./arquivos.model.js");
+const Arquivos = require("./arquivos.model.js");
 
 const Fornecedor = {
   // 1) Cria novo fornecedor
@@ -17,7 +17,7 @@ const Fornecedor = {
       complemento,
       repNome,
       repCpf,
-      repTelefone
+      repTelefone,
     } = data;
 
     const sql = `
@@ -49,7 +49,7 @@ const Fornecedor = {
       complemento,
       repNome,
       repCpf,
-      repTelefone
+      repTelefone,
     ];
 
     return new Promise((resolve, reject) => {
@@ -81,6 +81,7 @@ const Fornecedor = {
         if (err) return callback(err);
         if (!results?.length) return callback(null, null);
         const fornecedor = results[0];
+        console.log("Fornecedor encontrado:", fornecedor);
         enrichFornecedor(fornecedor, () => callback(null, fornecedor));
       }
     );
@@ -89,16 +90,16 @@ const Fornecedor = {
   // 4) Atualiza apenas campos da tabela fornecedor
   updateProfile: async (idUsuario, campos) => {
     const map = {
-      razaoSocial:        "razao_social",
-      nomeFantasia:       "nome_fantasia",
-      inscricaoEstadual:  "inscricao_estadual",
+      razaoSocial: "razao_social",
+      nomeFantasia: "nome_fantasia",
+      inscricaoEstadual: "inscricao_estadual",
       inscricaoMunicipal: "inscricao_municipal",
-      logradouro:         "logradouro",
-      numero:             "numero",
-      complemento:        "complemento",
-      repNome:            "rep_nome",
-      repCpf:             "rep_cpf",
-      repTelefone:        "rep_telefone"
+      logradouro: "logradouro",
+      numero: "numero",
+      complemento: "complemento",
+      repNome: "rep_nome",
+      repCpf: "rep_cpf",
+      repTelefone: "rep_telefone",
     };
 
     const sets = [];
@@ -111,36 +112,48 @@ const Fornecedor = {
     }
     if (sets.length) {
       params.push(idUsuario);
-      const sql = `UPDATE fornecedor SET ${sets.join(", ")} WHERE id_usuario = ?`;
+      const sql = `UPDATE fornecedor SET ${sets.join(
+        ", "
+      )} WHERE id_usuario = ?`;
       await db.execute(sql, params);
     }
-  }
+  },
 };
 
 // 5) Enriquecer com imagem de perfil e dataCadastro, depois avaliação
-function enrichFornecedor(fornecedor, done) {
+async function enrichFornecedor(fornecedor, done) {
   const Arquivos = require("./arquivos.model.js");
   const usuarioId = fornecedor.id_usuario;
-  db.query(
-    "SELECT perfil_arquivo_id, dataCadastro FROM usuario WHERE id_usuario = ?",
-    [usuarioId],
-    (err, rows) => {
-      if (err || !rows?.length) {
-        fornecedor.imagem       = null;
-        fornecedor.dataCadastro = null;
-        return fetchRating(fornecedor, done);
-      }
-      const { perfil_arquivo_id, dataCadastro } = rows[0];
-      fornecedor.dataCadastro = dataCadastro;
-      if (!perfil_arquivo_id) {
-        return fetchRating(fornecedor, done);
-      }
-      Arquivos.getArqPorId(perfil_arquivo_id, (eArq, arq) => {
-        if (!eArq && arq) fornecedor.imagem = arq;
-        fetchRating(fornecedor, done);
-      });
+
+  try {
+    const [rows] = await db
+      .promise()
+      .query(
+        "SELECT perfil_arquivo_id, dataCadastro FROM usuario WHERE id_usuario = ?",
+        [usuarioId]
+      );
+
+    if (!rows || !rows.length) {
+      fornecedor.imagem = null;
+      fornecedor.dataCadastro = null;
+      return fetchRating(fornecedor, done);
     }
-  );
+
+    const { perfil_arquivo_id, dataCadastro } = rows[0];
+    fornecedor.dataCadastro = dataCadastro;
+
+    if (perfil_arquivo_id) {
+      const arq = await Arquivos.getArqPorId(perfil_arquivo_id);
+      if (arq) fornecedor.imagem = arq;
+    }
+
+    return fetchRating(fornecedor, done);
+  } catch (err) {
+    console.error(err);
+    fornecedor.imagem = null;
+    fornecedor.dataCadastro = null;
+    return fetchRating(fornecedor, done);
+  }
 }
 
 // 6) Anexa avaliação média
