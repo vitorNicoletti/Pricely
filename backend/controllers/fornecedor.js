@@ -63,9 +63,9 @@ async function updateFornecedorProfile(req, res) {
 
   try {
     // 1) atualiza e-mail / telefone / senha / arquivos em `usuario`
-    await Vendedor.updateProfile(req.user.id, userDados);
+    await Vendedor.updateProfile(req.user.id_usuario, userDados);
     // 2) atualiza dados específicos na tabela `fornecedor`
-    await Fornecedor.updateProfile(req.user.id, campos);
+    await Fornecedor.updateProfile(req.user.id_usuario, campos);
     return res.status(200).json({ mensagem: "Perfil de fornecedor atualizado" });
   } catch (e) {
     console.error("Falha ao atualizar perfil de fornecedor:", e);
