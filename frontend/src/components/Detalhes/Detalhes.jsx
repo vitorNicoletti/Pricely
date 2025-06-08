@@ -9,6 +9,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import api from "../../api";
 
 function Detalhes() {
   const { id } = useParams();
@@ -16,19 +17,22 @@ function Detalhes() {
   const [fornecedor, setFornecedor] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/api/${id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setProduct(data);
-        fetch(`http://localhost:3000/api/fornecedor/${data.id_fornecedor}`)
-          .then((res) => res.json())
-          .then((data) => {
-            setFornecedor(data);
-          });
-      })
-      .catch((err) => {
+    const fetchData = async () => {
+      try {
+        const productRes = await api.get(`/${id}`);
+        setProduct(productRes.data);
+        if (productRes.data.id_fornecedor) {
+          const fornecedorRes = await api.get(
+            `/fornecedor/${productRes.data.id_fornecedor}`
+          );
+          console.log(fornecedorRes);
+          setFornecedor(fornecedorRes.data);
+        }
+      } catch (err) {
         console.error("Erro ao buscar produto:", err);
-      });
+      }
+    };
+    fetchData();
   }, [id]);
 
   return (
