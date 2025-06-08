@@ -33,6 +33,15 @@ function ProfileModal({ user }) {
             >
               <i className="fa-solid fa-cart-shopping" />
             </button>
+            <button
+              className={style.btn}
+              onClick={() => {
+                localStorage.removeItem("authToken");
+                window.location.reload();
+              }}
+            >
+              Sair
+            </button>
           </>
         ) : (
           <>
