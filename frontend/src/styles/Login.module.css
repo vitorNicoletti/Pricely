@@ -9,7 +9,7 @@ body, html {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.login-container {
+.loginContainer {
   height: 100vh;
   width: 100%;
   background: linear-gradient(to right, #f7931e 50%, #fefdf6 50%);
@@ -18,7 +18,8 @@ body, html {
   justify-content: center;
 }
 
-.login-card {
+
+.loginCard {
   width: 420px;
   max-width: 90vw;
   background: white;
@@ -27,8 +28,7 @@ body, html {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
-
-.login-header {
+.loginHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -36,18 +36,16 @@ body, html {
   margin-bottom: 30px;
 }
 
-
 .highlight {
   color: #f7931e;
 }
 
-.signup-link {
+.signupLink {
   text-align: right;
   line-height: 1.4;
 }
 
-
-.signup-link a {
+.signupLink a {
   color: #f7931e;
   text-decoration: none;
   margin-left: 5px;
@@ -73,11 +71,11 @@ input[type="text"], input[type="password"] {
   border-radius: 8px;
 }
 
-.password-input {
+.passwordInput {
   position: relative;
 }
 
-.eye-icon {
+.eyeIcon {
   position: absolute;
   right: 12px;
   top: 50%;
@@ -85,18 +83,18 @@ input[type="text"], input[type="password"] {
   cursor: pointer;
 }
 
-.forgot-password{
+.forgotPassword {
   text-align: right;
   margin-bottom: 20px;
 }
 
-.forgot-password a{
+.forgotPassword a {
   color: #333;
   font-size: 12px;
   text-decoration: none;
 }
 
-.login-btn {
+.loginBtn {
   width: 100%;
   background-color: #f7931e;
   color: white;
@@ -114,27 +112,14 @@ input[type="text"], input[type="password"] {
   color: #999;
 }
 
-.social-buttons {
+.socialButtons {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 15px;
 }
 
-.social-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  background: none;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.icon-btn {
+.iconBtn {
   padding: 10px;
   background: none;
   border: 1px solid #ccc;
@@ -147,8 +132,14 @@ input[type="text"], input[type="password"] {
   cursor: pointer;
 }
 
-.social-buttons img {
+.socialButtons img {
   width: 20px;
   height: 20px;
   object-fit: contain;
+}
+
+.errorMessage {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 10px;
 }
