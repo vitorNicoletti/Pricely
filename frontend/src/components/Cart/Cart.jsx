@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 import api from "../../api";
 
@@ -11,6 +10,20 @@ import Footer from "../Footer/Footer";
 const Cart = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
+
+  // Calcula os valores quando cartItems mudar
+  const { subtotal, discount, total } = useMemo(() => {
+    if (!cartItems.compras) return { subtotal: 0, discount: 0, total: 0 };
+
+    const subtotal = cartItems.compras.reduce(
+      (acc, item) => acc + item.preco_unidade * item.quantidade,
+      0
+    );
+    const discount = 0.1 * subtotal; // 10% de desconto
+    const total = subtotal - discount;
+
+    return { subtotal, discount, total };
+  }, [cartItems]);
 
   useEffect(() => {
     // Verifica se o usuário está logado
@@ -33,16 +46,6 @@ const Cart = () => {
     };
     fetchCart();
   }, [navigate]);
-
-  // const subtotal = cartItems.compras.reduce(
-  //   (acc, item) => acc + item.preco_unidade * item.quantidade,
-  //   0
-  // );
-  // const discount = 0.1 * subtotal;
-  // const total = subtotal - discount;
-  const subtotal = 0;
-  const discount = 0;
-  const total = 0;
 
   return (
     <>
