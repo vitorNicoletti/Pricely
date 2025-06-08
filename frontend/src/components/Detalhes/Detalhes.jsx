@@ -25,7 +25,6 @@ function Detalhes() {
           const fornecedorRes = await api.get(
             `/fornecedor/${productRes.data.id_fornecedor}`
           );
-          console.log(fornecedorRes);
           setFornecedor(fornecedorRes.data);
         }
       } catch (err) {

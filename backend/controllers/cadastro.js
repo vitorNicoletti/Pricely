@@ -9,8 +9,6 @@ const Fornecedor = require("../models/fornecedor.model");
 async function createVendedor(req, res) {
   const { email, senha, cpfCnpj } = req.body || {};
 
-  console.log(req.body);
-
   // Valida presença dos campos
   if (!email || !senha || !cpfCnpj) {
     return res
@@ -69,8 +67,6 @@ async function createFornecedor(req, res) {
     repCpf,
     repTelefone,
   } = req.body || {};
-
-  console.log(req.body);
 
   // Validações básicas de campos obrigatórios
   if (
