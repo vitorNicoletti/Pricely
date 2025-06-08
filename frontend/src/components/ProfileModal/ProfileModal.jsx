@@ -2,8 +2,9 @@ import style from "./ProfileModal.module.css";
 import profilePlaceholder from "../../assets/profile_placeholder.png";
 import { useNavigate } from "react-router-dom";
 
-const ProfileModal = ({ user }) => {
+function ProfileModal({ user }) {
   const navigate = useNavigate();
+  const isLogged = !!user && !!user.email;
   return (
     <div className={style.modal} onClick={(e) => e.stopPropagation()}>
       <div className={style.center}>
@@ -20,17 +21,38 @@ const ProfileModal = ({ user }) => {
             className={style.avatar}
           />
         )}
-        <p className={style.name}>{user.email}</p>
-        <button className={style.icons_btn}>
-          <i className="fa-regular fa-heart" />
-        </button>
-
-        <button className={style.icons_btn} onClick={() => navigate("/cart")}>
-          <i className="fa-solid fa-cart-shopping" />
-        </button>
+        {isLogged ? (
+          <>
+            <p className={style.name}>{user.email}</p>
+            <button className={style.icons_btn}>
+              <i className="fa-regular fa-heart" />
+            </button>
+            <button
+              className={style.icons_btn}
+              onClick={() => navigate("/cart")}
+            >
+              <i className="fa-solid fa-cart-shopping" />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              className={style.btn}
+              onClick={() => navigate("/login")}
+            >
+              Entrar
+            </button>
+            <button
+              className={style.btn}
+              onClick={() => navigate("/cadastro")}
+            >
+              Criar conta
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
-};
+}
 
 export default ProfileModal;
