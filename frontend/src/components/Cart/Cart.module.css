@@ -110,6 +110,13 @@
   color: #e18114;
 }
 
+.emptyCart {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #999;
+  margin: 100px;
+}
+
 /* Responsivo */
 @media (max-width: 768px) {
   .item {
