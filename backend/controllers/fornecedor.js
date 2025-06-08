@@ -1,9 +1,22 @@
 const Fornecedor = require("../models/fornecedor.model.js");
 const Vendedor   = require("../models/vendedor.model.js");
 
-function getFornecedorDetails(req, res) {
-  const { id } = req.params;
+/**
+ * GET /api/fornecedor/:id
+ * Perfil público de qualquer fornecedor
+ */
+async function getFornecedorDetails(req, res) {
+  let { id } = req.params;
 
+  // se veio “me”, troca pelo id do token
+  if (id === "me") {
+    if (!req.user || !req.user.id_usuario) {
+      return res.status(401).json({ message: "Não autenticado." });
+    }
+    id = req.user.id_usuario;
+  }
+
+  // agora id deve ser numérico
   if (!/^\d+$/.test(id)) {
     return res.status(400).json({ message: "ID inválido." });
   }
@@ -13,16 +26,12 @@ function getFornecedorDetails(req, res) {
       console.error(`Erro ao buscar fornecedor com id ${id}:`, err);
       return res.status(500).json({ message: "Erro no servidor." });
     }
-
     if (!fornecedor) {
       return res.status(404).json({ message: "Fornecedor não encontrado." });
     }
-
     return res.status(200).json(fornecedor);
   });
 }
- 
-//2) Atualiza perfil do fornecedor logado
 
 async function updateFornecedorProfile(req, res) {
   const body  = req.body  || {};
@@ -62,9 +71,9 @@ async function updateFornecedorProfile(req, res) {
   }
 
   try {
-    // 1) atualiza e-mail / telefone / senha / arquivos em `usuario`
+    // 1) atualiza dados em `usuario`
     await Vendedor.updateProfile(req.user.id_usuario, userDados);
-    // 2) atualiza dados específicos na tabela `fornecedor`
+    // 2) atualiza dados em `fornecedor`
     await Fornecedor.updateProfile(req.user.id_usuario, campos);
     return res.status(200).json({ mensagem: "Perfil de fornecedor atualizado" });
   } catch (e) {
@@ -76,4 +85,7 @@ async function updateFornecedorProfile(req, res) {
   }
 }
 
-module.exports = {getFornecedorDetails,updateFornecedorProfile};
+module.exports = {
+  getFornecedorDetails,
+  updateFornecedorProfile
+};

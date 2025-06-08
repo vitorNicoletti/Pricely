@@ -4,6 +4,7 @@ import Footer from "../Footer/Footer";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import api from "../../api";
+import profilePlaceholder from "../../assets/profile_placeholder.png";
 
 export default function BuyerProfile() {
   const { id } = useParams();
@@ -11,13 +12,13 @@ export default function BuyerProfile() {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
-    // 1) busca perfil do vendedor
+    // 1) buscar perfil do vendedor
     api
       .get(`/vendedor/${id}`)
       .then((res) => setBuyer(res.data))
       .catch((err) => console.error("Erro ao buscar perfil:", err));
 
-    // 2) busca pedidos do vendedor, com total calculado
+    // 2) buscar pedidos do vendedor
     api
       .get(`/vendedor/${id}/pedidos`)
       .then((res) => setOrders(res.data))
@@ -39,8 +40,7 @@ export default function BuyerProfile() {
   // --- Dados dinâmicos ---
   const name = buyer.email.split("@")[0];
   const balance = buyer.carteira?.saldo ?? 0;
-  const lastOrder = orders[0];
-  // Total economizado: soma dos descontos aplicados (ex: desconto é percentual)
+  const lastOrder = orders[0] || null;
   const totalSaved = orders.reduce(
     (sum, o) => sum + (o.total * o.desconto) / 100,
     0
@@ -49,11 +49,28 @@ export default function BuyerProfile() {
   return (
     <>
       <Header />
+
       <div className={styles.container}>
+        {/* === Foto de perfil adaptada === */}
+        <div className={styles.profilePicContainer}>
+          {buyer.imagemPerfil?.dados && buyer.imagemPerfil?.tipo ? (
+            <img
+              src={`data:${buyer.imagemPerfil.tipo};base64,${buyer.imagemPerfil.dados}`}
+              alt={`Avatar de ${name}`}
+              className={styles.avatar}
+            />
+          ) : (
+            <img
+              src={profilePlaceholder}
+              alt="Avatar padrão"
+              className={styles.avatar}
+            />
+          )}
+        </div>
+
         <h1>Bem-vindo, {name} 👋</h1>
 
         <section className={styles.summary}>
-          {/* Saldo disponível */}
           <div className={styles.card}>
             <span className={`material-icons ${styles.icon}`}>
               account_balance_wallet
@@ -69,7 +86,6 @@ export default function BuyerProfile() {
             </div>
           </div>
 
-          {/* Último pedido */}
           <div className={styles.card}>
             <span className={`material-icons ${styles.icon}`}>
               shopping_cart
@@ -90,11 +106,8 @@ export default function BuyerProfile() {
             </div>
           </div>
 
-          {/* Economia acumulada */}
           <div className={styles.card}>
-            <span className={`material-icons ${styles.icon}`}>
-              savings
-            </span>
+            <span className={`material-icons ${styles.icon}`}>savings</span>
             <div>
               <p>Economia acumulada</p>
               <h3>
@@ -130,7 +143,6 @@ export default function BuyerProfile() {
         <section className={styles.section}>
           <h2>Itens que você mais compra</h2>
           <ul className={styles.itemList}>
-            {/* Necessário endpoint de itens mais comprados*/}
             <li>Sem dados</li>
           </ul>
         </section>
@@ -138,12 +150,19 @@ export default function BuyerProfile() {
         <section className={styles.shortcuts}>
           <h2>Atalhos rápidos</h2>
           <div className={styles.links}>
-            <button><span className="material-icons">edit</span> Editar Perfil</button>
-            <button><span className="material-icons">favorite</span> Ver Favoritos</button>
-            <button><span className="material-icons">history</span> Meus Pedidos</button>
+            <button>
+              <span className="material-icons">edit</span> Editar Perfil
+            </button>
+            <button>
+              <span className="material-icons">favorite</span> Ver Favoritos
+            </button>
+            <button>
+              <span className="material-icons">history</span> Meus Pedidos
+            </button>
           </div>
         </section>
       </div>
+
       <Footer />
     </>
   );
