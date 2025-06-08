@@ -4,16 +4,15 @@ const jwt = require('jsonwebtoken');
 
 
 async function login(req,res){
-    const {email, senha} = (req.body || {undefined})
-    console.log(req.body)
+    const {email, senha} = (req.body || {undefined,undefined})
     // Verificação básica de e-mail com regex
     
-    if (!validarEmail(email)) {
-        return res.status(400).json({ erro: 'E-mail inválido' });
+    if (!validarEmail(email) || !senha) {
+        return res.status(400).json({ erro: 'E-mail ou senha inválido' });
     }
     let user = await Usuario.getUserByEmail(email)
     
-    if (!user){
+    if (user.length === 0){
         return res.status(401).json({erro: "Usuario não encontrado"})
     }
     user = user[0]
