@@ -9,6 +9,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import api from "../../api";
 
 function Detalhes() {
   const { id } = useParams();
@@ -28,7 +29,6 @@ function Detalhes() {
         }
       } catch (err) {
         console.error("Erro ao buscar produto:", err);
-        alert("Erro ao buscar produto");
       }
     };
     fetchData();
