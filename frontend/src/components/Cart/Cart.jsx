@@ -1,43 +1,48 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useEffect } from "react";
 
-import styles from './Cart.module.css';
-import Header from '../Header/Header';
-import Footer from '../Footer/Footer';
+import api from "../../api";
+
+import styles from "./Cart.module.css";
+import Header from "../Header/Header";
+import Footer from "../Footer/Footer";
 
 const Cart = () => {
-
   const navigate = useNavigate();
+  const [cartItems, setCartItems] = useState([]);
 
-  // Dados simulados do carrinho
-  const cartItems = [
-    {
-      id: 1,
-      title: 'Coca-cola Engradado vidro 350ml',
-      brand: 'Coca-cola 350ml',
-      price: 7.00,
-      qty: 2,
-    },
-    {
-      id: 2,
-      title: 'Boneco do Lucas Neto 2',
-      brand: 'Toy LTDA',
-      price: 150.00,
-      qty: 1,
-    },
-    {
-      id: 3,
-      title: 'Brinquedo do Lucas Neto',
-      brand: 'Toy LTDA',
-      price: 50.00,
-      qty: 1,
+  useEffect(() => {
+    // Verifica se o usuário está logado
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      navigate("/login");
+      return;
     }
-    
-  ];
 
-  const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
-  const discount = 0.1 * subtotal;
-  const total = subtotal - discount;
+    // Busca os itens do carrinho do Usuario
+    const fetchCart = async () => {
+      try {
+        const response = await api.get("/vendedor/carrinho", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCartItems(response.data);
+      } catch (error) {
+        console.error("Erro ao buscar itens do carrinho:", error);
+      }
+    };
+    fetchCart();
+  }, [navigate]);
+
+  // const subtotal = cartItems.compras.reduce(
+  //   (acc, item) => acc + item.preco_unidade * item.quantidade,
+  //   0
+  // );
+  // const discount = 0.1 * subtotal;
+  // const total = subtotal - discount;
+  const subtotal = 0;
+  const discount = 0;
+  const total = 0;
 
   return (
     <>
@@ -46,15 +51,15 @@ const Cart = () => {
         <h1 className={styles.title}>Seu Carrinho</h1>
 
         <div className={styles.items}>
-          {cartItems.map(item => (
+          {cartItems.compras?.map(item => (
             <div key={item.id} className={styles.item}>
               <div className={styles.itemInfo}>
-                <p className={styles.itemTitle}>{item.title}</p>
-                <p className={styles.itemBrand}>{item.brand}</p>
+                <p className={styles.itemTitle}>{item.produto.nome}</p>
+                <p className={styles.itemBrand}>{item.produto.descricao}</p>
               </div>
               <div className={styles.itemPrice}>
-                <p>R${item.price.toFixed(2)}</p>
-                <p>Qtd: {item.qty}</p>
+                <p>R${item.preco_unidade.toFixed(2)}</p>
+                <p>Qtd: {item.quantidade}</p>
               </div>
             </div>
           ))}

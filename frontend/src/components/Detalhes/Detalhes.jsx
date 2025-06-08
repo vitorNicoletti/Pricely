@@ -16,6 +16,7 @@ function Detalhes() {
   const [fornecedor, setFornecedor] = useState(null);
 
   useEffect(() => {
+<<<<<<< Updated upstream
     fetch(`http://localhost:3000/api/${id}`)
       .then((res) => res.json())
       .then((data) => {
@@ -27,6 +28,19 @@ function Detalhes() {
           });
       })
       .catch((err) => {
+=======
+    const fetchData = async () => {
+      try {
+        const productRes = await api.get(`/${id}`);
+        setProduct(productRes.data);
+        if (productRes.data.id_fornecedor) {
+          const fornecedorRes = await api.get(
+            `/fornecedor/${productRes.data.id_fornecedor}`
+          );
+          setFornecedor(fornecedorRes.data);
+        }
+      } catch (err) {
+>>>>>>> Stashed changes
         console.error("Erro ao buscar produto:", err);
       });
   }, [id]);

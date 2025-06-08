@@ -124,22 +124,18 @@ const Produtos = {
    * Retorna um produto pelo ID, enriquecido (imagem, promoções, avaliação).
    * Chama callback(err, produtoOuNull) quando pronto.
    */
-  getById: (id, callback) => {
+  getById: async (id) => {
     const sql = 'SELECT * FROM produto WHERE id_produto = ?';
-    db.query(sql, [id], async (err, results) => {
-      if (err) return callback(err);
-      if (!results || results.length === 0) {
-        return callback(null, null);
-      }
-
-      const produto = results[0];
-      try {
-        await enrichProduto(produto);
-        callback(null, produto);
-      } catch (erroEnriquecimento) {
-        callback(erroEnriquecimento);
-      }
+    const results = await new Promise((resolve, reject) => {
+      db.query(sql, [id], (err, results) => {
+        if (err) return reject(err);
+        resolve(results);
+      });
     });
+    if (!results || results.length === 0) return null;
+    const produto = results[0];
+    await enrichProduto(produto);
+    return produto;
   }
 };
 

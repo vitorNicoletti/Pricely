@@ -25,6 +25,7 @@ const Pedido = {
         return null;
       }
       carrinho = results[0];
+      console.log('Carrinho encontrado:', carrinho);
     } catch (err) {
       return null;
     }
