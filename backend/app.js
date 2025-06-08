@@ -6,6 +6,7 @@ const cadastroRouter = require('./routes/cadastro');
 const vendedorRouter = require("./routes/vendedor");
 const fornecedorRouter = require("./routes/fornecedor");
 const loginRouter = require('./routes/login');
+const logoutRouter = require('./routes/logout');
 dotenv.config(); // Carrega variáveis do .env
 
 
@@ -18,6 +19,7 @@ app.use("/api/vendedor", vendedorRouter);
 app.use("/api/fornecedor", fornecedorRouter);
 app.use('/api/cadastro',cadastroRouter )
 app.use('/api/login',loginRouter )
+app.use('/api/logout', logoutRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -7,6 +7,7 @@ const Vendedor = {
    * Criação de vendedor com base em usuário
    * @returns {Promise<number>} → ID do usuário recém-criado
    */
+  // 1) Cria usuário + registro em `vendedor`
   createVendedor: async (email, senha, cpfCnpj) => {
     // 1. Cria o usuário
     const usuarioId = await Usuario.create(email, senha);
@@ -19,15 +20,16 @@ const Vendedor = {
     return usuarioId;
   },
 
-
+  // 2) Busca perfil completo
   /**
    * Retorna o perfil completo do vendedor (usuário+vendedor+carteira+info_bancaria+arquivos)
    * @param {number} idUsuario
    * @param {(err: Error|null, perfil: object|null) => void} callback
    */
-  getById: (idUsuario, callback) => {
-    // 1) SELECT usuario + vendedor
-    const sqlUsuarioVendedor = `
+  getById: async (idUsuario, callback) => {
+    try {
+      const [results] = await db.promise().query(
+        `
       SELECT 
         u.id_usuario,
         u.email,
@@ -37,90 +39,146 @@ const Vendedor = {
         u.documento_arquivo_id,
         v.cpfCnpj
       FROM usuario AS u
-      INNER JOIN vendedor AS v
-        ON u.id_usuario = v.id_usuario
+      INNER JOIN vendedor AS v ON u.id_usuario = v.id_usuario
       WHERE u.id_usuario = ?
-    `;
-    db.query(sqlUsuarioVendedor, [idUsuario], (err, results) => {
-      if (err) return callback(err);
-      if (!results || results.length === 0) {
-        // não existe registro em "vendedor" para esse usuário
-        return callback(null, null);
-      }
+    `,
+        [idUsuario]
+      );
+
+      if (!results || results.length === 0) return callback(null, null);
+
       const row = results[0];
       const perfil = {
-        id_usuario:         row.id_usuario,
-        email:              row.email,
-        dataCadastro:       row.dataCadastro,
-        telefone:           row.telefone,
-        perfil_arquivo_id:    row.perfil_arquivo_id,
+        id_usuario: row.id_usuario,
+        email: row.email,
+        dataCadastro: row.dataCadastro,
+        telefone: row.telefone,
+        perfil_arquivo_id: row.perfil_arquivo_id,
         documento_arquivo_id: row.documento_arquivo_id,
-        cpfCnpj:            row.cpfCnpj,
-        imagemPerfil:       null,
-        documentoPerfil:    null,
-        carteira:           null,
-        infoBancaria:       null
+        cpfCnpj: row.cpfCnpj,
+        imagemPerfil: null,
+        documentoPerfil: null,
+        carteira: null,
+        infoBancaria: null,
       };
 
-      // 2) Buscar dados da carteira
-      const sqlCarteira = `
-        SELECT id_carteira, saldo, ultima_atualizacao 
-          FROM carteira 
-         WHERE id_usuario = ?
-      `;
-      db.query(sqlCarteira, [idUsuario], (err2, rowsCarteira) => {
-        if (err2) return callback(err2);
-        if (rowsCarteira && rowsCarteira.length > 0) {
-          perfil.carteira = rowsCarteira[0];
-        }
+      const [carteiraRows] = await db.promise().query(
+        `
+      SELECT id_carteira, saldo, ultima_atualizacao 
+        FROM carteira 
+       WHERE id_usuario = ?
+    `,
+        [idUsuario]
+      );
 
-        // 3) Buscar dados bancários
-        const sqlBancaria = `
-          SELECT id_info_banco, banco, agencia, conta, tipo_conta, pix 
-            FROM info_bancaria 
-           WHERE id_user = ?
-        `;
-        db.query(sqlBancaria, [idUsuario], (err3, rowsBancaria) => {
-          if (err3) return callback(err3);
-          if (rowsBancaria && rowsBancaria.length > 0) {
-            perfil.infoBancaria = rowsBancaria[0];
-          }
+      if (carteiraRows.length > 0) {
+        perfil.carteira = carteiraRows[0];
+      }
 
-          // 4) Se existir perfil_arquivo_id → buscar imagem de perfil
-          if (perfil.perfil_arquivo_id) {
-            Arquivos.getArqPorId(perfil.perfil_arquivo_id, (err4, arquivo) => {
-              if (!err4 && arquivo) {
-                perfil.imagemPerfil = arquivo;
-              }
-              // 5) Agora, se existir documento_arquivo_id → buscar documento
-              if (perfil.documento_arquivo_id) {
-                Arquivos.getArqPorId(perfil.documento_arquivo_id, (err5, docArq) => {
-                  if (!err5 && docArq) {
-                    perfil.documentoPerfil = docArq;
-                  }
-                  return callback(null, perfil);
-                });
-              } else {
-                return callback(null, perfil);
-              }
-            });
-          } else {
-            // 6) Caso não tenha perfil_arquivo_id, mas tenha documento_arquivo_id
-            if (perfil.documento_arquivo_id) {
-              Arquivos.getArqPorId(perfil.documento_arquivo_id, (err6, docArq2) => {
-                if (!err6 && docArq2) {
-                  perfil.documentoPerfil = docArq2;
-                }
-                return callback(null, perfil);
-              });
-            } else {
-              return callback(null, perfil);
-            }
-          }
-        });
-      });
-    });
-  }
+      const [bancoRows] = await db.promise().query(
+        `
+      SELECT id_info_banco, banco, agencia, conta, tipo_conta, pix 
+        FROM info_bancaria 
+       WHERE id_user = ?
+    `,
+        [idUsuario]
+      );
+
+      if (bancoRows.length > 0) {
+        perfil.infoBancaria = bancoRows[0];
+      }
+
+      // Carrega arquivos, se existirem
+      if (perfil.perfil_arquivo_id) {
+        perfil.imagemPerfil = await Arquivos.getArqPorId(
+          perfil.perfil_arquivo_id
+        );
+      }
+
+      if (perfil.documento_arquivo_id) {
+        perfil.documentoPerfil = await Arquivos.getArqPorId(
+          perfil.documento_arquivo_id
+        );
+      }
+
+      return callback(null, perfil);
+    } catch (error) {
+      return callback(error);
+    }
+  },
+
+  // 3) Atualiza usuário (texto + arquivos)
+  updateProfile: async (
+    idUsuario,
+    {
+      email,
+      telefone,
+      senha,
+      imagemBase64,
+      imagemTipo,
+      documentoBase64,
+      documentoTipo,
+    }
+  ) => {
+    const [[uRow]] = await db.execute(
+      "SELECT email FROM usuario WHERE id_usuario = ?",
+      [idUsuario]
+    );
+    const baseUser = (uRow?.email || "").split("@")[0] || `user${idUsuario}`;
+
+    // a) e-mail
+    if (email) {
+      const [dup] = await db.execute(
+        "SELECT 1 FROM usuario WHERE email = ? AND id_usuario <> ?",
+        [email, idUsuario]
+      );
+      if (dup.length) throw new Error("Email já utilizado");
+      await db.execute("UPDATE usuario SET email = ? WHERE id_usuario = ?", [
+        email,
+        idUsuario,
+      ]);
+    }
+    // b) telefone
+    if (telefone) {
+      await db.execute("UPDATE usuario SET telefone = ? WHERE id_usuario = ?", [
+        telefone,
+        idUsuario,
+      ]);
+    }
+    // c) senha
+    if (senha) {
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(senha, salt);
+      await db.execute(
+        "UPDATE usuario SET senha = ?, salt = ? WHERE id_usuario = ?",
+        [hash, salt, idUsuario]
+      );
+    }
+    // d) imagem de perfil
+    if (imagemBase64 && imagemTipo) {
+      const nomeImg = `perfil_${baseUser}`;
+      const [r] = await db.execute(
+        "INSERT INTO arquivos (nome, tipo, dados) VALUES (?, ?, ?)",
+        [nomeImg, imagemTipo, imagemBase64]
+      );
+      await db.execute(
+        "UPDATE usuario SET perfil_arquivo_id = ? WHERE id_usuario = ?",
+        [r.insertId, idUsuario]
+      );
+    }
+    // e) documento
+    if (documentoBase64 && documentoTipo) {
+      const nomeDoc = `documento_perfil_${baseUser}`;
+      const [rD] = await db.execute(
+        "INSERT INTO arquivos (nome, tipo, dados) VALUES (?, ?, ?)",
+        [nomeDoc, documentoTipo, documentoBase64]
+      );
+      await db.execute(
+        "UPDATE usuario SET documento_arquivo_id = ? WHERE id_usuario = ?",
+        [rD.insertId, idUsuario]
+      );
+    }
+  },
 };
 
 module.exports = Vendedor;
