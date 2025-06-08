@@ -7,6 +7,7 @@ import Catalogo from "./components/Catalog/Catalog.jsx";
 import Cadastro from "./components/Cadastro/Cadastro.jsx";
 import Detalhes from "./components/Detalhes/Detalhes.jsx";
 import SellerProfile from "./components/SellerProfile/SellerProfile.jsx";
+import BuyerProfile from "./components/BuyerProfile/BuyerProfile.jsx";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import OrderTracking from "./components/OrderTracking/OrderTracking.jsx";
@@ -25,6 +26,7 @@ function App() {
           <Route path="/fornecedor/:id" element={<SellerProfile />}></Route>
           <Route path="/cart/" element={<Cart />}></Route>
           <Route path="/rastreamento" element={<OrderTracking />}></Route>
+          <Route path="/Vendedor/:id" element={<BuyerProfile />}></Route>
         </Routes>
       </Router>
     </>
