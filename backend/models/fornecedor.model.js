@@ -81,7 +81,6 @@ const Fornecedor = {
         if (err) return callback(err);
         if (!results?.length) return callback(null, null);
         const fornecedor = results[0];
-        console.log("Fornecedor encontrado:", fornecedor);
         enrichFornecedor(fornecedor, () => callback(null, fornecedor));
       }
     );
