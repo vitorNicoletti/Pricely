@@ -71,6 +71,12 @@ async function updateVendedorProfile(req, res) {
     if (e.message === "Email já utilizado") {
       return res.status(400).json({ erro: e.message });
     }
+    if (e.message === "Senha obrigatória para atualizar perfil") {
+      return res.status(400).json({ erro: "Senha obrigatória para atualizar perfil" });
+    }
+    if (e.message === "Senha incorreta") {
+      return res.status(400).json({ erro: "Senha incorreta" });
+    }
     return res.status(500).json({ erro: "Falha ao atualizar perfil" });
   }
 }

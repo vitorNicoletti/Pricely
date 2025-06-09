@@ -1,6 +1,7 @@
 const db = require("../db.js");
 const Arquivos = require("./arquivos.model.js");
 const Usuario = require("./usuario.model.js");
+const bcrypt = require("bcrypt");
 
 const Vendedor = {
   /**
@@ -155,63 +156,81 @@ const Vendedor = {
       documentoTipo,
     }
   ) => {
-    const [[uRow]] = await db.execute(
-      "SELECT email FROM usuario WHERE id_usuario = ?",
-      [idUsuario]
-    );
+    // Busca usuário base e hash da senha
+    const [[uRow]] = await db
+      .promise()
+      .query("SELECT email, senha FROM usuario WHERE id_usuario = ?", [
+        idUsuario,
+      ]);
     const baseUser = (uRow?.email || "").split("@")[0] || `user${idUsuario}`;
+
+    // Verifica se a senha enviada está correta
+    if (!senha) {
+      throw new Error("Senha obrigatória para atualizar perfil");
+    }
+    const senhaCorreta = await bcrypt.compare(senha, uRow.senha);
+    if (!senhaCorreta) {
+      throw new Error("Senha incorreta");
+    }
 
     // a) e-mail
     if (email) {
-      const [dup] = await db.execute(
-        "SELECT 1 FROM usuario WHERE email = ? AND id_usuario <> ?",
-        [email, idUsuario]
-      );
-      if (dup.length) throw new Error("Email já utilizado");
-      await db.execute("UPDATE usuario SET email = ? WHERE id_usuario = ?", [
-        email,
-        idUsuario,
-      ]);
+      const [dup] = await db
+        .promise()
+        .query("SELECT 1 FROM usuario WHERE email = ? AND id_usuario <> ?", [
+          email,
+          idUsuario,
+        ]);
+      if (dup.length > 0) throw new Error("Email já utilizado");
+      await db
+        .promise()
+        .query("UPDATE usuario SET email = ? WHERE id_usuario = ?", [
+          email,
+          idUsuario,
+        ]);
     }
     // b) telefone
     if (telefone) {
-      await db.execute("UPDATE usuario SET telefone = ? WHERE id_usuario = ?", [
-        telefone,
-        idUsuario,
-      ]);
-    }
-    // c) senha
-    if (senha) {
-      const salt = await bcrypt.genSalt(10);
-      const hash = await bcrypt.hash(senha, salt);
-      await db.execute(
-        "UPDATE usuario SET senha = ?, salt = ? WHERE id_usuario = ?",
-        [hash, salt, idUsuario]
-      );
+      await db
+        .promise()
+        .query("UPDATE usuario SET telefone = ? WHERE id_usuario = ?", [
+          telefone,
+          idUsuario,
+        ]);
     }
     // d) imagem de perfil
     if (imagemBase64 && imagemTipo) {
       const nomeImg = `perfil_${baseUser}`;
-      const [r] = await db.execute(
-        "INSERT INTO arquivos (nome, tipo, dados) VALUES (?, ?, ?)",
-        [nomeImg, imagemTipo, imagemBase64]
-      );
-      await db.execute(
-        "UPDATE usuario SET perfil_arquivo_id = ? WHERE id_usuario = ?",
-        [r.insertId, idUsuario]
-      );
+      const [r] = await db
+        .promise()
+        .query("INSERT INTO arquivos (nome, tipo, dados) VALUES (?, ?, ?)", [
+          nomeImg,
+          imagemTipo,
+          imagemBase64,
+        ]);
+      await db
+        .promise()
+        .query(
+          "UPDATE usuario SET perfil_arquivo_id = ? WHERE id_usuario = ?",
+          [r.insertId, idUsuario]
+        );
     }
     // e) documento
     if (documentoBase64 && documentoTipo) {
       const nomeDoc = `documento_perfil_${baseUser}`;
-      const [rD] = await db.execute(
-        "INSERT INTO arquivos (nome, tipo, dados) VALUES (?, ?, ?)",
-        [nomeDoc, documentoTipo, documentoBase64]
-      );
-      await db.execute(
-        "UPDATE usuario SET documento_arquivo_id = ? WHERE id_usuario = ?",
-        [rD.insertId, idUsuario]
-      );
+      const [rD] = await db
+        .promise()
+        .query("INSERT INTO arquivos (nome, tipo, dados) VALUES (?, ?, ?)", [
+          nomeDoc,
+          documentoTipo,
+          documentoBase64,
+        ]);
+      await db
+        .promise()
+        .query(
+          "UPDATE usuario SET documento_arquivo_id = ? WHERE id_usuario = ?",
+          [rD.insertId, idUsuario]
+        );
     }
   },
 };
