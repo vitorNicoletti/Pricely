@@ -28,6 +28,7 @@ function ProfileModal() {
           }
           alt="Avatar"
           className={style.avatar}
+          onClick={() => navigate("/vendedor")}
         />
 
         {isLogged && (
