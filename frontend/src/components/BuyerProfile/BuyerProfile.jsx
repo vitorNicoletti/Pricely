@@ -2,28 +2,39 @@ import styles from "./BuyerProfile.module.css";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import profilePlaceholder from "../../assets/profile_placeholder.png";
 
 function BuyerProfile() {
-  const { id } = useParams();
   const [buyer, setBuyer] = useState(null);
   const [orders, setOrders] = useState([]);
 
-  useEffect(() => {
-    // 1) buscar perfil do vendedor
-    api
-      .get(`/vendedor/${id}`)
-      .then((res) => setBuyer(res.data))
-      .catch((err) => console.error("Erro ao buscar perfil:", err));
+  const navigate = useNavigate();
 
-    // 2) buscar pedidos do vendedor
-    api
-      .get(`/vendedor/${id}/pedidos`)
-      .then((res) => setOrders(res.data))
-      .catch((err) => console.error("Erro ao buscar pedidos:", err));
-  }, [id]);
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      console.error("Nenhum token de autenticação encontrado.");
+      navigate("/login");
+    }
+    async function fetchData() {
+      try {
+        // 1) Buscar perfil do vendedor
+        const profileResponse = await api.get("/vendedor/me");
+        setBuyer(profileResponse.data);
+
+        // 2) Buscar pedidos do vendedor
+        const ordersResponse = await api.get(
+          `/vendedor/${profileResponse.data.id_usuario}/pedidos`
+        );
+        setOrders(ordersResponse.data);
+      } catch (err) {
+        console.error("Erro ao buscar dados:", err);
+      }
+    }
+    fetchData();
+  }, []);
 
   if (!buyer) {
     return (
