@@ -5,97 +5,138 @@ const Oferta = require('./oferta.model.js');
 const Fornecedor = require('./fornecedor.model.js');
 const AvaliacaoProduto = require('./avaliacao_produto.model.js');
 
+/**
+ * Enriquecer um produto com:
+ *  1) imagem (arquivo)
+ *  2) lista de promoções (com id_fornecedor + nome_fornecedor)
+ *  3) avaliação média
+ *
+ * Retorna uma Promise que resolve quando todos os dados forem ligados ao objeto `produto`.
+ */
+async function enrichProduto(produto) {
+  // 1) imagem
+  produto.imagem = null;
+  if (produto.imagem_arquivo_id) {
+    try {
+      const arquivo = await Arquivos.getArqPorId(produto.imagem_arquivo_id);
+      produto.imagem = arquivo || null;
+    } catch (err) {
+      produto.imagem = null;
+    }
+  }
+
+  // 2) promoções
+  produto.promocoes = [];
+  try {
+    // transformar a chamada em callback numa Promise
+    const promocoes = await new Promise((resolve, reject) => {
+      Promocao.getPromocoesByProduct(produto.id_produto, (err, lista) => {
+        if (err) return reject(err);
+        resolve(lista || []);
+      });
+    });
+
+    // Se não há nenhuma promoção, a lista já fica vazia
+    for (const promo of promocoes) {
+      let idFornecedor = null;
+      let nomeFornecedor = null;
+
+      // obter id_fornecedor via Oferta.getIdFornecedorByOferta
+      try {
+        idFornecedor = await new Promise((resolve, reject) => {
+          Oferta.getIdFornecedorByOferta(promo.id_oferta, (err, idF) => {
+            if (err) return reject(err);
+            resolve(idF);
+          });
+        });
+      } catch {
+        idFornecedor = null;
+      }
+
+      // se achou algum id_fornecedor, pega o nome
+      if (idFornecedor) {
+        try {
+          nomeFornecedor = await new Promise((resolve, reject) => {
+            Fornecedor.getNome(idFornecedor, (err, nome) => {
+              if (err) return reject(err);
+              resolve(nome);
+            });
+          });
+        } catch {
+          nomeFornecedor = null;
+        }
+      }
+
+      produto.promocoes.push({
+        ...promo,
+        id_fornecedor: idFornecedor || null,
+        nome_fornecedor: nomeFornecedor || null
+      });
+    }
+
+  } catch (err) {
+    // em caso de erro ao buscar promoções, deixamos lista vazia
+    produto.promocoes = [];
+  }
+
+  // 3) avaliação média
+  produto.avaliacao_media = null;
+  try {
+    const media = await new Promise((resolve, reject) => {
+      AvaliacaoProduto.getAvaliacaoPorProduto(produto.id_produto, (err, avg) => {
+        if (err) return reject(err);
+        resolve(avg);
+      });
+    });
+    produto.avaliacao_media = media;
+  } catch {
+    produto.avaliacao_media = null;
+  }
+
+  // quando chegar aqui, `produto` já está totalmente “enriquecido”
+  return produto;
+}
+
 const Produtos = {
   /**
-   * Retorna todos os produtos, incluindo imagem, promoções, nome do fornecedor e avaliação média
+   * Retorna todos os produtos, enriquecendo cada um (imagem, promoções, avaliação).
+   * Chama callback(err, [produto, ...]) quando pronto.
    */
   getAll: (callback) => {
     const sql = 'SELECT * FROM produto';
-    db.query(sql, (err, results) => {
+    db.query(sql, async (err, results) => {
       if (err) return callback(err);
-      if (!results || results.length === 0) return callback(null, []);
+      if (!results || results.length === 0) {
+        return callback(null, []);
+      }
 
-      let remaining = results.length;
-      results.forEach((produto) => _enrichProduto(produto, () => {
-        if (--remaining === 0) callback(null, results);
-      }));
+      try {
+        // Promessa que enriquece cada produto
+        await Promise.all(results.map((p) => enrichProduto(p)));
+        callback(null, results);
+      } catch (erroEnriquecimento) {
+        callback(erroEnriquecimento);
+      }
     });
   },
 
   /**
-   * Retorna um produto por ID, incluindo imagem, promoções, nome do fornecedor e avaliação média
+   * Retorna um produto pelo ID, enriquecido (imagem, promoções, avaliação).
+   * Chama callback(err, produtoOuNull) quando pronto.
    */
-  getById: (id, callback) => {
+  getById: async (id) => {
     const sql = 'SELECT * FROM produto WHERE id_produto = ?';
-    db.query(sql, [id], (err, results) => {
-      if (err) return callback(err);
-      if (!results || results.length === 0) return callback(null, null);
-
-      const produto = results[0];
-      _enrichProduto(produto, () => callback(null, produto));
-    });
-  }
-};
-
-/**
- * Função auxiliar para enriquecer um objeto produto com imagem, promoções, fornecedor e avaliação média
- */
-function _enrichProduto(produto, done) {
-  // 1) imagem
-  const arquivoId = produto.imagem_arquivo_id;
-  const afterImage = (image) => {
-    produto.imagem = image || null;
-    // 2) promoções
-    Promocao.getPromocoesByProduct(produto.id_produto, (errPromo, promocoes) => {
-      if (errPromo || !promocoes) {
-        produto.promocoes = [];
-        // mesmo sem promoções, busca avaliação
-        return fetchRating(produto, done);
-      }
-      if (promocoes.length === 0) {
-        produto.promocoes = [];
-        return fetchRating(produto, done);
-      }
-
-      let countPromo = promocoes.length;
-      produto.promocoes = [];
-      promocoes.forEach((promo) => {
-        Oferta.getIdFornecedorByOferta(promo.id_oferta, (errFor, id_fornecedor) => {
-          if (errFor || !id_fornecedor) {
-            produto.promocoes.push({ ...promo, id_fornecedor: null, nome_fornecedor: null });
-            if (--countPromo === 0) fetchRating(produto, done);
-          } else {
-            Fornecedor.getNome(id_fornecedor, (errNome, nome) => {
-              produto.promocoes.push({
-                ...promo,
-                id_fornecedor,
-                nome_fornecedor: errNome ? null : nome
-              });
-              if (--countPromo === 0) fetchRating(produto, done);
-            });
-          }
-        });
+    const results = await new Promise((resolve, reject) => {
+      db.query(sql, [id], (err, results) => {
+        if (err) return reject(err);
+        resolve(results);
       });
     });
-  };
-
-  if (!arquivoId) {
-    afterImage(null);
-  } else {
-    Arquivos.getArqPorId(arquivoId, (errArq, arquivo) => {
-      afterImage(errArq ? null : arquivo);
-    });
+    if (!results || results.length === 0) return null;
+    const produto = results[0];
+    await enrichProduto(produto);
+    return produto;
   }
-}
-
-/**
- * Busca avaliação média do produto e adiciona ao objeto
- */
-function fetchRating(produto, done) {
-  AvaliacaoProduto.getAvaliacaoPorProduto(produto.id_produto, (errAvg, media) => {
-    produto.avaliacao_media = errAvg ? null : media;
-    done();
-  });
-}
+};
 
 module.exports = Produtos;

@@ -9,6 +9,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import api from "../../api";
 
 function Detalhes() {
   const { id } = useParams();
@@ -16,19 +17,21 @@ function Detalhes() {
   const [fornecedor, setFornecedor] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/api/${id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setProduct(data);
-        fetch(`http://localhost:3000/api/fornecedor/${data.id_fornecedor}`)
-          .then((res) => res.json())
-          .then((data) => {
-            setFornecedor(data);
-          });
-      })
-      .catch((err) => {
+    const fetchData = async () => {
+      try {
+        const productRes = await api.get(`/${id}`);
+        setProduct(productRes.data);
+        if (productRes.data.id_fornecedor) {
+          const fornecedorRes = await api.get(
+            `/fornecedor/${productRes.data.id_fornecedor}`
+          );
+          setFornecedor(fornecedorRes.data);
+        }
+      } catch (err) {
         console.error("Erro ao buscar produto:", err);
-      });
+      }
+    };
+    fetchData();
   }, [id]);
 
   return (
@@ -59,14 +62,21 @@ function Detalhes() {
             <p className={style.produtoMinimo}>Minimum order: 50</p>
 
             <input type="number" placeholder="Quantity" defaultValue={25} />
-            <button className={style.btn}>Adicionar ao Carrinho</button>
+            <button
+              className={style.btn}
+              onClick={() => {
+                alert("TODO: ADICIONAR AO CARRINHO");
+              }}
+            >
+              Adicionar ao Carrinho
+            </button>
 
             <div className={style.produtoEstoque}>
               <p>{product?.descricao}</p>
             </div>
 
             <div className={style.card_fornecedor}>
-              {fornecedor?.imagem.dados && fornecedor?.imagem.tipo ? (
+              {fornecedor?.imagem?.dados && fornecedor?.imagem?.tipo ? (
                 <img
                   src={`data:${fornecedor.imagem.tipo};base64,${fornecedor.imagem.dados}`}
                   alt={`Imagem de ${fornecedor.nomeFantasia}`}
@@ -86,8 +96,25 @@ function Detalhes() {
                   {fornecedor?.nome_fantasia}
                 </h3>
                 <div className={style.botoesFornecedor}>
-                  <button className={style.btn} onClick={() => {alert("TODO: FUNCAO DE SEGUIR")}}>Seguir</button>
-                  <button className={style.btn} onClick={() => window.open(`/fornecedor/${fornecedor?.id_usuario}`, "_blank")}>Ver Página</button>
+                  <button
+                    className={style.btn}
+                    onClick={() => {
+                      alert("TODO: FUNCAO DE SEGUIR");
+                    }}
+                  >
+                    Seguir
+                  </button>
+                  <button
+                    className={style.btn}
+                    onClick={() =>
+                      window.open(
+                        `/fornecedor/${fornecedor?.id_usuario}`,
+                        "_blank"
+                      )
+                    }
+                  >
+                    Ver Página
+                  </button>
                 </div>
               </div>
             </div>

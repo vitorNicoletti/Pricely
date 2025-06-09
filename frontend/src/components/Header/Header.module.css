@@ -1,19 +1,64 @@
 .header {
-    height: 60px;
-    width: 100%;
-    background-color: #FB9506; 
-    display: grid;
-    grid-template-columns: 26% 48% 26%;
-    grid-template-rows: 60px auto auto;
+  height: 60px;
+  width: 100%;
+  background-color: #fb9506;
+  display: grid;
+  grid-template-columns: 26% 48% 26%;
+  grid-template-rows: 60px auto auto;
 }
 
 .logo_div {
-    width: 100%;
-    height: 100%;
+  width: 100%;
+  height: 100%;
 }
 
 .logo_img {
-    height: 100%;
+  cursor: pointer;
+  height: 100%;
+}
+
+.navbar {
+  display: flex;
+  justify-content: center;
+  justify-items: center;
+  align-items: center;
+}
+.navbar a {
+  text-decoration: none;
+  color: black;
+  padding: 0px 20px;
+  cursor: pointer;
+}
+
+.navbar a:hover {
+  color: #f2f2f2;
+}
+
+.navbar i {
+  cursor: pointer;
+  font-size: x-large;
+  padding: 0px 20px;
+}
+
+.icons_btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.icons_btn:hover {
+  color: #f2f2f2;
+}
+
+.profileWrapper {
+  position: relative;
+}
+
+.modalWrapper {
+  position: absolute;
+  margin-top: 20px;
+  left:-100px;
+  z-index: 999;
 }
 
 .navbar {
@@ -32,4 +77,14 @@
     cursor: pointer;
     font-size: x-large;
     padding: 0px 20px;
+}
+
+.icons_btn {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.icons_btn:hover {
+    color: #F2F2F2;
 }

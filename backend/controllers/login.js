@@ -1,72 +1,66 @@
-const bcrypt = require('bcrypt');
-const Usuario = require('../models/usuario.model')
-const jwt = require('jsonwebtoken');
+const bcrypt      = require('bcrypt');
+const Usuario     = require('../models/usuario.model');
+const Vendedor    = require('../models/vendedor.model');
+const Fornecedor  = require('../models/fornecedor.model');
+const jwt         = require('jsonwebtoken');
 
+async function login(req, res) {
+  const { email, senha } = req.body || {};
 
-async function login(req,res){
-    const {email, senha} = (req.body || {undefined})
-    console.log(req.body)
-    // Verificação básica de e-mail com regex
-    
-    if (!validarEmail(email)) {
-        return res.status(400).json({ erro: 'E-mail inválido' });
-    }
-    let user = await Usuario.getUserByEmail(email)
-    
-    if (!user){
-        return res.status(401).json({erro: "Usuario não encontrado"})
-    }
-    user = user[0]
-    const senhaCorreta = await bcrypt.compare(senha, user.senha);
-    if (!senhaCorreta) {
-        return res.status(401).json({ erro: 'Senha incorreta' });
-    }
-    const token = gerarToken({id_usuario: user.id_usuario, email: user.email})
-    return res.status(200).json({message:"Sucesso ao logar",token:token})
+  if (!validarEmail(email) || !senha) {
+    return res.status(400).json({ erro: 'E-mail ou senha inválido.' });
+  }
 
-}
+  // Busca usuário
+  let users = await Usuario.getUserByEmail(email);
+  if (users.length === 0) {
+    return res.status(401).json({ erro: 'Usuário não encontrado.' });
+  }
+  const user = users[0];
 
-function gerarToken(payload) {
-    const secret = process.env.JWT_SECRET; // guarde no .env em produção
-    const options = {
-        expiresIn: '1h', // expira em 1 hora
-    };
+  // Valida senha
+  const senhaCorreta = await bcrypt.compare(senha, user.senha);
+  if (!senhaCorreta) {
+    return res.status(401).json({ erro: 'Senha incorreta.' });
+  }
 
-    const token = jwt.sign(payload, secret, options);
-    return token;
-}
-function validarCPF(cpf) {
-    // Remove caracteres não numéricos
-    cpf = cpf.replace(/[^\d]+/g, '');
+  // Gera token
+  const token = jwt.sign(
+    { id_usuario: user.id_usuario, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
 
-    // Verifica se tem 11 dígitos ou se é uma sequência inválida
-    if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+  // Busca perfil de vendedor
+  let perfil = await new Promise((resolve, reject) => {
+    Vendedor.getById(user.id_usuario, (err, vend) =>
+      err ? reject(err) : resolve(vend ? { ...vend, role: 'vendedor' } : null)
+    );
+  }).catch((_) => null);
 
-    // Validação do primeiro dígito verificador
-    let soma = 0;
-    for (let i = 0; i < 9; i++) {
-        soma += parseInt(cpf.charAt(i)) * (10 - i);
-    }
+  // Se não for vendedor, busca fornecedor
+  if (!perfil) {
+    perfil = await new Promise((resolve, reject) => {
+      Fornecedor.getById(user.id_usuario, (err, forn) =>
+        err ? reject(err) : resolve(forn ? { ...forn, role: 'fornecedor' } : null)
+      );
+    }).catch((_) => null);
+  }
 
-    let resto = (soma * 10) % 11;
-    if (resto === 10 || resto === 11) resto = 0;
-    if (resto !== parseInt(cpf.charAt(9))) return false;
+  // Se encontrou qualquer perfil, injeta o email
+  if (perfil) {
+    perfil.email = user.email;
+  }
 
-    // Validação do segundo dígito verificador
-    soma = 0;
-    for (let i = 0; i < 10; i++) {
-        soma += parseInt(cpf.charAt(i)) * (11 - i);
-    }
-
-    resto = (soma * 10) % 11;
-    if (resto === 10 || resto === 11) resto = 0;
-    if (resto !== parseInt(cpf.charAt(10))) return false;
-
-    return true;
+  return res.status(200).json({
+    message: 'Sucesso ao logar.',
+    token,
+    perfil
+  });
 }
 
 function validarEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-module.exports = {login}
+module.exports = { login };

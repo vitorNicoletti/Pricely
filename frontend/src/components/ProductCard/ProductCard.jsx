@@ -36,7 +36,12 @@ function ProductCard({ product }) {
         </p>
       </div>
       <div className={style.btn_div}>
-        <button className={style.btn}>
+        <button
+          className={style.btn}
+          onClick={() => {
+            alert("TODO: ADICIONAR AO CARRINHO");
+          }}
+        >
           <i className="fa-solid fa-cart-shopping" />
         </button>
         <button
