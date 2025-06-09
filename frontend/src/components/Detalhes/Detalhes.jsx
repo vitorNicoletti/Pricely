@@ -46,8 +46,7 @@ function Detalhes() {
           />
           <div className={style.produtoImagemContainer}>
             {product?.imagem.dados && product?.imagem.tipo && (
-              <img
-                className={style.produtoImagem}
+              <img className={style.produtoImagem}
                 src={`data:${product.imagem.tipo};base64,${product.imagem.dados}`}
                 alt={`Imagem de ${product.nome}`}
               />

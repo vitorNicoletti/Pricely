@@ -26,9 +26,6 @@ function Login() {
       localStorage.setItem("authToken", token);
       localStorage.setItem("user", JSON.stringify(perfil));
 
-      // 3) Configura header para demais chamadas
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
       setError("");
       navigate("/");
     } catch (err) {

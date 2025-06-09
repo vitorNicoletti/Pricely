@@ -26,7 +26,7 @@ function App() {
           <Route path="/fornecedor/:id" element={<SellerProfile />}></Route>
           <Route path="/cart/" element={<Cart />}></Route>
           <Route path="/rastreamento" element={<OrderTracking />}></Route>
-          <Route path="/vendedor/:id" element={<BuyerProfile />}></Route>
+          <Route path="/vendedor/" element={<BuyerProfile />}></Route>
         </Routes>
       </Router>
     </>
