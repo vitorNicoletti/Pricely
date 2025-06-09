@@ -11,135 +11,111 @@ const AvaliacaoProduto = require('./avaliacao_produto.model.js');
  *  2) lista de promoções (com id_fornecedor + nome_fornecedor)
  *  3) avaliação média
  *
- * Retorna uma Promise que resolve quando todos os dados forem ligados ao objeto `produto`.
+ * @param {object} produto - objeto do produto cru
+ * @returns {Promise<object>} - produto enriquecido
  */
 async function enrichProduto(produto) {
+
   // 1) imagem
   produto.imagem = null;
   if (produto.imagem_arquivo_id) {
     try {
-      const arquivo = await Arquivos.getArqPorId(produto.imagem_arquivo_id);
-      produto.imagem = arquivo || null;
-    } catch (err) {
+      produto.imagem = await Arquivos.getArqPorId(produto.imagem_arquivo_id) || null;
+    } catch {
       produto.imagem = null;
     }
   }
-
+  
   // 2) promoções
   produto.promocoes = [];
   try {
-    // transformar a chamada em callback numa Promise
-    const promocoes = await new Promise((resolve, reject) => {
-      Promocao.getPromocoesByProduct(produto.id_produto, (err, lista) => {
-        if (err) return reject(err);
-        resolve(lista || []);
-      });
-    });
-
-    // Se não há nenhuma promoção, a lista já fica vazia
+    const promocoes = await Promocao.getPromocoesByProduct(produto.id_produto);
     for (const promo of promocoes) {
       let idFornecedor = null;
       let nomeFornecedor = null;
 
-      // obter id_fornecedor via Oferta.getIdFornecedorByOferta
+      // id_fornecedor via Oferta
       try {
-        idFornecedor = await new Promise((resolve, reject) => {
-          Oferta.getIdFornecedorByOferta(promo.id_oferta, (err, idF) => {
-            if (err) return reject(err);
-            resolve(idF);
-          });
-        });
+        idFornecedor = await Oferta.getIdFornecedorByOferta(promo.id_oferta);
       } catch {
         idFornecedor = null;
       }
 
-      // se achou algum id_fornecedor, pega o nome
+      // nome_fornecedor via callback, embrulhado em Promise
       if (idFornecedor) {
-        try {
-          nomeFornecedor = await new Promise((resolve, reject) => {
-            Fornecedor.getNome(idFornecedor, (err, nome) => {
-              if (err) return reject(err);
-              resolve(nome);
-            });
+        nomeFornecedor = await new Promise((resolve) => {
+          Fornecedor.getNome(idFornecedor, (err, nome) => {
+            if (err || !nome) return resolve(null);
+            resolve(nome);
           });
-        } catch {
-          nomeFornecedor = null;
-        }
+        });
       }
-
       produto.promocoes.push({
         ...promo,
-        id_fornecedor: idFornecedor || null,
-        nome_fornecedor: nomeFornecedor || null
+        id_fornecedor: idFornecedor,
+        nome_fornecedor: nomeFornecedor
       });
     }
-
-  } catch (err) {
-    // em caso de erro ao buscar promoções, deixamos lista vazia
+  } catch {
     produto.promocoes = [];
   }
 
-  // 3) avaliação média
+  // 3) avaliação média via callback
   produto.avaliacao_media = null;
   try {
-    const media = await new Promise((resolve, reject) => {
-      AvaliacaoProduto.getAvaliacaoPorProduto(produto.id_produto, (err, avg) => {
-        if (err) return reject(err);
-        resolve(avg);
+    produto.avaliacao_media = await new Promise((resolve) => {
+      AvaliacaoProduto.getAvaliacaoPorProduto(produto.id_produto, (err, media) => {
+        if (err || media == null) return resolve(null);
+        resolve(media);
       });
     });
-    produto.avaliacao_media = media;
   } catch {
     produto.avaliacao_media = null;
   }
 
-  // quando chegar aqui, `produto` já está totalmente “enriquecido”
   return produto;
 }
 
 const Produtos = {
   /**
    * Retorna todos os produtos, enriquecendo cada um (imagem, promoções, avaliação).
-   * Chama callback(err, [produto, ...]) quando pronto.
+   * @returns {Promise<Array<object>>}
    */
-  getAll: (callback) => {
+  getAll: async () => {
     const sql = 'SELECT * FROM produto';
-    db.query(sql, async (err, results) => {
-      if (err) return callback(err);
-      if (!results || results.length === 0) {
-        return callback(null, []);
-      }
-
-      try {
-        // Promessa que enriquece cada produto
-        await Promise.all(results.map((p) => enrichProduto(p)));
-        callback(null, results);
-      } catch (erroEnriquecimento) {
-        callback(erroEnriquecimento);
-      }
+    const results = await new Promise((resolve, reject) => {
+      db.query(sql, (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
     });
+
+    if (!results || results.length === 0) {
+      return [];
+    }
+    
+    return await Promise.all(results.map(enrichProduto));
   },
 
   /**
    * Retorna um produto pelo ID, enriquecido (imagem, promoções, avaliação).
-   * Chama callback(err, produtoOuNull) quando pronto.
+   * @param {number} id - ID do produto
+   * @returns {Promise<object|null>} - produto ou null se não encontrado
    */
-  getById: (id, callback) => {
+  getById: async (id) => {
     const sql = 'SELECT * FROM produto WHERE id_produto = ?';
-    db.query(sql, [id], async (err, results) => {
-      if (err) return callback(err);
-      if (!results || results.length === 0) {
-        return callback(null, null);
-      }
-
-      const produto = results[0];
-      try {
-        await enrichProduto(produto);
-        callback(null, produto);
-      } catch (erroEnriquecimento) {
-        callback(erroEnriquecimento);
-      }
+    const results = await new Promise((resolve, reject) => {
+      db.query(sql, [id], (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
     });
+
+    if (!results || results.length === 0) {
+      return null;
+    }
+
+    return await enrichProduto(results[0]);
   }
 };
 

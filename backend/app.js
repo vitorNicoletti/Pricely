@@ -6,14 +6,17 @@ const cadastroRouter = require('./routes/cadastro');
 const vendedorRouter = require("./routes/vendedor");
 const fornecedorRouter = require("./routes/fornecedor");
 const loginRouter = require('./routes/login');
+const carrinhoRouter = require('./routes/carrinho')
 dotenv.config(); // Carrega variáveis do .env
-
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use('/api/carrinho', carrinhoRouter )
 app.use("/api", catalogoRouter);
+
+
 app.use("/api/vendedor", vendedorRouter);
 app.use("/api/fornecedor", fornecedorRouter);
 app.use('/api/cadastro',cadastroRouter )

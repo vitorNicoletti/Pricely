@@ -2,7 +2,6 @@ const Vendedor = require("../models/vendedor.model.js");
 
 function getVendedorDetails(req, res) {
   let idUsuario;
-
   // 1) Se houver parâmetro :id, usa-o
   if (req.params.id) {
     if (!/^\d+$/.test(req.params.id)) {

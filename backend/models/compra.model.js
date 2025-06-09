@@ -5,6 +5,27 @@ const Compra = {
    * Retorna a compra pelo ID do pedido. 
    * Se não encontrar ou ocorrer erro, retorna null.
    */
+  criarCompra: async (precoUnidade, quantidade, idProduto, idPedido) => {
+    const sql = `
+      INSERT INTO compra 
+        (preco_unidade, quantidade, estado, id_produto, id_pedido)
+      VALUES (?, ?, 'CARRINHO', ?, ?)
+    `;
+
+    try {
+      const result = await new Promise((resolve, reject) => {
+        db.query(sql, [precoUnidade, quantidade, idProduto, idPedido], (err, res) => {
+          if (err) return reject(err);
+          resolve(res);
+        });
+      });
+
+      return result.insertId;
+    } catch (error) {
+      console.error("Erro ao criar compra:", error);
+      return null;
+    }
+  },
   getCompraPorIdPedido: async (id_pedido) => {
     const sql = 'SELECT * FROM compra WHERE id_pedido = ?';
 
