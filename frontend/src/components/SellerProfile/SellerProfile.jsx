@@ -2,9 +2,8 @@ import avatar_placeholder from "../../assets/profile_placeholder.png";
 import Header from "../Header/Header";
 import styles from "./SellerProfile.module.css";
 import ProductCard from "../ProductCard/ProductCard";
-import { useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-
 import api from "../../api";
 
 export default function SellerProfile() {
@@ -14,6 +13,25 @@ export default function SellerProfile() {
   const [selected, setSelected] = useState("produtos");
 
   useEffect(() => {
+    const stored = localStorage.getItem("user");
+    const loggedUser = stored ? JSON.parse(stored) : null;
+
+    // Se for o próprio fornecedor logado, usa localStorage
+    if (loggedUser && String(loggedUser.id_usuario) === id) {
+      setFornecedor(loggedUser);
+    } else {
+      // Senão, busca o perfil público do fornecedor
+      api
+        .get(`/fornecedor/${id}`)
+        .then((response) => {
+          setFornecedor(response.data);
+        })
+        .catch((error) => {
+          console.error("Erro ao buscar fornecedor:", error);
+        });
+    }
+
+    // Produtos
     api
       .get("/")
       .then((response) => {
@@ -22,11 +40,7 @@ export default function SellerProfile() {
       .catch((error) => {
         console.error("Erro ao buscar produtos:", error);
       });
-
-    api.get(`/fornecedor/${id}`).then((response) => {
-      setFornecedor(response.data);
-    });
-  }, []);
+  }, [id]);
 
   function getTempoDesdeCadastro(dataCadastroStr) {
     if (!dataCadastroStr) return "";
@@ -78,21 +92,15 @@ export default function SellerProfile() {
                 <i className={`fa-regular fa-comments`}></i>
               </div>
             </div>
-            <h2>{fornecedor.nome_fantasia}</h2>
-            {/* <p className={styles.localizacao}>
-              <i className="fa-solid fa-location-dot"></i> Curitiba, PR
-            </p> */}
+            <h2>{fornecedor.nomeFantasia || fornecedor.nome_fantasia || "Fornecedor"}</h2>
             <div className={styles.infos}>
               <span>
-                <strong>{fornecedor.avaliacao_media}★</strong>
+                <strong>
+                  {fornecedor.avaliacao_media ?? "?"}★
+                </strong>
                 <br />
                 Avaliação
               </span>
-              {/* <span>
-                <strong>37K</strong>
-                <br />
-                Vendas
-              </span> */}
             </div>
             <p className={styles.since}>
               {getTempoDesdeCadastro(fornecedor.dataCadastro)}
@@ -102,6 +110,7 @@ export default function SellerProfile() {
             <button className={styles.btn}>Seguir</button>
           </div>
         </div>
+
         <div className={styles.productsContainer}>
           <div className={styles.sectionTitle}>
             <button
@@ -117,6 +126,7 @@ export default function SellerProfile() {
               Sobre
             </button>
           </div>
+
           {selected === "produtos" && (
             <div className={styles.productsList}>
               {products.length === 0 ? (
@@ -131,6 +141,7 @@ export default function SellerProfile() {
               )}
             </div>
           )}
+
           {selected === "sobre" && (
             <div className={styles.sobreSection}>
               <h3>Sobre o fornecedor</h3>
