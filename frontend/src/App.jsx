@@ -7,8 +7,7 @@ import Catalogo from "./components/Catalog/Catalog.jsx";
 import Cadastro from "./components/Cadastro/Cadastro.jsx";
 import Detalhes from "./components/Detalhes/Detalhes.jsx";
 import SellerProfile from "./components/SellerProfile/SellerProfile.jsx";
-import OrderTracking from "./components/OrderTracking/OrderTracking.jsx";
-import UserProfile from "./UserProfile/UserProfile.jsx";
+import BuyerProfile from "./components/BuyerProfile/BuyerProfile.jsx";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
@@ -16,10 +15,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 function App() {
   return (
     <>
-      <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
-      />
       <Router>
         <Routes>
           <Route path="/" element={<Catalogo />}></Route>
@@ -31,7 +26,7 @@ function App() {
           <Route path="/fornecedor/:id" element={<SellerProfile />}></Route>
           <Route path="/cart/" element={<Cart />}></Route>
           <Route path="/rastreamento" element={<OrderTracking />}></Route>
-          <Route path="/profile" element={<UserProfile />}></Route>
+          <Route path="/vendedor/:id" element={<BuyerProfile />}></Route>
         </Routes>
       </Router>
     </>

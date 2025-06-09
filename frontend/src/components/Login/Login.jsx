@@ -1,35 +1,46 @@
-import { useState } from 'react';
-import styles from './Login.module.css';
-import googleLogo from '../../assets/google.svg';
-import facebookLogo from '../../assets/facebook.png';
-import appleLogo from '../../assets/apple.svg';
+import { useState } from "react";
+import styles from "./Login.module.css";
+import googleLogo from "../../assets/google.svg";
+import facebookLogo from "../../assets/facebook.png";
+import appleLogo from "../../assets/apple.svg";
+import { useNavigate } from "react-router-dom";
+import api from "../../api";
 
 function Login() {
-  const [usernameOrEmail, setUsernameOrEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [usernameOrEmail, setUsernameOrEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async () => {
-    const formData = new FormData();
-    formData.append('identifier', usernameOrEmail);
-    formData.append('password', password);
+    const login_data = { email: usernameOrEmail, senha: password };
 
+    setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/api/login', {
-        method: 'POST',
-        body: formData,
-      });
+      // 1) Autentica e recebe { token, perfil }
+      const { data } = await api.post("/login", login_data);
+      const { token, perfil } = data;
 
-      const data = await response.json();
+      // 2) Armazena token e perfil
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("user", JSON.stringify(perfil));
 
-      if (response.ok) {
-        window.location.href = '/home';
-      } else {
-        alert(data.message || 'Erro ao fazer login.');
-      }
+      // 3) Configura header para demais chamadas
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      setError("");
+      navigate("/");
     } catch (err) {
       console.error(err);
-      setError('Erro de conexão.');
+      const msg =
+        err.response?.data?.erro ||
+        err.response?.data?.message ||
+        err.message ||
+        "Erro de conexão.";
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,10 +59,9 @@ function Login() {
           </div>
 
           <h1>Entrar</h1>
-
           {error && <div className={styles.errorMessage}>{error}</div>}
 
-          <label>Digite seu nome de Usuário ou Email</label>
+          <label>Nome de Usuário ou Email</label>
           <input
             type="text"
             placeholder="Nome de Usuário ou email"
@@ -59,7 +69,7 @@ function Login() {
             onChange={(e) => setUsernameOrEmail(e.target.value)}
           />
 
-          <label>Digite sua Senha</label>
+          <label>Senha</label>
           <div className={styles.passwordInput}>
             <input
               type="password"
@@ -73,20 +83,23 @@ function Login() {
             <a href="#">Esqueci minha senha</a>
           </div>
 
-          <button className={styles.loginBtn} onClick={handleLogin}>
-            Entrar
+          <button
+            className={styles.loginBtn}
+            onClick={handleLogin}
+            disabled={loading}
+          >
+            {loading ? "Entrando..." : "Entrar"}
           </button>
 
           <div className={styles.divider}>OU</div>
-
           <div className={styles.socialButtons}>
-            <button className={styles.iconBtn}>
+            <button className={styles.iconBtn} disabled={loading}>
               <img src={googleLogo} alt="Google" />
             </button>
-            <button className={styles.iconBtn}>
+            <button className={styles.iconBtn} disabled={loading}>
               <img src={facebookLogo} alt="Facebook" />
             </button>
-            <button className={styles.iconBtn}>
+            <button className={styles.iconBtn} disabled={loading}>
               <img src={appleLogo} alt="Apple" />
             </button>
           </div>
