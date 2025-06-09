@@ -4,9 +4,6 @@ import style from "./ProductCard.module.css";
 function ProductCard({ product }) {
   const navigate = useNavigate();
 
-  const loadDetails = () => {
-    navigate(`/details/${product.id_produto}`);
-  };
   return (
     <div className={style.card}>
       <div className={style.img_div}>
@@ -47,7 +44,10 @@ function ProductCard({ product }) {
         >
           <i className="fa-solid fa-cart-shopping" />
         </button>
-        <button onClick={loadDetails} className={style.btn}>
+        <button
+          onClick={() => navigate(`/details/${product.id_produto}`)}
+          className={style.btn}
+        >
           Ver Detalhes
         </button>
       </div>

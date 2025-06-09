@@ -21,19 +21,13 @@ function Header() {
         console.error("Nenhum token de autenticação encontrado.");
         return;
       }
-      try {
-        const response = await api.get("/vendedor/me", {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setUser(response.data);
-      } catch (error) {
-        console.error("Erro na requisição:", error.message);
-      }
-    })();
-  }, []);
+      setUser(
+        localStorage.getItem("user")
+          ? JSON.parse(localStorage.getItem("user"))
+          : {}
+      );
+    });
+  });
 
   return (
     <div className={style.header}>
