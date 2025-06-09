@@ -8,9 +8,9 @@ import Cadastro from "./components/Cadastro/Cadastro.jsx";
 import Detalhes from "./components/Detalhes/Detalhes.jsx";
 import SellerProfile from "./components/SellerProfile/SellerProfile.jsx";
 import BuyerProfile from "./components/BuyerProfile/BuyerProfile.jsx";
+import OrderTracking from "./components/OrderTracking/OrderTracking.jsx";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import OrderTracking from "./components/OrderTracking/OrderTracking.jsx";
 
 function App() {
   return (
@@ -24,9 +24,9 @@ function App() {
           <Route path="/details/:id" element={<Detalhes />}></Route>
           <Route path="/about" element={<About />}></Route>
           <Route path="/fornecedor/:id" element={<SellerProfile />}></Route>
-          <Route path="/cart/" element={<Cart />}></Route>
+          <Route path="/cart" element={<Cart />}></Route>
           <Route path="/rastreamento" element={<OrderTracking />}></Route>
-          <Route path="/vendedor/" element={<BuyerProfile />}></Route>
+          <Route path="/vendedor" element={<BuyerProfile />}></Route>
         </Routes>
       </Router>
     </>
