@@ -40,7 +40,6 @@ api.interceptors.response.use(
 const handleLogout = () => {
   localStorage.removeItem("authToken");
   localStorage.removeItem("user"); // Se você também armazena o perfil
-  window.location.href = "/login"; // Redirecionar para a página de login
 };
 
 export default api;

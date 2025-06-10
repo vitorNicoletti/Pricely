@@ -7,13 +7,11 @@ function ProfileModal() {
 
   // 1) Recupera o perfil do localStorage
   const stored = localStorage.getItem("user");
-  console.log("Stored user data:", stored);
   const user = stored ? JSON.parse(stored) : null;
-  console.log("User data:", user);
   const isLogged = !!user;
 
   // 2) Pegue sempre user.email
-  const displayEmail = user?.email ?? "";
+  const displayEmail = user?.email ?? user?.nome_fantasia ?? "Usuário";
 
   // 3) Imagem: fornecedor usa user.imagem; vendedor user.imagemPerfil
   const imgData = user?.imagem?.dados ?? user?.imagemPerfil?.dados;
@@ -31,13 +29,14 @@ function ProfileModal() {
           alt="Avatar"
           className={style.avatar}
           onClick={() => {
-            if (!user?.role) return;
+            // if (!user?.role) return;
 
-            if (user.role === "fornecedor") {
-              navigate(`/fornecedor/${user.id_usuario}`);
-            } else if (user.role === "vendedor") {
-              navigate("/vendedor");
-            }
+            // if (user.role === "fornecedor") {
+            //   navigate(`/fornecedor/${user.id_usuario}`);
+            // } else if (user.role === "vendedor") {
+            //   navigate("/vendedor");
+            // }
+            navigate("/vendedor");
           }}
         />
 

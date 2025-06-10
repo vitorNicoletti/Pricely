@@ -1,15 +1,17 @@
-import api from "../../api";
-import Header from "../Header/Header";
-import Footer from "../Footer/Footer";
 import style from "./Detalhes.module.css";
 import favoritoIcone from "../../assets/favoritos.png";
 import avatarRegina from "../../assets/avatar-regina.png";
 import avatarCarlos from "../../assets/avatar-carlos.png";
 import avatarRicardo from "../../assets/avatar-ricardo.png";
+
+import api from "../../api";
+import Header from "../Header/Header";
+import Footer from "../Footer/Footer";
 import CartConfirmModal from "../CartConfirmModal/CartConfirmModal";
 import avatar_placeholder from "../../assets/profile_placeholder.png";
 import seller_profile_style from "../SellerProfile/SellerProfile.module.css";
 
+import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 
@@ -19,6 +21,12 @@ function Detalhes() {
   const [fornecedor, setFornecedor] = useState(null);
   const [showCartModal, setShowCartModal] = useState(false);
   const quantityRef = useRef();
+
+  const stored = localStorage.getItem("user");
+  const user = stored ? JSON.parse(stored) : null;
+  const isLogged = !!user;
+
+  const navigate = useNavigate();
 
   const minimumOrder = product?.quantidade_minima || 50;
 
@@ -41,6 +49,10 @@ function Detalhes() {
   }, [id]);
 
   function handleAddToCartClick() {
+    if (!isLogged) {
+      navigate("/login");
+      return;
+    }
     setShowCartModal(true);
   }
 

@@ -5,34 +5,42 @@ const Fornecedor = require("../models/fornecedor.model.js");
  * GET /api/fornecedor/me    — perfil do próprio (usando token)
  */
 async function getFornecedorDetails(req, res) {
-  try {
-    let { id } = req.params;
-
-    // se veio “me”, troca pelo id do token
-    if (id === "me") {
-      if (!req.user || !req.user.id_usuario) {
-        return res.status(401).json({ message: "Não autenticado." });
-      }
-      id = req.user.id_usuario;
-    }
-
-    // valida id numérico
-    if (!/^\d+$/.test(String(id))) {
+  let idUsuario;
+  // 1) Se houver parâmetro :id, usa-o
+  if (req.params.id) {
+    // Valida se o ID é um número inteiro positivo
+    if (!/^[\d]+$/.test(req.params.id)) {
       return res.status(400).json({ message: "ID inválido." });
     }
-
-    // chama o model (que agora retorna Promise)
-    const fornecedor = await Fornecedor.getById(Number(id));
-    if (!fornecedor) {
-      return res.status(404).json({ message: "Fornecedor não encontrado." });
+    idUsuario = Number(req.params.id);
+    // Busca perfil público do fornecedor
+    Fornecedor.getPublicProfile(idUsuario)
+      .then((perfil) => {
+        if (!perfil) {
+          return res.status(404).json({ message: "Fornecedor não encontrado." });
+        }
+        return res.status(200).json(perfil);
+      })
+      .catch((err) => {
+        return res.status(500).json({ message: "Erro interno do servidor." });
+      });
+  } else {
+    // Senão, busca no token
+    idUsuario = req.user && req.user.id_usuario;
+    if (!idUsuario) {
+      return res.status(401).json({ message: "Não autenticado." });
     }
-
-    // devolve exatamente o objeto do model (já enriquecido)
-    return res.status(200).json(fornecedor);
-
-  } catch (err) {
-    console.error("Erro ao buscar fornecedor:", err);
-    return res.status(500).json({ message: "Erro no servidor." });
+    // Busca detalhes do fornecedor por ID
+    Fornecedor.getById(idUsuario)
+      .then((perfil) => {
+        if (!perfil) {
+          return res.status(404).json({ message: "Usuário não é fornecedor." });
+        }
+        return res.status(200).json(perfil);
+      })
+      .catch((err) => {
+        return res.status(500).json({ message: "Erro interno do servidor." });
+      });
   }
 }
 
