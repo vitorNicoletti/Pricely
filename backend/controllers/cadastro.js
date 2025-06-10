@@ -35,7 +35,7 @@ async function createVendedor(req, res) {
   // Cria usuário e obtém o ID gerado
   let usuarioId;
   try {
-    usuarioId = await Vendedor.createVendedor(email, senha, cpfCnpj, telefone); // ✅ telefone passado
+    usuarioId = await Vendedor.createVendedor(email, senha, cpfCnpj, telefone);
   } catch (err) {
     console.error("Erro ao criar vendedor:", err);
     return res
