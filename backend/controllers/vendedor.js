@@ -2,7 +2,6 @@ const Vendedor = require("../models/vendedor.model.js");
 
 function getVendedorDetails(req, res) {
   let idUsuario;
-
   // 1) Se houver parâmetro :id, usa-o
   if (req.params.id) {
     // Valida se o ID é um número inteiro positivo

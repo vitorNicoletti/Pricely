@@ -1,6 +1,7 @@
 const express = require("express");
+
 const multer = require("multer");
-const {getCarrinho} = require("../controllers/pedido")
+const {getCarrinho} = require("../controllers/carrinho")
 const { autenticarToken } = require("../middlewares/auth.js");
 const {getVendedorDetails,updateVendedorProfile} = require("../controllers/vendedor.js");
 
