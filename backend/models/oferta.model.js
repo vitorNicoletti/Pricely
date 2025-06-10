@@ -1,21 +1,26 @@
 const db = require('../db.js');
 
 const Oferta = {
-  getIdFornecedorByOferta: (id, callback) => {
+  /**
+   * Retorna o id do fornecedor para uma oferta.
+   *
+   * @param {number} id - ID da oferta
+   * @returns {Promise<number|null>} - resolve para id_fornecedor ou null se não encontrado
+   */
+  getIdFornecedorByOferta: async (id) => {
     const sql = 'SELECT id_fornecedor FROM oferta WHERE id_oferta = ?';
-    db.query(sql, [id], (err, results) => {
-      if (err) {
-        return callback(err);
-      }
-
-      if (!results || results.length === 0) {
-        // Se preferir, retorne um erro 404 em vez de null
-        return callback(null, null);
-      }
-
-      // Retorna apenas o id_fornecedor
-      return callback(null, results[0].id_fornecedor);
+    const results = await new Promise((resolve, reject) => {
+      db.query(sql, [id], (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
     });
+
+    if (!results || results.length === 0) {
+      return null;
+    }
+
+    return results[0].id_fornecedor;
   }
 };
 

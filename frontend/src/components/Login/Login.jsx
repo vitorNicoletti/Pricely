@@ -14,26 +14,28 @@ function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    let login_data = {
-      email: usernameOrEmail,
-      senha: password,
-    };
+    const login_data = { email: usernameOrEmail, senha: password };
 
     setLoading(true);
-
     try {
-      const response = await api.post("/login", login_data);
-      const data = response.data;
-      localStorage.setItem("authToken", data.token); // Armazena o token
+      // 1) Autentica e recebe { token, perfil }
+      const { data } = await api.post("/login", login_data);
+      const { token, perfil } = data;
+
+      // 2) Armazena token e perfil
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("user", JSON.stringify(perfil));
+
       setError("");
       navigate("/");
     } catch (err) {
       console.error(err);
-      if (err.response && err.response.data) {
-        setError(err.response.data.message || err.response.data.error || "Erro ao fazer login.");
-      } else {
-        setError(err.message || "Erro de conexão.");
-      }
+      const msg =
+        err.response?.data?.erro ||
+        err.response?.data?.message ||
+        err.message ||
+        "Erro de conexão.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -54,10 +56,9 @@ function Login() {
           </div>
 
           <h1>Entrar</h1>
-
           {error && <div className={styles.errorMessage}>{error}</div>}
 
-          <label>Digite seu nome de Usuário ou Email</label>
+          <label>Nome de Usuário ou Email</label>
           <input
             type="text"
             placeholder="Nome de Usuário ou email"
@@ -65,7 +66,7 @@ function Login() {
             onChange={(e) => setUsernameOrEmail(e.target.value)}
           />
 
-          <label>Digite sua Senha</label>
+          <label>Senha</label>
           <div className={styles.passwordInput}>
             <input
               type="password"
@@ -88,7 +89,6 @@ function Login() {
           </button>
 
           <div className={styles.divider}>OU</div>
-
           <div className={styles.socialButtons}>
             <button className={styles.iconBtn} disabled={loading}>
               <img src={googleLogo} alt="Google" />

@@ -12,13 +12,13 @@ const Usuario = {
     });
   },
 
-  create: async (email, senha) => {
+  create: async (email, senha, telefone) => {
     const saltRounds = 10;
     const salt = await bcrypt.genSalt(saltRounds);
     const hashedPassword = await bcrypt.hash(senha, salt);
-    const sql = "INSERT INTO usuario (email, senha, salt, dataCadastro) VALUES (?, ?, ?, NOW())";
+    const sql = "INSERT INTO usuario (email, senha, salt, telefone, dataCadastro) VALUES (?, ?, ?, ?, NOW())";
     return new Promise((resolve, reject) => {
-      db.query(sql, [email, hashedPassword, salt], (err, result) => {
+      db.query(sql, [email, hashedPassword, salt, telefone], (err, result) => {
         if (err) return reject(err);
         resolve(result.insertId);
       });

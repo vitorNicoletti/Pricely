@@ -21,6 +21,11 @@
   margin-bottom: 16px;
 }
 
+.avatar:hover {
+  border: 2px solid #fb9506;
+  cursor: pointer;
+}
+
 .name {
   margin: 8px 0;
 }

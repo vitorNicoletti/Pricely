@@ -36,9 +36,7 @@ const Cart = () => {
     // Busca os itens do carrinho do Usuario
     const fetchCart = async () => {
       try {
-        const response = await api.get("/vendedor/carrinho", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await api.get("/vendedor/carrinho");
         setCartItems(response.data);
       } catch (error) {
         console.error("Erro ao buscar itens do carrinho:", error);
@@ -57,15 +55,16 @@ const Cart = () => {
           {!cartItems.compras || cartItems.compras.length === 0 ? (
             <div className={styles.emptyCart}>
               <h2>Seu carrinho está vazio</h2>
-              <button 
-                className={styles.keepBuying} 
+
+              <button
+                className={styles.keepBuying}
                 onClick={() => navigate("/")}
               >
                 Ver Produtos
               </button>
             </div>
           ) : (
-            cartItems.compras.map(item => (
+            cartItems.compras.map((item) => (
               <div key={item.id} className={styles.item}>
                 <div className={styles.itemInfo}>
                   <p className={styles.itemTitle}>{item.produto.nome}</p>
@@ -84,16 +83,31 @@ const Cart = () => {
           <>
             <div className={styles.summary}>
               <h3>Resumo</h3>
-              <p><span>Subtotal</span><span>R${subtotal.toFixed(2)}</span></p>
-              <p><span>Desconto</span><span>- R${discount.toFixed(2)}</span></p>
-              <p className={styles.total}><span>Total</span><span>R${total.toFixed(2)}</span></p>
+              <p>
+                <span>Subtotal</span>
+                <span>R${subtotal.toFixed(2)}</span>
+              </p>
+              <p>
+                <span>Desconto</span>
+                <span>- R${discount.toFixed(2)}</span>
+              </p>
+              <p className={styles.total}>
+                <span>Total</span>
+                <span>R${total.toFixed(2)}</span>
+              </p>
             </div>
 
             <div className={styles.actions}>
-              <button className={styles.checkout} onClick={() => navigate("/payment")}>
+              <button
+                className={styles.checkout}
+                onClick={() => navigate("/payment")}
+              >
                 Finalizar Compra
               </button>
-              <button className={styles.keepBuying} onClick={() => navigate("/")}>
+              <button
+                className={styles.keepBuying}
+                onClick={() => navigate("/")}
+              >
                 Continuar comprando
               </button>
             </div>
