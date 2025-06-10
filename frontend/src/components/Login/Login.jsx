@@ -24,7 +24,6 @@ function Login() {
 
       // 2) Armazena token e perfil
       localStorage.setItem("authToken", token);
-      localStorage.setItem("user", JSON.stringify(perfil));
 
       setError("");
       navigate("/");

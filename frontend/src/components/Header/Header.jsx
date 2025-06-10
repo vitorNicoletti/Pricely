@@ -15,19 +15,28 @@ function Header() {
   };
 
   useEffect(() => {
-    (async () => {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        console.error("Nenhum token de autenticação encontrado.");
-        return;
-      }
-      setUser(
-        localStorage.getItem("user")
-          ? JSON.parse(localStorage.getItem("user"))
-          : {}
-      );
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      console.error("Nenhum token de autenticação encontrado.");
+      return;
+    }
+
+    async function fetchUserData() {
+      const user_data = await api.get("/vendedor/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setUser(user_data.data);
+      localStorage.setItem("user", JSON.stringify(user_data.data));
+    }
+
+    fetchUserData().catch((err) => {
+      console.error("Erro ao buscar dados do usuário:", err);
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
     });
-  });
+  }, []);
 
   return (
     <div className={style.header}>
