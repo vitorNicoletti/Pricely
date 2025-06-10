@@ -19,8 +19,8 @@ export default function SellerProfile() {
   const isOwner = loggedUser && String(loggedUser.id_usuario) === id;
 
   const [fornecedor, setFornecedor] = useState({});
-  const [products, setProducts]     = useState([]);
-  const [selected, setSelected]     = useState("produtos");
+  const [products, setProducts] = useState([]);
+  const [selected, setSelected] = useState("produtos");
 
   // 3) Estados para edição/exclusão
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -35,18 +35,23 @@ export default function SellerProfile() {
     if (isOwner) {
       setFornecedor(loggedUser);
     } else {
-      api.get(`/fornecedor/${id}`)
-         .then(res => setFornecedor(res.data))
-         .catch(err => console.error("Erro ao buscar fornecedor:", err));
+      api
+        .get(`/fornecedor/${id}`)
+        .then((res) => setFornecedor(res.data))
+        .catch((err) => console.error("Erro ao buscar fornecedor:", err));
     }
 
     // lista de produtos do próprio fornecedor
-    api.get("/produtos")
-       .then(res => {
-         const meus = res.data.filter(p => String(p.id_fornecedor) === String(id));
-         setProducts(meus);
-       })
-       .catch(err => console.error("Erro ao buscar produtos:", err));
+    api
+      .get("/")
+      .then((res) => {
+        const meus = res.data.filter(
+          (p) => String(p.id_fornecedor) === String(id)
+        );
+        console.log("Produtos do fornecedor:", res.data);
+        setProducts(res.data);
+      })
+      .catch((err) => console.error("Erro ao buscar produtos:", err));
   }, [id]);
 
   // 5) Abre modal de edição
@@ -210,10 +215,7 @@ export default function SellerProfile() {
                 <p>Nenhum produto encontrado.</p>
               ) : (
                 products.map((p) => (
-                  <div
-                    key={p.id_produto}
-                    className={styles.productCardWrapper}
-                  >
+                  <div key={p.id_produto} className={styles.productCardWrapper}>
                     <ProductCard product={p} />
                     {isOwner && (
                       <div className={styles.cardActions}>
@@ -313,9 +315,11 @@ export default function SellerProfile() {
                 </select>
               </label>
               <label className={styles.modalUploadLabel}>
-                {editPreview
-                  ? <img src={editPreview} alt="Preview" />
-                  : "Clique ou arraste para alterar a imagem"}
+                {editPreview ? (
+                  <img src={editPreview} alt="Preview" />
+                ) : (
+                  "Clique ou arraste para alterar a imagem"
+                )}
                 <input
                   type="file"
                   accept="image/*"

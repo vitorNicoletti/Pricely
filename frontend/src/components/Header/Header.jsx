@@ -20,12 +20,14 @@ function Header() {
         // Tenta buscar como vendedor
         const userResponse = await api.get("/vendedor/me");
         setUser(userResponse.data);
+        userResponse.data.role = "vendedor"; // Adiciona a role para identificar o tipo de usuário
         localStorage.setItem("user", JSON.stringify(userResponse.data));
       } catch (vendedorErr) {
         try {
           // Se falhar, tenta buscar como fornecedor
           const userResponse = await api.get("/fornecedor/me");
           setUser(userResponse.data);
+          userResponse.data.role = "fornecedor"; // Adiciona a role para identificar o tipo de usuário
           localStorage.setItem("user", JSON.stringify(userResponse.data));
         } catch (fornecedorErr) {
           console.error("Erro ao buscar dados do usuário:", fornecedorErr);

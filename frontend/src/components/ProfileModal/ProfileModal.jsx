@@ -29,14 +29,13 @@ function ProfileModal() {
           alt="Avatar"
           className={style.avatar}
           onClick={() => {
-            // if (!user?.role) return;
+            if (!user?.role) return;
 
-            // if (user.role === "fornecedor") {
-            //   navigate(`/fornecedor/${user.id_usuario}`);
-            // } else if (user.role === "vendedor") {
-            //   navigate("/vendedor");
-            // }
-            navigate("/vendedor");
+            if (user.role === "fornecedor") {
+              navigate(`/fornecedor/${user.id_usuario}`);
+            } else if (user.role === "vendedor") {
+              navigate("/vendedor");
+            }
           }}
         />
 
