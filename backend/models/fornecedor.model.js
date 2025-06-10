@@ -1,7 +1,9 @@
 const db = require("../db.js");
 const Avaliacao_fornecedor = require("./avaliacao_fornecedor.model.js");
+const Arquivos = require("./arquivos.model.js");
 
 const Fornecedor = {
+  // 1) Cria novo fornecedor
   createFornecedor: async (data) => {
     const {
       idUsuario,
@@ -58,86 +60,104 @@ const Fornecedor = {
     });
   },
 
-  /**
-   * Retorna a razão social do fornecedor pelo id do usuário
-   * @param {number} idUsuario – ID do usuário vinculado ao fornecedor
-   * @param {function(Error, string|null)} callback – (err, razao_social)
-   */
+  // 2) Razão social
   getNome: (idUsuario, callback) => {
-    const sql = "SELECT razao_social FROM fornecedor WHERE id_usuario = ?";
-    db.query(sql, [idUsuario], (err, results) => {
-      if (err) {
-        return callback(err);
+    db.query(
+      "SELECT razao_social FROM fornecedor WHERE id_usuario = ?",
+      [idUsuario],
+      (err, results) => {
+        if (err) return callback(err);
+        callback(null, results?.[0]?.razao_social || null);
       }
-      if (!results || results.length === 0) {
-        return callback(null, null);
-      }
-      return callback(null, results[0].razao_social);
-    });
+    );
   },
 
-  /**
-   * Retorna um fornecedor completo (imagem, dataCadastro, avaliação média) pelo ID
-   * @param {number} id – id_usuario do fornecedor
-   * @param {(err: Error|null, fornecedor: object|null) => void} callback
-   */
-  getById: (id, callback) => {
-    const sql = "SELECT id_usuario, nome_fantasia FROM fornecedor WHERE id_usuario = ?";
-    db.query(sql, [id], (err, results) => {
-      if (err) return callback(err);
-      if (!results || results.length === 0) return callback(null, null);
+  // 3) Perfil completo
+  getById: (idUsuario) => {
+  return new Promise((resolve, reject) => {
+    db.query(
+      "SELECT id_usuario, nome_fantasia FROM fornecedor WHERE id_usuario = ?",
+      [idUsuario],
+      (err, results) => {
+        if (err) return reject(err);
+        if (!results?.length) return resolve(null);
+        const fornecedor = results[0];
+        enrichFornecedor(fornecedor, () => resolve(fornecedor));
+      }
+    );
+  });
+},
 
-      const fornecedor = results[0];
-      enrichFornecedor(fornecedor, () => callback(null, fornecedor));
-    });
+  // 4) Atualiza apenas campos da tabela fornecedor
+  updateProfile: async (idUsuario, campos) => {
+    const map = {
+      razaoSocial: "razao_social",
+      nomeFantasia: "nome_fantasia",
+      inscricaoEstadual: "inscricao_estadual",
+      inscricaoMunicipal: "inscricao_municipal",
+      logradouro: "logradouro",
+      numero: "numero",
+      complemento: "complemento",
+      repNome: "rep_nome",
+      repCpf: "rep_cpf",
+      repTelefone: "rep_telefone",
+    };
+
+    const sets = [];
+    const params = [];
+    for (const [key, col] of Object.entries(map)) {
+      if (campos[key] !== undefined) {
+        sets.push(`${col} = ?`);
+        params.push(campos[key]);
+      }
+    }
+    if (sets.length) {
+      params.push(idUsuario);
+      const sql = `UPDATE fornecedor SET ${sets.join(
+        ", "
+      )} WHERE id_usuario = ?`;
+      await db.execute(sql, params);
+    }
   },
 };
 
-/**
- * Função auxiliar para enriquecer um objeto fornecedor com:
- * – imagem de perfil (perfil_arquivo_id)
- * – dataCadastro do usuário
- * – avaliação média
- */
-function enrichFornecedor(fornecedor, done) {
+// 5) Enriquecer com imagem de perfil e dataCadastro, depois avaliação
+async function enrichFornecedor(fornecedor, done) {
   const Arquivos = require("./arquivos.model.js");
   const usuarioId = fornecedor.id_usuario;
 
-  const afterImageAndData = (image, dataCadastro) => {
-    fornecedor.imagem = image || null;
-    fornecedor.dataCadastro = dataCadastro || null;
-    // Busca avaliação média
-    fetchRating(fornecedor, done);
-  };
+  try {
+    const [rows] = await db
+      .promise()
+      .query(
+        "SELECT perfil_arquivo_id, dataCadastro FROM usuario WHERE id_usuario = ?",
+        [usuarioId]
+      );
 
-  if (!usuarioId) {
-    afterImageAndData(null, null);
-  } else {
-    // 1) Busca perfil_arquivo_id e dataCadastro na tabela usuario
-    const sql = "SELECT perfil_arquivo_id, dataCadastro FROM usuario WHERE id_usuario = ?";
-    db.query(sql, [usuarioId], (err, results) => {
-      if (err || !results || results.length === 0) {
-        afterImageAndData(null, null);
-      } else {
-        const arquivoId = results[0].perfil_arquivo_id;
-        const dataCadastro = results[0].dataCadastro;
-        if (!arquivoId) {
-          afterImageAndData(null, dataCadastro);
-        } else {
-          Arquivos.getArqPorId(arquivoId, (errArq, arquivo) => {
-            afterImageAndData(errArq ? null : arquivo, dataCadastro);
-          });
-        }
-      }
-    });
+    if (!rows || !rows.length) {
+      fornecedor.imagem = null;
+      fornecedor.dataCadastro = null;
+      return fetchRating(fornecedor, done);
+    }
+
+    const { perfil_arquivo_id, dataCadastro } = rows[0];
+    fornecedor.dataCadastro = dataCadastro;
+
+    if (perfil_arquivo_id) {
+      const arq = await Arquivos.getArqPorId(perfil_arquivo_id);
+      if (arq) fornecedor.imagem = arq;
+    }
+
+    return fetchRating(fornecedor, done);
+  } catch (err) {
+    console.error(err);
+    fornecedor.imagem = null;
+    fornecedor.dataCadastro = null;
+    return fetchRating(fornecedor, done);
   }
 }
 
-/**
- * Busca avaliação média do fornecedor e adiciona ao objeto
- * @param {object} fornecedor – objeto que contém id_usuario
- * @param {() => void} done – callback para executar ao terminar
- */
+// 6) Anexa avaliação média
 function fetchRating(fornecedor, done) {
   Avaliacao_fornecedor.getAvaliacao(fornecedor.id_usuario, (errAvg, media) => {
     fornecedor.avaliacao_media = errAvg ? null : media;

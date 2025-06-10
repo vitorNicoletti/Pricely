@@ -27,6 +27,7 @@
   text-decoration: none;
   color: black;
   padding: 0px 20px;
+  cursor: pointer;
 }
 
 .navbar a:hover {

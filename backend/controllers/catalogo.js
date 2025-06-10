@@ -1,3 +1,4 @@
+
 // controllers/produtos.controller.js
 
 const Produtos = require('../models/produtos.model');
@@ -9,14 +10,15 @@ async function getProductDetails(req, res) {
   const { id } = req.params;
 
   // Valida ID numérico
+
   if (!/^\d+$/.test(id)) {
-    return res.status(400).json({ message: 'ID inválido.' });
+    return res.status(400).json({ message: "ID inválido." });
   }
 
   try {
     const produto = await Produtos.getById(Number(id));
     if (!produto) {
-      return res.status(404).json({ message: 'Produto não encontrado.' });
+      return res.status(404).json({ message: "Produto não encontrado." });
     }
     return res.status(200).json(produto);
   } catch (err) {

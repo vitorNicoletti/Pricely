@@ -21,19 +21,13 @@ function Header() {
         console.error("Nenhum token de autenticação encontrado.");
         return;
       }
-      try {
-        const response = await api.get("/vendedor/me", {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setUser(response.data);
-      } catch (error) {
-        console.error("Erro na requisição:", error.message);
-      }
-    })();
-  }, []);
+      setUser(
+        localStorage.getItem("user")
+          ? JSON.parse(localStorage.getItem("user"))
+          : {}
+      );
+    });
+  });
 
   return (
     <div className={style.header}>
@@ -46,9 +40,9 @@ function Header() {
         />
       </div>
       <div className={style.navbar}>
-        <a href="/">Home</a>
-        <a href="/about">Sobre</a>
-        <a href="/help">Fale Conosco</a>
+        <a onClick={() => navigate("/")}>Home</a>
+        <a onClick={() => navigate("/about")}>Sobre</a>
+        <a onClick={() => navigate("/help")}>Fale Conosco</a>
       </div>
       <div className={style.navbar}>
         {/* TODO: Usar classes para os ícones no lugar dos botoes */}

@@ -116,6 +116,7 @@ const Produtos = {
     }
 
     return await enrichProduto(results[0]);
+
   }
 };
 
