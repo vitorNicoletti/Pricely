@@ -15,27 +15,29 @@ function Header() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      console.error("Nenhum token de autenticação encontrado.");
-      return;
-    }
+    const fetchUserData = async () => {
+      try {
+        // Tenta buscar como vendedor
+        const userResponse = await api.get("/vendedor/me");
+        setUser(userResponse.data);
+        userResponse.data.role = "vendedor"; // Adiciona a role para identificar o tipo de usuário
+        localStorage.setItem("user", JSON.stringify(userResponse.data));
+      } catch (vendedorErr) {
+        try {
+          // Se falhar, tenta buscar como fornecedor
+          const userResponse = await api.get("/fornecedor/me");
+          setUser(userResponse.data);
+          userResponse.data.role = "fornecedor"; // Adiciona a role para identificar o tipo de usuário
+          localStorage.setItem("user", JSON.stringify(userResponse.data));
+        } catch (fornecedorErr) {
+          console.error("Erro ao buscar dados do usuário:", fornecedorErr);
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("user");
+        }
+      }
+    };
 
-    async function fetchUserData() {
-      const user_data = await api.get("/vendedor/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setUser(user_data.data);
-      localStorage.setItem("user", JSON.stringify(user_data.data));
-    }
-
-    fetchUserData().catch((err) => {
-      console.error("Erro ao buscar dados do usuário:", err);
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
-    });
+    fetchUserData();
   }, []);
 
   return (

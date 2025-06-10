@@ -20,9 +20,9 @@ function Login() {
     try {
       // 1) Autentica e recebe { token, perfil }
       const { data } = await api.post("/login", login_data);
-      const { token, perfil } = data;
+      const { token } = data;
 
-      // 2) Armazena token e perfil
+      // 2) Armazena token
       localStorage.setItem("authToken", token);
 
       setError("");
