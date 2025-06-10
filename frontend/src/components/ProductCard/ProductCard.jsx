@@ -37,14 +37,6 @@ function ProductCard({ product }) {
       </div>
       <div className={style.btn_div}>
         <button
-          className={style.btn}
-          onClick={() => {
-            alert("TODO: ADICIONAR AO CARRINHO");
-          }}
-        >
-          <i className="fa-solid fa-cart-shopping" />
-        </button>
-        <button
           onClick={() => navigate(`/details/${product.id_produto}`)}
           className={style.btn}
         >
