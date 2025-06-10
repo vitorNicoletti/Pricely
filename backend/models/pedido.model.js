@@ -9,45 +9,89 @@ const Pedido = {
    * recupera as compras desse pedido e retorna os produtos detalhados.
    * Se não encontrar o carrinho ou ocorrer erro, retorna null.
    */
-  getCarrinhoPorIdVendedor: async (idVendedor) => {
-    // 1) Buscar o carrinho (pedido em estado 'CARRINHO') para o vendedor
-    const sql = "SELECT * FROM pedido WHERE id_vendedor = ? AND estado = 'CARRINHO'";
-    let carrinho;
+  // Refatorada: só cuida da lógica geral e delega a criação
+  addProduto: async (idPedido, idProduto, quantidade) => {
     try {
-        
-      const results = await new Promise((resolve, reject) => {
-        db.query(sql, [idVendedor], (err, rows) => {
-          if (err) return reject(err);
-          resolve(rows);
-        });
+      const produtoInfo = await Produtos.getById(idProduto);
+
+      if (!produtoInfo || typeof produtoInfo.preco_unidade !== 'number') {
+        throw new Error("Produto não encontrado ou sem preço definido.");
+      }
+
+      return await Compra.criarCompra(produtoInfo.preco_unidade, quantidade, idProduto, idPedido);
+    } catch (error) {
+      console.error("Erro ao adicionar produto ao pedido:", error);
+      return null;
+    }
+  },
+
+  createCarrinho: async (idVendedor) => {
+  const sql = `
+    INSERT INTO pedido 
+      (dataCadastro, desconto, id_vendedor, cep, metodo_pagamento, estado)
+    VALUES
+      (NOW(), 0, ?, '', 'carteira', 'CARRINHO')
+  `;
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      db.query(sql, [idVendedor], (err, res) => {
+        if (err) return reject(err);
+        resolve(res);
       });
-      if (results.length === 0) {
-        return null;
-      }
-      carrinho = results[0];
-    } catch (err) {
-      return null;
+    });
+
+    // Retornar o pedido recém-criado
+    const id_pedido = result.insertId;
+    const [novoPedido] = await new Promise((resolve, reject) => {
+      db.query('SELECT * FROM pedido WHERE id_pedido = ?', [id_pedido], (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+
+    return {carrinho:novoPedido};
+
+  } catch (error) {
+    console.error("Erro ao criar carrinho:", error);
+    return null;
+  }
+},
+
+getCarrinhoPorIdVendedor: async (idVendedor) => {
+  const sql = "SELECT * FROM pedido WHERE id_vendedor = ? AND estado = 'CARRINHO'";
+  let carrinho;
+
+  try {
+    const results = await new Promise((resolve, reject) => {
+      db.query(sql, [idVendedor], (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+
+    if (results.length === 0) {
+      return null; // Não existe carrinho
     }
 
-    // 2) Buscar todas as compras vinculadas a esse pedido (carrinho)
-    let listaCompras;
-    try {
-      listaCompras = await Compra.getCompraPorIdPedido(carrinho.id_pedido);
-      if (listaCompras === null) {
-        return null;
-      }
-    } catch {
-      return null;
-    }
+    carrinho = results[0];
+  } catch (err) {
+    console.error("Erro ao buscar carrinho:", err);
+    return null;
+  }
 
-    // O método getCompraPorIdPedido pode retornar um objeto único ou um array.
-    // Garantimos que trabalhemos sempre com um array:
+  let comprasDetalhadas = [];
+
+  try {
+    const listaCompras = await Compra.getCompraPorIdPedido(carrinho.id_pedido);
+
     const comprasArray = Array.isArray(listaCompras)
       ? listaCompras
-      : [listaCompras];
+      : listaCompras
+      ? [listaCompras]
+      : [];
 
-    // 3) Para cada compra, buscar os detalhes do produto
-    const comprasDetalhadas = await Promise.all(
+    comprasDetalhadas = await Promise.all(
       comprasArray.map(async (compra) => {
         let produtoDetalhado = null;
         try {
@@ -61,13 +105,16 @@ const Pedido = {
         };
       })
     );
+  } catch (err) {
+    console.error("Erro ao buscar compras:", err);
+    comprasDetalhadas = [];
+  }
 
-    // 4) Retornar informação consolidada: carrinho + lista de compras com produtos
-    return {
-      carrinho,
-      compras: comprasDetalhadas,
-    };
-  },
-};
+  return {
+    carrinho,
+    compras: comprasDetalhadas,
+  };
+},
 
+}
 module.exports = Pedido;

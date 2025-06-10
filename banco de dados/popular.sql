@@ -1,3 +1,4 @@
+
 USE `Pricely`;
 
 -- 1) Arquivos (perfil, documento, imagem de produto)

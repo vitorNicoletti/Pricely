@@ -5,20 +5,22 @@ const bcrypt = require("bcrypt");
 
 const Vendedor = {
   /**
-   * Criação de vendedor com base em usuário
-   * @returns {Promise<number>} → ID do usuário recém-criado
-   */
-  createVendedor: async (email, senha, cpfCnpj) => {
-    // 1. Cria o usuário
-    const usuarioId = await Usuario.create(email, senha);
-    // 2. Insere o vendedor
-    await db.execute(
-      "INSERT INTO vendedor (id_usuario, cpfCnpj) VALUES (?, ?)",
-      [usuarioId, cpfCnpj]
-    );
-    // 3. Retorna o ID do novo usuário (vendedor)
-    return usuarioId;
-  },
+ * Criação de vendedor com base em usuário
+ * @returns {Promise<number>} → ID do usuário recém-criado
+ */
+  createVendedor: async (email, senha, cpfCnpj, telefone) => {
+  // 1. Cria o usuário
+  const usuarioId = await Usuario.create(email, senha, telefone);
+  
+  // 2. Insere o vendedor
+  await db.execute(
+    "INSERT INTO vendedor (id_usuario, cpfCnpj) VALUES (?, ?)",
+    [usuarioId, cpfCnpj]
+  );
+
+  // 3. Retorna o ID do novo usuário (vendedor)
+  return usuarioId;
+},
 
   /**
    * Retorna o perfil completo do vendedor (usuário+vendedor+carteira+info_bancaria+arquivos)

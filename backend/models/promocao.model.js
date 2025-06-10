@@ -7,31 +7,36 @@ const Promocao = {
    * Primeiro busca a oferta vinculada ao produto e, então, todas as entradas em grupo_promocao.
    *
    * @param {number} productId - ID do produto
-   * @param {function(Error, array)} callback - callback com assinatura (err, resultados)
+   * @returns {Promise<Array>} - Promise que resolve para o array de promoções
    */
-  getPromocoesByProduct: (productId, callback) => {
+  getPromocoesByProduct: async (productId) => {
     // 1) Buscar oferta associada ao produto
-    ProdOferta.getOfertaByProduct(productId, (err, oferta) => {
-      if (err) {
-        return callback(err);
-      }
-      // Se não houver oferta, retorna lista vazia
-      if (!oferta || (!oferta.id_oferta && typeof oferta !== 'number')) {
-        return callback(null, []);
-      }
-
-      // Se getOfertaByProduct retornou um objeto, extrai id_oferta
-      const ofertaId = typeof oferta === 'number' ? oferta : oferta.id_oferta;
-      // 2) Buscar promoções no grupo_promocao
-      const sql = 'SELECT * FROM grupo_promocao WHERE id_oferta = ?';
-      db.query(sql, [ofertaId], (err, results) => {
-        if (err) {
-          return callback(err);
-        }
-        // Retorna array de promoções (pode ser vazio)
-        return callback(null, results);
+    const oferta = await new Promise((resolve, reject) => {
+      ProdOferta.getOfertaByProduct(productId, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
       });
     });
+
+    // Se não houver oferta, retorna lista vazia
+    const ofertaId =
+      !oferta || (typeof oferta !== 'number' && !oferta.id_oferta)
+        ? null
+        : (typeof oferta === 'number' ? oferta : oferta.id_oferta);
+    if (!ofertaId) {
+      return [];
+    }
+
+    // 2) Buscar promoções no grupo_promocao
+    const sql = 'SELECT * FROM grupo_promocao WHERE id_oferta = ?';
+    const results = await new Promise((resolve, reject) => {
+      db.query(sql, [ofertaId], (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
+      });
+    });
+
+    return results;
   }
 };
 

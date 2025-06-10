@@ -73,18 +73,20 @@ const Fornecedor = {
   },
 
   // 3) Perfil completo
-  getById: (idUsuario, callback) => {
+  getById: (idUsuario) => {
+  return new Promise((resolve, reject) => {
     db.query(
       "SELECT id_usuario, nome_fantasia FROM fornecedor WHERE id_usuario = ?",
       [idUsuario],
       (err, results) => {
-        if (err) return callback(err);
-        if (!results?.length) return callback(null, null);
+        if (err) return reject(err);
+        if (!results?.length) return resolve(null);
         const fornecedor = results[0];
-        enrichFornecedor(fornecedor, () => callback(null, fornecedor));
+        enrichFornecedor(fornecedor, () => resolve(fornecedor));
       }
     );
-  },
+  });
+},
 
   // 4) Atualiza apenas campos da tabela fornecedor
   updateProfile: async (idUsuario, campos) => {
