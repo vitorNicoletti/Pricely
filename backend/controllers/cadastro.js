@@ -7,7 +7,7 @@ const Fornecedor = require("../models/fornecedor.model");
  * Cria um novo vendedor (usuário + registro em tabela vendedor)
  */
 async function createVendedor(req, res) {
-  const { email, senha, cpfCnpj } = req.body || {};
+  const { email, senha, cpfCnpj, telefone } = req.body || {};
 
   // Valida presença dos campos
   if (!email || !senha || !cpfCnpj) {
