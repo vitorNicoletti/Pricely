@@ -9,6 +9,45 @@ const Conjunto = require('../models/conjunto.model');
 const db = require('../db.js');
 
 
+
+async function removerProduto(req, res) {
+  const user = req.user;
+  const { id_produto } = req.body || {};
+
+  if (!user) {
+    return res.status(401).json({ error: 'Usuário não autenticado' });
+  }
+
+  if (!id_produto) {
+    return res.status(400).json({ error: 'Parâmetro id_produto é obrigatório' });
+  }
+
+  try {
+    let carrinhoData = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario);  
+    carrinhoData = carrinhoData[0]
+    if (!carrinhoData || !carrinhoData.compras || !carrinhoData.compras.length) {
+      return res.status(404).json({ error: 'Carrinho vazio ou inexistente' });
+    }
+
+    for (const compra of carrinhoData.compras) {
+      if (compra.id_produto === Number(id_produto)) {
+        const sucesso = await Compra.removerCompra(compra.id_compra);
+
+        if (sucesso) {
+          return res.status(200).json({ message: 'Produto removido do carrinho com sucesso' });
+        } else {
+          return res.status(500).json({ error: 'Erro ao remover o produto do carrinho' });
+        }
+      }
+    }
+
+    return res.status(404).json({ error: 'Produto não encontrado no carrinho' });
+  } catch (err) {
+    console.error('Erro ao remover produto do carrinho:', err);
+    return res.status(500).json({ error: 'Erro interno no servidor' });
+  }
+}
+
 async function getCarrinho(req, res) {
   const user = req.user;
   if (!user) {
@@ -77,15 +116,15 @@ async function adicionarAoCarrinho(req, res) {
 
   try {
     let carrinhoData = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario);
-    
-    if (!carrinhoData) {
+    carrinhoData = carrinhoData[0]
+    if (!carrinhoData || carrinhoData.length === 0) {
       carrinhoData = await Pedido.createCarrinho(user.id_usuario);
     }
-
-    const carrinhoId = carrinhoData.carrinho?.id_pedido || carrinhoData.id_pedido;
+    const carrinhoId = carrinhoData?.pedido?.id_pedido || carrinhoData?.carrinho?.id_pedido;
     if(carrinhoData.compras){
       for (const compra of carrinhoData.compras) {
-        if (compra.id_produto == id_produto) {
+        if (compra.id_produto === id_produto) {
+          
           await Compra.atualizarCompra(compra.id_compra,{
             quantidade: Number(compra.quantidade) + Number(quantidade)
           });
@@ -98,7 +137,7 @@ async function adicionarAoCarrinho(req, res) {
 
     }
 
-
+    
     const idCompra = await Pedido.addProduto(carrinhoId, id_produto, quantidade, Number(dividir));
     if (!idCompra) {
       return res.status(500).json({ message: "Erro interno ao adicionar produto" });
@@ -191,7 +230,8 @@ async function finalizarCompra(req, res) {
     }
 
     // 4) Busca carrinho
-    const carrinhoData = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario);
+    let carrinhoData = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario);
+    carrinhoData = carrinhoData[0]
     if (!carrinhoData || !Array.isArray(carrinhoData.compras) || !carrinhoData.compras.length) {
       return res.status(400).json({ message: "Carrinho vazio ou inexistente." });
     }
@@ -263,4 +303,4 @@ async function obterCoordenadasPorEndereco(rua, numero) {
 function dividirCompra(compra){
   
 }
-module.exports = { getCarrinho, adicionarAoCarrinho, finalizarCompra };
+module.exports = { getCarrinho, adicionarAoCarrinho, finalizarCompra,removerProduto };

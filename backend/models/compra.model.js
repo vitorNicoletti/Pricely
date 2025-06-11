@@ -1,11 +1,30 @@
 const db = require('../db.js');
 
 const Compra = {
+
+
+
+  removerCompra: async (id_compra) => {
+    const sql = `DELETE FROM compra WHERE id_compra = ?`;
+    try {
+      const result = await new Promise((resolve, reject) => {
+        db.query(sql, [id_compra], (err, res) => {
+          if (err) return reject(err);
+          resolve(res);
+        });
+      });
+
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error('Erro ao remover compra:', error);
+      return false;
+    }
+  },
   /**
    * Retorna a compra pelo ID do pedido. 
    * Se não encontrar ou ocorrer erro, retorna null.
    */
-  criarCompra: async (precoUnidade, quantidade, idProduto, idPedido,dividir) => {
+  criarCompra: async (precoUnidade, quantidade, idProduto, idPedido, dividir) => {
     const sql = `
       INSERT INTO compra 
         (preco_unidade, quantidade, estado, id_produto, id_pedido,dividir)
@@ -15,7 +34,7 @@ const Compra = {
 
     try {
       const result = await new Promise((resolve, reject) => {
-        db.query(sql, [precoUnidade, quantidade, idProduto, idPedido,dividir], (err, res) => {
+        db.query(sql, [precoUnidade, quantidade, idProduto, idPedido, dividir], (err, res) => {
 
           if (err) return reject(err);
           resolve(res);
@@ -42,8 +61,7 @@ const Compra = {
       if (!results || results.length === 0) {
         return null;
       }
-
-      return results[0];
+      return results;
     } catch (err) {
       return null;
     }
@@ -56,7 +74,7 @@ const Compra = {
    * @param {object} dados - Objeto com os campos a serem atualizados.
    */
   atualizarCompra: async (id_compra, dados) => {
-    const camposPermitidos = ['preco_unidade', 'quantidade', 'frete_pago', 'estado','id_conjunto'];
+    const camposPermitidos = ['preco_unidade', 'quantidade', 'frete_pago', 'estado', 'id_conjunto'];
     const camposAtualizar = [];
     const valores = [];
 

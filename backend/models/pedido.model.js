@@ -5,62 +5,63 @@ const Produtos = require('./produtos.model.js');
 
 const Pedido = {
 
-
   getPedidoDetalhadoPorEstado: async (idVendedor, estado) => {
     const sql = "SELECT * FROM pedido WHERE id_vendedor = ? AND estado = ?";
-    let pedido;
 
     try {
-      const results = await new Promise((resolve, reject) => {
+      const pedidos = await new Promise((resolve, reject) => {
         db.query(sql, [idVendedor, estado], (err, rows) => {
           if (err) return reject(err);
           resolve(rows);
         });
       });
 
-      if (results.length === 0) return null;
+      if (!pedidos || pedidos.length === 0) return [];
 
-      pedido = results[0];
-    } catch (err) {
-      console.error(`Erro ao buscar pedido com estado ${estado}:`, err);
-      return null;
-    }
+      const pedidosDetalhados = await Promise.all(
+        pedidos.map(async (pedido) => {
+          let comprasDetalhadas = [];
 
-    let comprasDetalhadas = [];
-
-    try {
-      const listaCompras = await Compra.getCompraPorIdPedido(pedido.id_pedido);
-
-      const comprasArray = Array.isArray(listaCompras)
-        ? listaCompras
-        : listaCompras
-          ? [listaCompras]
-          : [];
-
-      comprasDetalhadas = await Promise.all(
-        comprasArray.map(async (compra) => {
-          let produtoDetalhado = null;
           try {
-            produtoDetalhado = await Produtos.getById(compra.id_produto);
-          } catch {
-            produtoDetalhado = null;
+            const listaCompras = await Compra.getCompraPorIdPedido(pedido.id_pedido);
+            const comprasArray = Array.isArray(listaCompras)
+              ? listaCompras
+              : listaCompras
+                ? [listaCompras]
+                : [];
+
+            comprasDetalhadas = await Promise.all(
+              comprasArray.map(async (compra) => {
+                let produtoDetalhado = null;
+                try {
+                  produtoDetalhado = await Produtos.getById(compra.id_produto);
+                } catch {
+                  produtoDetalhado = null;
+                }
+                return {
+                  ...compra,
+                  produto: produtoDetalhado,
+                };
+              })
+            );
+          } catch (err) {
+            console.error("Erro ao buscar compras:", err);
           }
+
           return {
-            ...compra,
-            produto: produtoDetalhado,
+            pedido,
+            compras: comprasDetalhadas,
           };
         })
       );
-    } catch (err) {
-      console.error("Erro ao buscar compras:", err);
-      comprasDetalhadas = [];
-    }
 
-    return {
-      pedido,
-      compras: comprasDetalhadas,
-    };
+      return pedidosDetalhados;
+    } catch (err) {
+      console.error(`Erro ao buscar pedidos com estado ${estado}:`, err);
+      return [];
+    }
   },
+
 
   getCarrinhoPorIdVendedor: async (idVendedor) => {
     return await Pedido.getPedidoDetalhadoPorEstado(idVendedor, 'CARRINHO');

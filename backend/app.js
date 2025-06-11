@@ -16,13 +16,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use("/api/catalogo", catalogoRouter);
 app.use('/api/carrinho', carrinhoRouter )
 app.use('/api/produtos', produtoRoutes);
-app.use("/api", catalogoRouter);
+
 app.use("/api/vendedor", vendedorRouter);
 app.use("/api/fornecedor", fornecedorRouter);
 app.use('/api/cadastro',cadastroRouter )
 app.use('/api/login',loginRouter )
+
 
 
 const PORT = process.env.PORT || 3000;
