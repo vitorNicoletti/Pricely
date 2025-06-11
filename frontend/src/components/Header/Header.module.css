@@ -22,6 +22,7 @@
   justify-content: center;
   justify-items: center;
   align-items: center;
+  margin-right: 40px;
 }
 .navbar a {
   text-decoration: none;
@@ -56,8 +57,7 @@
 
 .modalWrapper {
   position: absolute;
-  margin-top: 20px;
-  left:-100px;
+  /* margin-top: 320px; */
   z-index: 999;
 }
 

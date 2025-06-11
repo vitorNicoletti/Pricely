@@ -29,6 +29,7 @@ const Vendedor = {
    */
   getById: async (idUsuario) => {
     try {
+      console.log("olha que vou tentar mesmo")
       const [results] = await db.promise().query(
         `SELECT 
           u.id_usuario,
@@ -62,12 +63,14 @@ const Vendedor = {
       };
 
       // Busca dados da carteira
+      console.log("Buscando dados da carteira")
       const [carteiraRows] = await db.promise().query(
         `SELECT id_carteira, saldo, ultima_atualizacao 
          FROM carteira 
          WHERE id_usuario = ?`,
         [idUsuario]
       );
+      console.log("buscados os dados da carteira", carteiraRows)
 
       if (carteiraRows.length > 0) {
         perfil.carteira = carteiraRows[0];

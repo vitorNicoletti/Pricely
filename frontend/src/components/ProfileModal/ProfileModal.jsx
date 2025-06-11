@@ -11,6 +11,7 @@ function ProfileModal() {
   const stored = localStorage.getItem("user");
   const user = stored ? JSON.parse(stored) : null;
   const isLogged = !!user;
+  console.log(user)
 
   // 2) Pegue sempre user.email
   const displayEmail = user?.email ?? user?.nome_fantasia ?? "Usuário";
