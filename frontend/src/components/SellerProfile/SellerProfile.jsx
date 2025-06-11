@@ -271,7 +271,7 @@ export default function SellerProfile() {
                     )}
                   </div>
                 ))
-              )}
+              }
             </div>
           )}
           {selected==="sobre" && (
