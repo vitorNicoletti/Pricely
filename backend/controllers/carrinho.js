@@ -1,6 +1,8 @@
 const Pedido = require('../models/pedido.model');
 const Promocao = require('../models/promocao.model');
+const Usuario = require('../models/usuario.model');
 const Vendedor = require('../models/vendedor.model');
+const bcrypt = require('bcrypt');
 
 async function getCarrinho(req, res) {
   const user = req.user;
@@ -11,6 +13,7 @@ async function getCarrinho(req, res) {
   try {
     // Supondo que o método no model se chame getCarrinhoPorIdVendedor
     const carrinhoData = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario);
+    
     if (!carrinhoData) {
       return res.status(404).json({ error: 'Carrinho não encontrado' });
     }
@@ -110,3 +113,34 @@ function pegarPromocaoPedidoMinimo(res,listaPromocoes){
   return promocaoMinima
 }
 module.exports = { getCarrinho, adicionarAoCarrinho };
+
+async function finalizarCompra(req,res){
+  // forma de confirmar se a compra REALMENTE deve ser feita
+  const confirmarSenha = req.senha 
+  const user = req.user
+  const userBanco = await Usuario.getUserByEmail(user.email)
+  const senha = userBanco.senha
+  const senhaCorreta = await bcrypt.compare(senha, confirmarSenha);
+  if (!senhaCorreta){
+    return res.status(400).json({message:"senha incorreta."})
+  }
+  // senha confirmada, comecar algoritmo
+  // verificar se existe e armazenar o carrinho
+  const carrinho = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario)
+  if (!carrinho){
+    return res.status(400).json({message:"carrinho não existe"})
+  }
+  //
+  for(const compra in carrinho.compras ){
+    const infoPromocoes = await Promocao.getPromocoesByProduct(compra.id_produto)
+    const promocaoMinima = pegarPromocaoPedidoMinimo(res,infoPromocoes)
+    if(promocaoMinima.quantidade > compra.quantidade){
+      const conjuntoDividir = dividirCompra(compra)
+    }
+  }
+  
+}
+
+function dividirCompra(compra){
+  
+}

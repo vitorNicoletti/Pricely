@@ -10,7 +10,7 @@ const Pedido = {
    * Se não encontrar o carrinho ou ocorrer erro, retorna null.
    */
   // Refatorada: só cuida da lógica geral e delega a criação
-  addProduto: async (idPedido, idProduto, quantidade) => {
+  addProduto: async (idPedido, idProduto, quantidade,dividir) => {
     try {
       const produtoInfo = await Produtos.getById(idProduto);
 
@@ -18,7 +18,7 @@ const Pedido = {
         throw new Error("Produto não encontrado ou sem preço definido.");
       }
 
-      return await Compra.criarCompra(produtoInfo.preco_unidade, quantidade, idProduto, idPedido);
+      return await Compra.criarCompra(produtoInfo.preco_unidade, quantidade, idProduto, idPedido,dividir);
     } catch (error) {
       console.error("Erro ao adicionar produto ao pedido:", error);
       return null;
