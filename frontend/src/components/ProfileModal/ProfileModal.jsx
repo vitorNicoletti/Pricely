@@ -22,10 +22,11 @@ function ProfileModal() {
   function sairHandler() {
     // Limpa o localStorage
     localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    localStorage.removeItem("authToken");
 
     // Redireciona para a página inicial
     navigate("/");
+    window.location.reload(true)
   }
 
   return (

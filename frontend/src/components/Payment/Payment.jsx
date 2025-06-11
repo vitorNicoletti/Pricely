@@ -1,8 +1,10 @@
 import { useState } from "react";
-import "./Payment.css";
-import mastercard from "../../assets/mastercard.svg"
-import amex from "../../assets/amex.svg"
-import visa from "../../assets/visa.svg"
+import mastercard from "../../assets/mastercard.svg";
+import amex from "../../assets/amex.svg";
+import visa from "../../assets/visa.svg";
+import Header from "../Header/Header";
+import style from "./Payment.module.css";
+import { useNavigate } from "react-router-dom";
 
 function getCardBrand(number) {
   if (/^4/.test(number)) return "visa";
@@ -69,7 +71,8 @@ function isValidPostalCode(postalCode) {
 }
 
 function Payment() {
-  const [paymentType, setPaymentType] = useState("solo");
+  const navigate = useNavigate();
+
   const [method, setMethod] = useState("card");
   const [cardNumber, setCardNumber] = useState("");
   const [cvc, setCvc] = useState("");
@@ -102,10 +105,12 @@ function Payment() {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!isValidCardNumber(cardNumber)) newErrors.cardNumber = "Número do cartão inválido (16 dígitos)";
+    if (!isValidCardNumber(cardNumber))
+      newErrors.cardNumber = "Número do cartão inválido (16 dígitos)";
     if (!isValidExpiry(expiry)) newErrors.expiry = "Data de validade inválida";
     if (!isValidCVC(cvc, cardBrand)) newErrors.cvc = "CVC inválido";
-    if (!isValidPostalCode(postalCode)) newErrors.postalCode = "Código postal inválido";
+    if (!isValidPostalCode(postalCode))
+      newErrors.postalCode = "Código postal inválido";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -114,131 +119,131 @@ function Payment() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      alert("Pagamento enviado com sucesso!");
+      navigate("/rastreamento");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="payment-container">
-      <div className="payment-mode">
-        <button
-          className={paymentType === "solo" ? "active" : ""}
-          onClick={() => setPaymentType("solo")}
-          type="button"
-        >
-          <span role="img" aria-label="user">👤</span> Pagar sozinho
-        </button>
-        <button
-          className={paymentType === "group" ? "active" : ""}
-          onClick={() => setPaymentType("group")}
-          type="button"
-        >
-          <span role="img" aria-label="group">👥</span> Pagar em grupo
-        </button>
-      </div>
-
-      <div className="payment-methods">
-        <button
-          className={method === "card" ? "active" : ""}
-          onClick={() => setMethod("card")}
-          type="button"
-        >
-          💳<br />Card
-        </button>
-        <button
-          className={method === "eps" ? "active" : ""}
-          onClick={() => setMethod("eps")}
-          type="button"
-        >
-          🅿️<br />EPS
-        </button>
-        <button
-          className={method === "giropay" ? "active" : ""}
-          onClick={() => setMethod("giropay")}
-          type="button"
-        >
-          🏦<br />Giropay
-        </button>
-        <button type="button">⋯</button>
-      </div>
-
-      <div className="card-form">
-        <label>Número do cartão</label>
-        <div className="card-input-wrapper">
-          <input
-            type="text"
-            placeholder="1234 1234 1234 1234"
-            value={cardNumber}
-            onChange={handleCardNumberChange}
-            maxLength={19}
-          />
-          <div className="card-icons">
-            {cardBrand === "visa" && <img src={visa} alt="Visa" />}
-            {cardBrand === "mastercard" && <img src={mastercard} alt="Mastercard" />}
-            {cardBrand === "amex" && <img src={amex} alt="Amex" />}
-          </div>
-        </div>
-        {errors.cardNumber && <span className="error">{errors.cardNumber}</span>}
-
-        <div className="form-row">
-          <div>
-            <label>Validade</label>
-            <input
-              type="text"
-              placeholder="MM / YY"
-              value={expiry}
-              onChange={handleExpiryChange}
-              maxLength={7}
-            />
-            {errors.expiry && <span className="error">{errors.expiry}</span>}
-          </div>
-          <div>
-            <label>CVC</label>
-            <input
-              type="text"
-              placeholder="CVC"
-              value={cvc}
-              onChange={handleCvcChange}
-              maxLength={4}
-            />
-            {errors.cvc && <span className="error">{errors.cvc}</span>}
-          </div>
+    <>
+      <Header />
+      <form onSubmit={handleSubmit} className={style.payment_container}>
+        <div className={style.payment_methods}>
+          <button
+            className={method === "card" ? style.active : ""}
+            onClick={() => setMethod("card")}
+            type="button"
+          >
+            💳
+            <br />
+            Card
+          </button>
+          <button
+            className={method === "eps" ? style.active : null}
+            onClick={() => setMethod("eps")}
+            type="button"
+          >
+            🅿️
+            <br />
+            EPS
+          </button>
+          <button
+            className={method === "giropay" ? style.active : null}
+            onClick={() => setMethod("giropay")}
+            type="button"
+          >
+            🏦
+            <br />
+            Giropay
+          </button>
+          <button type="button">⋯</button>
         </div>
 
-        <div className="form-row">
-          <div>
-            <label>País</label>
-            <select defaultValue={"brasil"}>
-              <option value="alemanha">Alemanha</option>
-              <option value="brasil">Brasil</option>
-              <option value="canada">Canadá</option>
-              <option value="china">China</option>
-              <option value="eua">Estados Unidos</option>
-              <option value="franca">França</option>
-              <option value="japao">Japão</option>
-              <option value="itelia">Itália</option>
-              <option value="india">Índia</option>
-              <option value="eu">Reino Unido</option>
-            </select>
-          </div>
-          <div>
-            <label>Código Postal</label>
+        <div className={style.card_form}>
+          <label>Número do cartão</label>
+          <div className={style.card_input_wrapper}>
             <input
               type="text"
-              placeholder="Código postal"
-              value={postalCode}
-              onChange={handlePostalCodeChange}
-              maxLength={9}
+              placeholder="1234 1234 1234 1234"
+              value={cardNumber}
+              onChange={handleCardNumberChange}
+              maxLength={19}
             />
-            {errors.postalCode && <span className="error">{errors.postalCode}</span>}
+            <div className={style.card_icons}>
+              {cardBrand === "visa" && <img src={visa} alt="Visa" />}
+              {cardBrand === "mastercard" && (
+                <img src={mastercard} alt="Mastercard" />
+              )}
+              {cardBrand === "amex" && <img src={amex} alt="Amex" />}
+            </div>
           </div>
-        </div>
+          {errors.cardNumber && (
+            <span className={style.error}>{errors.cardNumber}</span>
+          )}
 
-        <button type="submit" className="submit-button">
-          Enviar Pagamento
-        </button>
-      </div>
-    </form>
+          <div className={style.form_row}>
+            <div>
+              <label>Validade</label>
+              <input
+                type="text"
+                placeholder="MM / YY"
+                value={expiry}
+                onChange={handleExpiryChange}
+                maxLength={7}
+              />
+              {errors.expiry && (
+                <span className={style.error}>{errors.expiry}</span>
+              )}
+            </div>
+            <div>
+              <label>CVC</label>
+              <input
+                type="text"
+                placeholder="CVC"
+                value={cvc}
+                onChange={handleCvcChange}
+                maxLength={4}
+              />
+              {errors.cvc && <span className={style.error}>{errors.cvc}</span>}
+            </div>
+          </div>
+
+          <div className={style.form_row}>
+            <div>
+              <label>País</label>
+              <select defaultValue={"brasil"}>
+                <option value="alemanha">Alemanha</option>
+                <option value="brasil">Brasil</option>
+                <option value="canada">Canadá</option>
+                <option value="china">China</option>
+                <option value="eua">Estados Unidos</option>
+                <option value="franca">França</option>
+                <option value="japao">Japão</option>
+                <option value="itelia">Itália</option>
+                <option value="india">Índia</option>
+                <option value="eu">Reino Unido</option>
+              </select>
+            </div>
+            <div>
+              <label>Código Postal</label>
+              <input
+                type="text"
+                placeholder="Código postal"
+                value={postalCode}
+                onChange={handlePostalCodeChange}
+                maxLength={9}
+              />
+              {errors.postalCode && (
+                <span className={style.error}>{errors.postalCode}</span>
+              )}
+            </div>
+          </div>
+
+          <button type="submit" className={style.submit_button}>
+            Enviar Pagamento
+          </button>
+        </div>
+      </form>
+    </>
   );
 }
 
