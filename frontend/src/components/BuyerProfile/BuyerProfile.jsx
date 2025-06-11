@@ -22,7 +22,7 @@ function BuyerProfile() {
     const token = localStorage.getItem("authToken");
     if (!token) {
       console.error("Nenhum token de autenticação encontrado.");
-      navigate("/login");
+      navigate("/");
     }
     async function fetchData() {
       try {

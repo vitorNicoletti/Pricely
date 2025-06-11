@@ -1,20 +1,34 @@
 import style from "./Detalhes.module.css";
-import seller_profile_style from "../SellerProfile/SellerProfile.module.css";
-import avatar_placeholder from "../../assets/profile_placeholder.png";
+import favoritoIcone from "../../assets/favoritos.png";
 import avatarRegina from "../../assets/avatar-regina.png";
 import avatarCarlos from "../../assets/avatar-carlos.png";
 import avatarRicardo from "../../assets/avatar-ricardo.png";
-import favoritoIcone from "../../assets/favoritos.png";
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+
+import api from "../../api";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
-import api from "../../api";
+import CartConfirmModal from "../CartConfirmModal/CartConfirmModal";
+import avatar_placeholder from "../../assets/profile_placeholder.png";
+import seller_profile_style from "../SellerProfile/SellerProfile.module.css";
+
+import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
 
 function Detalhes() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [fornecedor, setFornecedor] = useState(null);
+  const [showCartModal, setShowCartModal] = useState(false);
+  const quantityRef = useRef();
+
+  const stored = localStorage.getItem("user");
+  const user = stored ? JSON.parse(stored) : null;
+  const isLogged = !!user;
+
+  const navigate = useNavigate();
+
+  const minimumOrder = product?.quantidade_minima || 50;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,6 +48,14 @@ function Detalhes() {
     fetchData();
   }, [id]);
 
+  function handleAddToCartClick() {
+    if (!isLogged) {
+      navigate("/login");
+      return;
+    }
+    setShowCartModal(true);
+  }
+
   return (
     <>
       <Header />
@@ -46,7 +68,8 @@ function Detalhes() {
           />
           <div className={style.produtoImagemContainer}>
             {product?.imagem.dados && product?.imagem.tipo && (
-              <img className={style.produtoImagem}
+              <img
+                className={style.produtoImagem}
                 src={`data:${product.imagem.tipo};base64,${product.imagem.dados}`}
                 alt={`Imagem de ${product.nome}`}
               />
@@ -59,13 +82,19 @@ function Detalhes() {
             <p className={style.produtoPreco}>
               R$ <strong>{product?.preco_unidade.toFixed(2)}</strong>
             </p>
-            <p className={style.produtoMinimo}>Minimum order: 50</p>
+            <p className={style.produtoMinimo}>Minimum order: {minimumOrder}</p>
 
-            <input type="number" placeholder="Quantity" defaultValue={25} />
+            <input
+              type="number"
+              placeholder="Quantity"
+              defaultValue={25}
+              min={1}
+              ref={quantityRef}
+            />
             <button
               className={style.btn}
               onClick={() => {
-                alert("TODO: ADICIONAR AO CARRINHO");
+                handleAddToCartClick();
               }}
             >
               Adicionar ao Carrinho
@@ -99,7 +128,9 @@ function Detalhes() {
                   <button
                     className={style.btn}
                     onClick={() => {
-                      alert("TODO: FUNCAO DE SEGUIR");
+                      alert(
+                        "Funcionalidade de seguir fornecedor ainda não implementada."
+                      );
                     }}
                   >
                     Seguir
@@ -120,8 +151,19 @@ function Detalhes() {
             </div>
           </div>
         </div>
+      </div>
 
-        <div className={style.avaliacoesSection}>
+      {showCartModal && (
+        <CartConfirmModal
+          open={showCartModal}
+          onClose={() => setShowCartModal(false)}
+          quantityRef={quantityRef}
+          product={product}
+          minimumOrder={minimumOrder}
+        />
+      )}
+
+      <div className={style.avaliacoesSection}>
           <h3>Últimas Avaliações</h3>
           <div className={style.avaliacoes}>
             <div className={style.avaliacao}>
@@ -248,7 +290,7 @@ function Detalhes() {
             </div>
           </div>
         </div>
-      </div>
+
       <Footer />
     </>
   );

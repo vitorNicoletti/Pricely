@@ -20,11 +20,26 @@ function Login() {
     try {
       // 1) Autentica e recebe { token, perfil }
       const { data } = await api.post("/login", login_data);
-      const { token, perfil } = data;
+      const { token } = data;
 
-      // 2) Armazena token e perfil
+      // 2) Armazena token
       localStorage.setItem("authToken", token);
-      localStorage.setItem("user", JSON.stringify(perfil));
+
+      try {
+        // Tenta buscar como vendedor
+        const userResponse = await api.get("/vendedor/me");
+        userResponse.data.role = "vendedor"; // Adiciona a role para identificar o tipo de usuário
+        localStorage.setItem("user", JSON.stringify(userResponse.data));
+      } catch (vendedorErr) {
+        try {
+          // Se falhar, tenta buscar como fornecedor
+          const userResponse = await api.get("/fornecedor/me");
+          userResponse.data.role = "fornecedor"; // Adiciona a role para identificar o tipo de usuário
+          localStorage.setItem("user", JSON.stringify(userResponse.data));
+        } catch (fornecedorErr) {
+          console.error("Erro ao buscar dados do usuário:", fornecedorErr);
+        }
+      }
 
       setError("");
       navigate("/");
@@ -43,6 +58,11 @@ function Login() {
 
   return (
     <div className={styles.loginContainer}>
+      {loading && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingModal}>Carregando...</div>
+        </div>
+      )}
       <div>
         <div className={styles.loginCard}>
           <div className={styles.loginHeader}>

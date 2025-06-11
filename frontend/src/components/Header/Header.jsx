@@ -13,21 +13,16 @@ function Header() {
   const toggleModal = () => {
     setIsOpen(!isOpen);
   };
-
   useEffect(() => {
-    (async () => {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        console.error("Nenhum token de autenticação encontrado.");
-        return;
+    async function loadUserData() {
+      let userData = localStorage.getItem("user");
+      if (userData) {
+        userData = JSON.parse(userData);
+        setUser(userData);
       }
-      setUser(
-        localStorage.getItem("user")
-          ? JSON.parse(localStorage.getItem("user"))
-          : {}
-      );
-    });
-  });
+    }
+    loadUserData();
+  }, []);
 
   return (
     <div className={style.header}>
