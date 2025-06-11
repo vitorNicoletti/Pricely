@@ -5,6 +5,7 @@ const Oferta = require('./oferta.model.js');
 const Fornecedor = require('./fornecedor.model.js');
 const AvaliacaoProduto = require('./avaliacao_produto.model.js');
 
+
 /**
  * Enriquecer um produto com:
  *  1) imagem (arquivo)
@@ -14,109 +15,116 @@ const AvaliacaoProduto = require('./avaliacao_produto.model.js');
  * @param {object} produto - objeto do produto cru
  * @returns {Promise<object>} - produto enriquecido
  */
-async function enrichProduto(produto) {
 
-  // 1) imagem
+async function enrichProduto(produto) {
+  // imagem
   produto.imagem = null;
   if (produto.imagem_arquivo_id) {
-    try {
-      produto.imagem = await Arquivos.getArqPorId(produto.imagem_arquivo_id) || null;
-    } catch {
-      produto.imagem = null;
-    }
+    produto.imagem = await Arquivos.getArqPorId(produto.imagem_arquivo_id).catch(() => null);
   }
-  
-  // 2) promoções
+  // promoções
   produto.promocoes = [];
   try {
     const promocoes = await Promocao.getPromocoesByProduct(produto.id_produto);
     for (const promo of promocoes) {
-      let idFornecedor = null;
+      const idFornecedor = await Oferta.getIdFornecedorByOferta(promo.id_oferta).catch(() => null);
       let nomeFornecedor = null;
 
-      // id_fornecedor via Oferta
-      try {
-        idFornecedor = await Oferta.getIdFornecedorByOferta(promo.id_oferta);
-      } catch {
-        idFornecedor = null;
-      }
-
-      // nome_fornecedor via callback, embrulhado em Promise
       if (idFornecedor) {
-        nomeFornecedor = await new Promise((resolve) => {
-          Fornecedor.getNome(idFornecedor, (err, nome) => {
-            if (err || !nome) return resolve(null);
-            resolve(nome);
-          });
+        nomeFornecedor = await new Promise(res => {
+          Fornecedor.getNome(idFornecedor, (err, nome) => res(err ? null : nome));
         });
       }
-      produto.promocoes.push({
-        ...promo,
-        id_fornecedor: idFornecedor,
-        nome_fornecedor: nomeFornecedor
-      });
+      produto.promocoes.push({ ...promo, id_fornecedor: idFornecedor, nome_fornecedor: nomeFornecedor });
     }
   } catch {
     produto.promocoes = [];
   }
 
-  // 3) avaliação média via callback
-  produto.avaliacao_media = null;
-  try {
-    produto.avaliacao_media = await new Promise((resolve) => {
-      AvaliacaoProduto.getAvaliacaoPorProduto(produto.id_produto, (err, media) => {
-        if (err || media == null) return resolve(null);
-        resolve(media);
-      });
-    });
-  } catch {
-    produto.avaliacao_media = null;
-  }
-
+  // avaliação media
+  produto.avaliacao_media = await new Promise(res => {
+    AvaliacaoProduto.getAvaliacaoPorProduto(produto.id_produto, (err, media) => res(err ? null : media));
+  }).catch(() => null);
   return produto;
 }
 
 const Produtos = {
+
   /**
    * Retorna todos os produtos, enriquecendo cada um (imagem, promoções, avaliação).
    * @returns {Promise<Array<object>>}
    */
   getAll: async () => {
-    const sql = 'SELECT * FROM produto';
-    const results = await new Promise((resolve, reject) => {
-      db.query(sql, (err, rows) => {
-        if (err) return reject(err);
-        resolve(rows);
-      });
-    });
-
-    if (!results || results.length === 0) {
-      return [];
-    }
-    
-    return await Promise.all(results.map(enrichProduto));
+    const [rows] = await db.promise().query('SELECT * FROM produto');
+    if (!rows.length) return [];
+    return Promise.all(rows.map(enrichProduto));
   },
-
-  /**
+    /**
    * Retorna um produto pelo ID, enriquecido (imagem, promoções, avaliação).
    * @param {number} id - ID do produto
    * @returns {Promise<object|null>} - produto ou null se não encontrado
    */
-  getById: async (id) => {
-    const sql = 'SELECT * FROM produto WHERE id_produto = ?';
-    const results = await new Promise((resolve, reject) => {
-      db.query(sql, [id], (err, rows) => {
-        if (err) return reject(err);
-        resolve(rows);
-      });
-    });
-
-    if (!results || results.length === 0) {
-      return null;
+  getById: async id => {
+    const [rows] = await db.promise().query('SELECT * FROM produto WHERE id_produto = ?', [id]);
+    if (!rows.length) return null;
+    return enrichProduto(rows[0]);
+  },
+  // nova função: lista por fornecedor
+  getByFornecedor: async id_fornecedor => {
+    const [rows] = await db.promise().query(
+      'SELECT * FROM produto WHERE id_fornecedor = ?',
+      [id_fornecedor]
+    );
+    if (!rows.length) return [];
+    return Promise.all(rows.map(enrichProduto));
+  },
+  create: async ({ nome, descricao, preco_unidade, estado, id_fornecedor, imagemBuffer, imagemNome, imagemTipo }) => {
+    let imagem_arquivo_id = null;
+    if (imagemBuffer) {
+      imagem_arquivo_id = await Arquivos.salvarArquivo(imagemNome, imagemTipo, imagemBuffer);
     }
-
-    return await enrichProduto(results[0]);
-
+    const [result] = await db.promise().query(
+      `INSERT INTO produto (nome, descricao, preco_unidade, estado, id_fornecedor, imagem_arquivo_id)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [nome, descricao, preco_unidade, estado, id_fornecedor, imagem_arquivo_id]
+    );
+    return result.insertId;
+  },
+  update: async ({ id_produto, nome, descricao, preco_unidade, estado, id_fornecedor, newImagem }) => {
+    const [rows] = await db.promise().query(
+      'SELECT imagem_arquivo_id FROM produto WHERE id_produto = ? AND id_fornecedor = ?',
+      [id_produto, id_fornecedor]
+    );
+    const oldImgId = rows[0]?.imagem_arquivo_id;
+    let imagem_arquivo_id;
+    if (newImagem) {
+      imagem_arquivo_id = await Arquivos.salvarArquivo(newImagem.originalname, newImagem.mimetype, newImagem.buffer);
+    }
+    const setC = newImagem
+      ? 'nome=?, descricao=?, preco_unidade=?, estado=?, imagem_arquivo_id=?'
+      : 'nome=?, descricao=?, preco_unidade=?, estado=?';
+    const params = newImagem
+      ? [nome, descricao, preco_unidade, estado, imagem_arquivo_id, id_produto, id_fornecedor]
+      : [nome, descricao, preco_unidade, estado, id_produto, id_fornecedor];
+    const [resUpdate] = await db.promise().query(
+      `UPDATE produto SET ${setC} WHERE id_produto = ? AND id_fornecedor = ?`,
+      params
+    );
+    if (newImagem && oldImgId) await Arquivos.deleteArquivo(oldImgId);
+    return resUpdate.affectedRows;
+  },
+  remove: async (id_produto, id_fornecedor) => {
+    const [rows] = await db.promise().query(
+      'SELECT imagem_arquivo_id FROM produto WHERE id_produto = ? AND id_fornecedor = ?',
+      [id_produto, id_fornecedor]
+    );
+    const imgId = rows[0]?.imagem_arquivo_id;
+    const [resDel] = await db.promise().query(
+      'DELETE FROM produto WHERE id_produto = ? AND id_fornecedor = ?',
+      [id_produto, id_fornecedor]
+    );
+    if (resDel.affectedRows && imgId) await Arquivos.deleteArquivo(imgId);
+    return resDel.affectedRows;
   }
 };
 

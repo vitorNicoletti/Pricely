@@ -7,7 +7,7 @@ const Fornecedor = require("../models/fornecedor.model");
  * Cria um novo vendedor (usuário + registro em tabela vendedor)
  */
 async function createVendedor(req, res) {
-  const { email, senha, cpfCnpj, telefone } = req.body || {}; // ✅ telefone adicionado
+  const { email, senha, cpfCnpj, telefone } = req.body || {};
 
   // Valida presença dos campos
   if (!email || !senha || !cpfCnpj) {
@@ -35,7 +35,7 @@ async function createVendedor(req, res) {
   // Cria usuário e obtém o ID gerado
   let usuarioId;
   try {
-    usuarioId = await Vendedor.createVendedor(email, senha, cpfCnpj, telefone); // ✅ telefone passado
+    usuarioId = await Vendedor.createVendedor(email, senha, cpfCnpj, telefone);
   } catch (err) {
     console.error("Erro ao criar vendedor:", err);
     return res

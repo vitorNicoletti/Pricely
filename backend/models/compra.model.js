@@ -1,6 +1,10 @@
 const db = require('../db.js');
 
 const Compra = {
+  /**
+   * Retorna a compra pelo ID do pedido. 
+   * Se não encontrar ou ocorrer erro, retorna null.
+   */
   criarCompra: async (precoUnidade, quantidade, idProduto, idPedido) => {
     const sql = `
       INSERT INTO compra 
@@ -22,7 +26,6 @@ const Compra = {
       return null;
     }
   },
-
   getCompraPorIdPedido: async (id_pedido) => {
     const sql = 'SELECT * FROM compra WHERE id_pedido = ?';
 

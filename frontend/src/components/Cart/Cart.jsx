@@ -55,6 +55,7 @@ const Cart = () => {
           {!cartItems.compras || cartItems.compras.length === 0 ? (
             <div className={styles.emptyCart}>
               <h2>Seu carrinho está vazio</h2>
+
               <button
                 className={styles.keepBuying}
                 onClick={() => navigate("/")}

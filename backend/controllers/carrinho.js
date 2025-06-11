@@ -1,4 +1,6 @@
+
 const Compra = require('../models/compra.model');
+
 const Pedido = require('../models/pedido.model');
 const Promocao = require('../models/promocao.model');
 const Vendedor = require('../models/vendedor.model');
@@ -24,7 +26,10 @@ async function getCarrinho(req, res) {
 
 async function adicionarAoCarrinho(req, res) {
   const user = req.user;
+
   let { id_produto, quantidade, dividir } = req.body;
+
+  // Verifica se usuário está autenticado
 
   if (!user) {
     return res.status(401).json({ error: 'Usuário não autenticado' });
@@ -32,6 +37,7 @@ async function adicionarAoCarrinho(req, res) {
 
   // Validação dos campos
   const erros = [];
+
 
   id_produto = Number(id_produto);
   quantidade = Number(quantidade);
@@ -52,7 +58,6 @@ async function adicionarAoCarrinho(req, res) {
   if (erros.length > 0) {
     return res.status(400).json({ error: 'Parâmetros inválidos', detalhes: erros });
   }
-
   // Verifica promoções se não for dividido
   if (dividir === 0) {
     const infoPromocoes = await Promocao.getPromocoesByProduct(id_produto);
@@ -117,5 +122,6 @@ function pegarPromocaoPedidoMinimo(res, listaPromocoes) {
 
   return promocaoMinima;
 }
+
 
 module.exports = { getCarrinho, adicionarAoCarrinho };
