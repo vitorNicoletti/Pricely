@@ -15,11 +15,30 @@ const Cart = () => {
   const { subtotal, discount, total } = useMemo(() => {
     if (!cartItems.compras) return { subtotal: 0, discount: 0, total: 0 };
 
-    const subtotal = cartItems.compras.reduce(
-      (acc, item) => acc + item.preco_unidade * item.quantidade,
-      0
-    );
-    const discount = 0.1 * subtotal; // 10% de desconto
+    let subtotal = 0;
+    let discount = 0;
+
+    cartItems.compras.forEach((item) => {
+      const preco = item.preco_unidade;
+      const qtd = item.quantidade;
+      const promocoes = item.produto.promocoes || [];
+
+      subtotal += preco * qtd;
+
+      // Ordena promoções da maior para a menor quantidade para pegar a mais vantajosa
+      const promocoesValidas = promocoes
+        .filter((promo) => qtd >= promo.quantidade)
+        .sort((a, b) => b.quantidade - a.quantidade);
+
+      if (promocoesValidas.length > 0) {
+        const melhorPromo = promocoesValidas[0];
+        const descontoProduto =
+          (melhorPromo.desc_porcentagem / 100) * (preco * qtd);
+        discount += descontoProduto;
+      }
+      console.log(promocoes)
+    });
+
     const total = subtotal - discount;
 
     return { subtotal, discount, total };

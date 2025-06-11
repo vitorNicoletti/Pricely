@@ -155,6 +155,7 @@ function Detalhes() {
 
       {showCartModal && (
         <CartConfirmModal
+          userRole={user.role}
           open={showCartModal}
           onClose={() => setShowCartModal(false)}
           quantityRef={quantityRef}
