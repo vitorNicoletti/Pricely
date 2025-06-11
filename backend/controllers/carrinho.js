@@ -232,7 +232,7 @@ async function finalizarCompra(req, res) {
       numero: numeroInt,
       complemento: complemento || null
     };
-    const okPedido = await Pedido.atualizarPedido(carrinhoData.carrinho.id_pedido, dadosPedido);
+    const okPedido = await Pedido.atualizarPedido(carrinhoData.pedido.id_pedido, dadosPedido);
     if (!okPedido) {
       console.error(`Falha ao atualizar pedido ${carrinhoData.carrinho.id_pedido}`);
     }
