@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import avatar_placeholder from "../../assets/profile_placeholder.png";
 import Header from "../Header/Header";
@@ -23,32 +23,68 @@ export default function SellerProfile() {
   const [products, setProducts] = useState([]);
   const [selected, setSelected] = useState("produtos");
 
-  // modais
-  const [isEditOpen, setIsEditOpen]         = useState(false);
-  const [currentProduct, setCurrentProduct] = useState(null);
-  const [editPreview, setEditPreview]       = useState(null);
-  const [editImage, setEditImage]           = useState(null);
-  const [isDeleteOpen, setIsDeleteOpen]     = useState(false);
+  // ref para `<input type=file>`
+  const fileInputRef = useRef(null);
 
+  // modais de edição/exclusão produto
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState(null);
+  const [editPreview, setEditPreview] = useState(null);
+  const [editImage, setEditImage] = useState(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  // busca perfil e produtos ao montar
   useEffect(() => {
-    // perfil: usa "/fornecedor/me" ou "/fornecedor/:id"
     const perfilEndpoint = isOwner ? "/fornecedor/me" : `/fornecedor/${id}`;
     api.get(perfilEndpoint)
-   .then(res => {
-     const data = res.data;
-     setFornecedor({
-       ...data,
-       nomeFantasia: data.nomeFantasia || data.nome_fantasia || "",
-     });
-   })
-   .catch(err => console.error("Erro ao buscar fornecedor:", err));
+      .then(res => {
+        const data = res.data;
+        setFornecedor({
+          ...data,
+          nomeFantasia: data.nomeFantasia || data.nome_fantasia || "",
+        });
+      })
+      .catch(err => console.error("Erro ao buscar fornecedor:", err));
 
-    // produtos deste fornecedor
     api.get(`/produtos/fornecedor/${id}`)
-       .then(res => setProducts(res.data))
-       .catch(err => console.error("Erro ao buscar produtos:", err));
+      .then(res => setProducts(res.data))
+      .catch(err => console.error("Erro ao buscar produtos:", err));
   }, [id, isOwner]);
 
+  // abre dialog de upload de perfil
+  const handleChooseProfile = () => {
+    fileInputRef.current?.click();
+  };
+
+  // lida com mudança de imagem de perfil
+  const handleProfileImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // preview local
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64Data = reader.result.split(',')[1];
+      setFornecedor(prev => ({
+        ...prev,
+        imagem: { tipo: file.type, dados: base64Data }
+      }));
+    };
+    reader.readAsDataURL(file);
+
+    // upload ao servidor
+    const formData = new FormData();
+    formData.append("imagemPerfil", file);
+    try {
+      await api.put("/fornecedor/me", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } catch (err) {
+      console.error("Erro ao atualizar imagem de perfil:", err);
+    }
+  };
+
+  // abre modal de edição de produto
   const openEditModal = (p) => {
     setCurrentProduct({ ...p });
     if (p.imagem?.dados) {
@@ -60,6 +96,7 @@ export default function SellerProfile() {
     setIsEditOpen(true);
   };
 
+  // change imagem no modal edição
   const handleImageChangeEdit = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -69,6 +106,7 @@ export default function SellerProfile() {
     reader.readAsDataURL(file);
   };
 
+  // salva edição no servidor
   const handleSaveEdit = () => {
     const fd = new FormData();
     fd.append("nome", currentProduct.nome);
@@ -91,11 +129,13 @@ export default function SellerProfile() {
        .catch(err => console.error("Erro ao salvar produto:", err));
   };
 
+  // abre modal exclusão
   const handleDeleteClick = (p) => {
     setCurrentProduct(p);
     setIsDeleteOpen(true);
   };
 
+  // confirma exclusão
   const confirmDelete = () => {
     api.delete(`/produtos/${currentProduct.id_produto}`)
        .then(() => {
@@ -107,6 +147,7 @@ export default function SellerProfile() {
        .catch(err => console.error("Erro ao excluir produto:", err));
   };
 
+  // formata tempo desde cadastro
   function getTempoDesdeCadastro(dataStr) {
     if (!dataStr) return "";
     const diffDays = Math.floor((Date.now() - new Date(dataStr).getTime()) / (1000*60*60*24));
@@ -122,7 +163,18 @@ export default function SellerProfile() {
       <Header />
       <div className={styles.backgroundImage}>
         {isOwner && (
-          <h2><button className={styles.btn}>Coloque Sua Imagem AQUI!</button></h2>
+          <>
+            <button className={styles.btn} onClick={handleChooseProfile}>
+              Coloque Sua Imagem AQUI!
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleProfileImageChange}
+            />
+          </>
         )}
       </div>
       <div className={styles.profilePage}>
@@ -138,7 +190,6 @@ export default function SellerProfile() {
             <h2>{fornecedor.nomeFantasia || "Fornecedor"}</h2>
             <div className={styles.infos}>
               <strong>{fornecedor.avaliacao_media ?? "?"}★</strong>
-              <span>Avaliação</span>
             </div>
             <p className={styles.since}>{getTempoDesdeCadastro(fornecedor.dataCadastro)}</p>
             <button className={styles.btn}>Seguir</button>
@@ -147,18 +198,16 @@ export default function SellerProfile() {
             )}
           </div>
         </div>
-
         <div className={styles.productsContainer}>
           <div className={styles.sectionTitle}>
             <button className={selected==="produtos"?styles.selected:""} onClick={()=>setSelected("produtos")}>Produtos</button>
             <button className={selected==="sobre"?styles.selected:""} onClick={()=>setSelected("sobre")}>Sobre</button>
           </div>
-
           {selected==="produtos" && (
             <div className={styles.productsList}>
-               {products.length===0
+              {products.length===0
                 ? <p>Nenhum produto encontrado.</p>
-                : products.map(p => (
+                : products.map(p=>(
                   <div key={p.id_produto} className={styles.productCardWrapper}>
                     <ProductCard product={p}/>
                     {isOwner && (
@@ -172,7 +221,6 @@ export default function SellerProfile() {
               }
             </div>
           )}
-
           {selected==="sobre" && (
             <div className={styles.sobreSection}>
               <h3>Sobre o fornecedor</h3>
@@ -182,116 +230,30 @@ export default function SellerProfile() {
         </div>
       </div>
 
-      {/* Modal de edição */}
       {isEditOpen && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setIsEditOpen(false)}
-        >
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalOverlay} onClick={()=>setIsEditOpen(false)}>
+          <div className={styles.modal} onClick={e=>e.stopPropagation()}>
             <h2>Editar Produto</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSaveEdit();
-              }}
-            >
-              <label>
-                Nome:
-                <input
-                  type="text"
-                  value={currentProduct.nome}
-                  onChange={(e) =>
-                    setCurrentProduct({
-                      ...currentProduct,
-                      nome: e.target.value,
-                    })
-                  }
-                />
-              </label>
-              <label>
-                Descrição:
-                <textarea
-                  value={currentProduct.descricao}
-                  onChange={(e) =>
-                    setCurrentProduct({
-                      ...currentProduct,
-                      descricao: e.target.value,
-                    })
-                  }
-                />
-              </label>
-              <label>
-                Preço:
-                <input
-                  type="number"
-                  step="0.01"
-                  value={currentProduct.preco_unidade}
-                  onChange={(e) =>
-                    setCurrentProduct({
-                      ...currentProduct,
-                      preco_unidade: e.target.value,
-                    })
-                  }
-                />
-              </label>
-              <label>
-                Estado:
-                <select
-                  value={currentProduct.estado}
-                  onChange={(e) =>
-                    setCurrentProduct({
-                      ...currentProduct,
-                      estado: e.target.value,
-                    })
-                  }
-                >
-                  <option value="novo">Novo</option>
-                  <option value="usado">Usado</option>
-                </select>
-              </label>
+            <form onSubmit={e=>{e.preventDefault();handleSaveEdit()}}>
+              <label>Nome:<input type="text" value={currentProduct.nome} onChange={e=>setCurrentProduct({...currentProduct,nome:e.target.value})}/></label>
+              <label>Descrição:<textarea value={currentProduct.descricao} onChange={e=>setCurrentProduct({...currentProduct,descricao:e.target.value})}/></label>
+              <label>Preço:<input type="number" step="0.01" value={currentProduct.preco_unidade} onChange={e=>setCurrentProduct({...currentProduct,preco_unidade:e.target.value})}/></label>
+              <label>Estado:<select value={currentProduct.estado} onChange={e=>setCurrentProduct({...currentProduct,estado:e.target.value})}><option value="novo">Novo</option><option value="usado">Usado</option></select></label>
               <label className={styles.modalUploadLabel}>
-                {editPreview ? (
-                  <img
-                    src={editPreview}
-                    alt="Preview"
-                    className={styles.previewImg}
-                  />
-                ) : (
-                  "Clique ou arraste para alterar a imagem"
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChangeEdit}
-                />
+                {editPreview? <img src={editPreview} alt="Preview" className={styles.previewImg}/> : "Clique ou arraste para alterar a imagem"}
+                <input type="file" accept="image/*" onChange={handleImageChangeEdit}/>
               </label>
-              <div className={styles.modalButtons}>
-                <button type="submit">Salvar</button>
-                <button type="button" onClick={() => setIsEditOpen(false)}>
-                  Cancelar
-                </button>
-              </div>
+              <div className={styles.modalButtons}><button type="submit">Salvar</button><button type="button" onClick={()=>setIsEditOpen(false)}>Cancelar</button></div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Modal de exclusão */}
       {isDeleteOpen && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setIsDeleteOpen(false)}
-        >
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <p>
-              Tem certeza que deseja excluir o produto{" "}
-              <strong>{currentProduct?.nome}</strong>?
-            </p>
-            <div className={styles.modalButtons}>
-              <button onClick={confirmDelete}>Sim, Excluir</button>
-              <button onClick={() => setIsDeleteOpen(false)}>Cancelar</button>
-            </div>
+        <div className={styles.modalOverlay} onClick={()=>setIsDeleteOpen(false)}>
+          <div className={styles.modal} onClick={e=>e.stopPropagation()}>
+            <p>Tem certeza que deseja excluir o produto <strong>{currentProduct?.nome}</strong>?</p>
+            <div className={styles.modalButtons}><button onClick={confirmDelete}>Sim, Excluir</button><button onClick={()=>setIsDeleteOpen(false)}>Cancelar</button></div>
           </div>
         </div>
       )}
