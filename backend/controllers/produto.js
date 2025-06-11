@@ -42,13 +42,12 @@ exports.listByFornecedor = async (req, res) => {
  * @body {string} nome          - nome do produto (obrigatório)
  * @body {string} descricao     - descrição (obrigatório)
  * @body {number} preco_unidade - preço unitário (obrigatório > 0)
- * @body {string} estado        - "novo" ou "usado" (obrigatório)
  * @file {file}   imagem        - arquivo de imagem (opcional)
  * @returns {object} mensagem e id do produto criado
  */
 exports.create = async (req, res) => {
   try {
-    const { nome, descricao, preco_unidade, estado } = req.body;
+    const { nome, descricao, preco_unidade } = req.body;
     const userId = req.user.id_usuario;
 
     // validações de entrada
@@ -59,16 +58,13 @@ exports.create = async (req, res) => {
     if (isNaN(preco) || preco <= 0) {
       return res.status(400).json({ erro: "Preço unitário inválido." });
     }
-    if (!["novo","usado"].includes(estado)) {
-      return res.status(400).json({ erro: "Estado deve ser 'novo' ou 'usado'." });
-    }
 
     const imagem = req.file;
     const id = await Produtos.create({
       nome,
       descricao,
       preco_unidade: preco,
-      estado,
+      estado: "ATIVO",
       id_fornecedor: userId,
       imagemBuffer: imagem?.buffer,
       imagemNome: imagem?.originalname,
@@ -111,8 +107,8 @@ exports.update = async (req, res) => {
     if (isNaN(preco) || preco <= 0) {
       return res.status(400).json({ erro: "Preço unitário inválido." });
     }
-    if (!["novo","usado"].includes(estado)) {
-      return res.status(400).json({ erro: "Estado deve ser 'novo' ou 'usado'." });
+    if (!["ATIVO","INATIVO"].includes(estado)) {
+      return res.status(400).json({ erro: "Estado deve ser 'ATIVO' ou 'INATIVO'." });
     }
 
     const affected = await Produtos.update({
