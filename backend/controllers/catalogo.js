@@ -1,5 +1,4 @@
 
-
 // controllers/produtos.controller.js
 
 const Produtos = require('../models/produtos.model');

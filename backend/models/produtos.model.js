@@ -17,6 +17,7 @@ const AvaliacaoProduto = require('./avaliacao_produto.model.js');
  */
 
 async function enrichProduto(produto) {
+
   // imagem
   produto.imagem = null;
   if (produto.imagem_arquivo_id) {
@@ -29,6 +30,7 @@ async function enrichProduto(produto) {
     for (const promo of promocoes) {
       const idFornecedor = await Oferta.getIdFornecedorByOferta(promo.id_oferta).catch(() => null);
       let nomeFornecedor = null;
+
 
       if (idFornecedor) {
         nomeFornecedor = await new Promise(res => {
@@ -55,6 +57,7 @@ const Produtos = {
    * @returns {Promise<Array<object>>}
    */
   getAll: async () => {
+
     const [rows] = await db.promise().query('SELECT * FROM produto');
     if (!rows.length) return [];
     return Promise.all(rows.map(enrichProduto));
@@ -64,6 +67,7 @@ const Produtos = {
    * @param {number} id - ID do produto
    * @returns {Promise<object|null>} - produto ou null se não encontrado
    */
+
   getById: async id => {
     const [rows] = await db.promise().query('SELECT * FROM produto WHERE id_produto = ?', [id]);
     if (!rows.length) return null;

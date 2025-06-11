@@ -1,5 +1,3 @@
-DROP DATABASE IF EXISTS `Pricely`;
-
 -- MySQL Workbench Forward Engineering
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
@@ -97,14 +95,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`fornecedor` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb3;
 
--- 10) Ofertas (fornecedor 2)
-INSERT INTO oferta (id_oferta, dataCadastro, id_fornecedor) VALUES
-  (1, '2025-05-01 08:00:00', 2);
 
--- 11) Grupo de promoção (oferta 1)
-INSERT INTO grupo_promocao (idgrupo_promocao, quantidade, desc_porcentagem, id_oferta) VALUES
-  (1, 3, 10, 1),  -- 10% de desconto para compras de 3 ou mais
-  (2, 5, 20, 1);  -- 20% de desconto para compras de 5 ou mais
 -- -----------------------------------------------------
 -- Table `Pricely`.`avaliacao_fornecedor`
 -- -----------------------------------------------------
@@ -147,13 +138,6 @@ ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 
--- 12) Associação produto ↔ oferta
-INSERT INTO produto_oferta (id_oferta, id_produto) VALUES
-  (1, 1);
-
--- 13) Conjuntos de entrega
-INSERT INTO conjunto (id_conjunto, frete_max, raio_metros, longitude, latitude) VALUES
-  (1, 20.00, 5000, '-46.633309', '-23.55052');
 
 -- -----------------------------------------------------
 -- Table `Pricely`.`avaliacao_produto`
@@ -228,14 +212,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`pedido` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb3;
 
--- 14) Pedidos (vendedor 3)
-INSERT INTO pedido (id_pedido, dataCadastro, desconto, rua, numero, complemento, id_vendedor, cep, metodo_pagamento, estado) VALUES
-  (1, '2025-05-10 15:30:00', 0, 'Av. B', '200', 'Apto 5', 3, '20000000', 'cartao', 'CARRINHO');
 
-
--- 15) Compras no pedido 1
-INSERT INTO compra (id_compra, preco_unidade, quantidade, frete_pago, estado, id_produto, id_pedido, id_avaliacao_fornecedor, id_avaliacao_produto, id_conjunto) VALUES
-  (1, 49.90, 2, 15.00, 'PROCESSANDO', 1, 1, 1, 2, 1);
 -- -----------------------------------------------------
 -- Table `Pricely`.`conjunto`
 -- -----------------------------------------------------
@@ -249,14 +226,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`conjunto` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb3;
 
--- 16) Informações bancárias do usuário 1
-INSERT INTO info_bancaria (id_info_banco, banco, agencia, conta, tipo_conta, pix, id_user) VALUES
-  (1, 'Banco do Brasil', '0001', '12345-6', 'Corrente', 'joao@pix.com', 1);
 
--- 17) Relacionamentos de seguimento (usuário 1 segue fornecedor 2 e vendedor 3)
-INSERT INTO seguindo (id_usuario_seguidor, id_usuario_seguido, dataCadastro) VALUES
-  (1, 2, '2025-04-20 12:00:00'),
-  (1, 3, '2025-04-20 12:05:00');
 -- -----------------------------------------------------
 -- Table `Pricely`.`compra`
 -- -----------------------------------------------------
@@ -271,6 +241,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`compra` (
   `id_avaliacao_fornecedor` INT NULL DEFAULT NULL,
   `id_avaliacao_produto` INT NULL DEFAULT NULL,
   `id_conjunto` INT NULL DEFAULT NULL,
+  `dividir` TINYINT NULL,
   PRIMARY KEY (`id_compra`),
   INDEX `fk_compra_1_idx` (`id_pedido` ASC) VISIBLE,
   INDEX `fk_compra_2_idx` (`id_produto` ASC) VISIBLE,
