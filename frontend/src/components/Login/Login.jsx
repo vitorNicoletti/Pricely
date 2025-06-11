@@ -58,6 +58,11 @@ function Login() {
 
   return (
     <div className={styles.loginContainer}>
+      {loading && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingModal}>Carregando...</div>
+        </div>
+      )}
       <div>
         <div className={styles.loginCard}>
           <div className={styles.loginHeader}>

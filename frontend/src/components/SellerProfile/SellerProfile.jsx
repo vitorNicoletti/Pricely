@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import avatar_placeholder from "../../assets/profile_placeholder.png";
 import Header from "../Header/Header";
@@ -121,7 +121,9 @@ export default function SellerProfile() {
     <>
       <Header />
       <div className={styles.backgroundImage}>
-        <h2><button className={styles.btn}>Coloque Sua Imagem AQUI!</button></h2>
+        {isOwner && (
+          <h2><button className={styles.btn}>Coloque Sua Imagem AQUI!</button></h2>
+        )}
       </div>
       <div className={styles.profilePage}>
         <div className={styles.profileCardContainer}>
