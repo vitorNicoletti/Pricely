@@ -1,3 +1,6 @@
+
+const Compra = require('../models/compra.model');
+
 const Pedido = require('../models/pedido.model');
 const Promocao = require('../models/promocao.model');
 const Vendedor = require('../models/vendedor.model');
@@ -9,7 +12,6 @@ async function getCarrinho(req, res) {
   }
 
   try {
-    // Supondo que o método no model se chame getCarrinhoPorIdVendedor
     const carrinhoData = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario);
     if (!carrinhoData) {
       return res.status(404).json({ error: 'Carrinho não encontrado' });
@@ -24,9 +26,11 @@ async function getCarrinho(req, res) {
 
 async function adicionarAoCarrinho(req, res) {
   const user = req.user;
-  const { id_produto, quantidade, dividir } = req.body;
+
+  let { id_produto, quantidade, dividir } = req.body;
 
   // Verifica se usuário está autenticado
+
   if (!user) {
     return res.status(401).json({ error: 'Usuário não autenticado' });
   }
@@ -34,79 +38,90 @@ async function adicionarAoCarrinho(req, res) {
   // Validação dos campos
   const erros = [];
 
-  if (!Number.isInteger(Number(id_produto)) || Number(id_produto) <= 0) {
+
+  id_produto = Number(id_produto);
+  quantidade = Number(quantidade);
+  dividir = Number(dividir);
+
+  if (!Number.isInteger(id_produto) || id_produto <= 0) {
     erros.push('id_produto deve ser um número inteiro positivo.');
   }
 
-  if (!Number.isInteger(Number(quantidade)) || Number(quantidade) <= 0) {
+  if (!Number.isInteger(quantidade) || quantidade <= 0) {
     erros.push('quantidade deve ser um número inteiro positivo.');
   }
 
-  if (Number(dividir) !== 0 && Number(dividir) !== 1) {
+  if (dividir !== 0 && dividir !== 1) {
     erros.push('dividir deve ser 0 ou 1.');
   }
 
   if (erros.length > 0) {
     return res.status(400).json({ error: 'Parâmetros inválidos', detalhes: erros });
   }
-
-  if (dividir === "0"){
-    // processo de verificar se o pedido mínimo foi atendido e pegar possiveis descontos
-    const infoPromocoes = await Promocao.getPromocoesByProduct(id_produto)
-    const promocaoMinima = pegarPromocaoPedidoMinimo(res,infoPromocoes)
-    if(promocaoMinima.quantidade > quantidade){
-      dividir = 1
+  // Verifica promoções se não for dividido
+  if (dividir === 0) {
+    const infoPromocoes = await Promocao.getPromocoesByProduct(id_produto);
+    const promocaoMinima = pegarPromocaoPedidoMinimo(res, infoPromocoes);
+    if (promocaoMinima.quantidade > quantidade) {
+      dividir = 1;
     }
   }
 
-  if (!user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
-  }
-  
   try {
-    // Supondo que o método no model se chame getCarrinhoPorIdVendedor
-    let carrinhoId = -1
     let carrinhoData = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario);
     
-    if (carrinhoData) {
-      carrinhoId = carrinhoData.id_pedido
-      
+    if (!carrinhoData) {
+      carrinhoData = await Pedido.createCarrinho(user.id_usuario);
     }
-    else{
-      carrinhoData = await Pedido.createCarrinho(user.id_usuario)
-      
+
+    const carrinhoId = carrinhoData.carrinho?.id_pedido || carrinhoData.id_pedido;
+
+    for (const compra of carrinhoData.compras) {
+      if (compra.id_produto == id_produto) {
+        await Compra.atualizarCompra(compra.id_compra,{
+          quantidade: Number(compra.quantidade) + Number(quantidade)
+        });
+        return res.status(200).json({
+          message: "produto adicionado com sucesso!",
+          id_compra: compra.id_compra
+        });
+      }
     }
- 
-    const idCompra = await Pedido.addProduto(carrinhoData.carrinho.id_pedido,id_produto,quantidade);
-    if (!idCompra){
-      return res.status(500).json({message:"internal server error"})
+
+    const idCompra = await Pedido.addProduto(carrinhoId, id_produto, quantidade);
+    if (!idCompra) {
+      return res.status(500).json({ message: "Erro interno ao adicionar produto" });
     }
-    return res.status(200).json({message:"produto adicionado com sucesso!",id_compra:idCompra})
-  } 
-  catch (err) {
-    console.error('Erro ao buscar carrinho:', err);
-    return res.status(500).json({ error: 'idCompraErro interno no servidor' });
+
+    return res.status(200).json({ message: "produto adicionado com sucesso!", id_compra: idCompra });
+
+  } catch (err) {
+    console.error('Erro ao adicionar produto ao carrinho:', err);
+    return res.status(500).json({ error: 'Erro interno no servidor' });
   }
 }
 
-function pegarPromocaoPedidoMinimo(res,listaPromocoes){
-      const VALOR_ALTO_PARA_INICIAR_LOOP = 99999
-    promocaoMinima = {
-      quantidade: VALOR_ALTO_PARA_INICIAR_LOOP
-    }
-    for (promocao in listaPromocoes){
-      if(promocao.quantidade < promocaoMinima.quantidade){
-        promocaoMinima = promocao
-      }
-      else if (promocao.quantidade == promocaoMinima.quantidade){
-        if(promocao.desc_porcentagem> promocaoMinima.desc_porcentagem){
-          promocaoMinima = promocao
-        }
+function pegarPromocaoPedidoMinimo(res, listaPromocoes) {
+  const VALOR_ALTO = 99999;
+  let promocaoMinima = { quantidade: VALOR_ALTO };
+
+  for (const promocao of listaPromocoes) {
+    if (promocao.quantidade < promocaoMinima.quantidade) {
+      promocaoMinima = promocao;
+    } else if (promocao.quantidade === promocaoMinima.quantidade) {
+      if (promocao.desc_porcentagem > promocaoMinima.desc_porcentagem) {
+        promocaoMinima = promocao;
       }
     }
-    if (promocaoMinima.quantidade === VALOR_ALTO_PARA_INICIAR_LOOP){
-      return res.status(404).json({message:"produto não está mais a venda"})
-    }
-  return promocaoMinima
+  }
+
+  if (promocaoMinima.quantidade === VALOR_ALTO) {
+    res.status(404).json({ message: "produto não está mais à venda" });
+    throw new Error("Produto indisponível");
+  }
+
+  return promocaoMinima;
 }
+
+
 module.exports = { getCarrinho, adicionarAoCarrinho };

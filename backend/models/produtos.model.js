@@ -5,6 +5,17 @@ const Oferta = require('./oferta.model.js');
 const Fornecedor = require('./fornecedor.model.js');
 const AvaliacaoProduto = require('./avaliacao_produto.model.js');
 
+
+/**
+ * Enriquecer um produto com:
+ *  1) imagem (arquivo)
+ *  2) lista de promoções (com id_fornecedor + nome_fornecedor)
+ *  3) avaliação média
+ *
+ * @param {object} produto - objeto do produto cru
+ * @returns {Promise<object>} - produto enriquecido
+ */
+
 async function enrichProduto(produto) {
   // imagem
   produto.imagem = null;
@@ -18,6 +29,7 @@ async function enrichProduto(produto) {
     for (const promo of promocoes) {
       const idFornecedor = await Oferta.getIdFornecedorByOferta(promo.id_oferta).catch(() => null);
       let nomeFornecedor = null;
+
       if (idFornecedor) {
         nomeFornecedor = await new Promise(res => {
           Fornecedor.getNome(idFornecedor, (err, nome) => res(err ? null : nome));
@@ -28,6 +40,7 @@ async function enrichProduto(produto) {
   } catch {
     produto.promocoes = [];
   }
+
   // avaliação media
   produto.avaliacao_media = await new Promise(res => {
     AvaliacaoProduto.getAvaliacaoPorProduto(produto.id_produto, (err, media) => res(err ? null : media));
@@ -36,11 +49,21 @@ async function enrichProduto(produto) {
 }
 
 const Produtos = {
+
+  /**
+   * Retorna todos os produtos, enriquecendo cada um (imagem, promoções, avaliação).
+   * @returns {Promise<Array<object>>}
+   */
   getAll: async () => {
     const [rows] = await db.promise().query('SELECT * FROM produto');
     if (!rows.length) return [];
     return Promise.all(rows.map(enrichProduto));
   },
+    /**
+   * Retorna um produto pelo ID, enriquecido (imagem, promoções, avaliação).
+   * @param {number} id - ID do produto
+   * @returns {Promise<object|null>} - produto ou null se não encontrado
+   */
   getById: async id => {
     const [rows] = await db.promise().query('SELECT * FROM produto WHERE id_produto = ?', [id]);
     if (!rows.length) return null;
