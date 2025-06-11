@@ -29,6 +29,7 @@ async function enrichProduto(produto) {
       const idFornecedor = await Oferta.getIdFornecedorByOferta(promo.id_oferta).catch(() => null);
       let nomeFornecedor = null;
 
+
       if (idFornecedor) {
         nomeFornecedor = await new Promise(res => {
           Fornecedor.getNome(idFornecedor, (err, nome) => res(err ? null : nome));
@@ -58,6 +59,7 @@ const Produtos = {
    * @returns {Promise<Array<object>>} lista de produtos
    */
   getAll: async () => {
+
     const [rows] = await db.promise().query('SELECT * FROM produto');
     if (!rows.length) return [];
     return Promise.all(rows.map(enrichProduto));

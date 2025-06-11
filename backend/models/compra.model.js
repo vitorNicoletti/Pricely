@@ -5,16 +5,18 @@ const Compra = {
    * Retorna a compra pelo ID do pedido. 
    * Se não encontrar ou ocorrer erro, retorna null.
    */
-  criarCompra: async (precoUnidade, quantidade, idProduto, idPedido) => {
+  criarCompra: async (precoUnidade, quantidade, idProduto, idPedido,dividir) => {
     const sql = `
       INSERT INTO compra 
-        (preco_unidade, quantidade, estado, id_produto, id_pedido)
-      VALUES (?, ?, 'CARRINHO', ?, ?)
+        (preco_unidade, quantidade, estado, id_produto, id_pedido,dividir)
+      VALUES (?, ?, 'CARRINHO', ?, ?,?)
+
     `;
 
     try {
       const result = await new Promise((resolve, reject) => {
-        db.query(sql, [precoUnidade, quantidade, idProduto, idPedido], (err, res) => {
+        db.query(sql, [precoUnidade, quantidade, idProduto, idPedido,dividir], (err, res) => {
+
           if (err) return reject(err);
           resolve(res);
         });
@@ -54,7 +56,7 @@ const Compra = {
    * @param {object} dados - Objeto com os campos a serem atualizados.
    */
   atualizarCompra: async (id_compra, dados) => {
-    const camposPermitidos = ['preco_unidade', 'quantidade', 'frete_pago', 'estado'];
+    const camposPermitidos = ['preco_unidade', 'quantidade', 'frete_pago', 'estado','id_conjunto'];
     const camposAtualizar = [];
     const valores = [];
 

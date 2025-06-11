@@ -36,19 +36,28 @@ export default function SellerProfile() {
   // busca perfil e produtos ao montar
   useEffect(() => {
     const perfilEndpoint = isOwner ? "/fornecedor/me" : `/fornecedor/${id}`;
-    api.get(perfilEndpoint)
-      .then(res => {
+
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    api
+      .get(perfilEndpoint)
+      .then((res) => {
         const data = res.data;
         setFornecedor({
           ...data,
           nomeFantasia: data.nomeFantasia || data.nome_fantasia || "",
         });
       })
-      .catch(err => console.error("Erro ao buscar fornecedor:", err));
+      .catch((err) => console.error("Erro ao buscar fornecedor:", err));
 
-    api.get(`/produtos/fornecedor/${id}`)
-      .then(res => setProducts(res.data))
-      .catch(err => console.error("Erro ao buscar produtos:", err));
+    // produtos deste fornecedor
+    api
+      .get(`/produtos/fornecedor/${id}`)
+      .then((res) => setProducts(res.data))
+      .catch((err) => console.error("Erro ao buscar produtos:", err));
   }, [id, isOwner]);
 
   // abre dialog de upload de perfil
@@ -115,18 +124,19 @@ export default function SellerProfile() {
     fd.append("estado", currentProduct.estado);
     if (editImage) fd.append("imagem", editImage);
 
-    api.put(`/produtos/${currentProduct.id_produto}`, fd)
-       .then(() => {
-         setProducts(prev =>
-           prev.map(p =>
-             String(p.id_produto) === String(currentProduct.id_produto)
-               ? { ...currentProduct }
-               : p
-           )
-         );
-         setIsEditOpen(false);
-       })
-       .catch(err => console.error("Erro ao salvar produto:", err));
+    api
+      .put(`/produtos/${currentProduct.id_produto}`, fd)
+      .then(() => {
+        setProducts((prev) =>
+          prev.map((p) =>
+            String(p.id_produto) === String(currentProduct.id_produto)
+              ? { ...currentProduct }
+              : p
+          )
+        );
+        setIsEditOpen(false);
+      })
+      .catch((err) => console.error("Erro ao salvar produto:", err));
   };
 
   // abre modal exclusão
@@ -137,25 +147,30 @@ export default function SellerProfile() {
 
   // confirma exclusão
   const confirmDelete = () => {
-    api.delete(`/produtos/${currentProduct.id_produto}`)
-       .then(() => {
-         setProducts(prev =>
-           prev.filter(p => String(p.id_produto) !== String(currentProduct.id_produto))
-         );
-         setIsDeleteOpen(false);
-       })
-       .catch(err => console.error("Erro ao excluir produto:", err));
+    api
+      .delete(`/produtos/${currentProduct.id_produto}`)
+      .then(() => {
+        setProducts((prev) =>
+          prev.filter(
+            (p) => String(p.id_produto) !== String(currentProduct.id_produto)
+          )
+        );
+        setIsDeleteOpen(false);
+      })
+      .catch((err) => console.error("Erro ao excluir produto:", err));
   };
 
   // formata tempo desde cadastro
   function getTempoDesdeCadastro(dataStr) {
     if (!dataStr) return "";
-    const diffDays = Math.floor((Date.now() - new Date(dataStr).getTime()) / (1000*60*60*24));
-    const years = Math.floor(diffDays/365);
-    const months = Math.floor((diffDays%365)/30);
-    if (years) return `Há ${years} ano${years>1?'s':''}`;
-    if (months) return `Há ${months} mês${months>1?'es':''}`;
-    return `Há ${diffDays} dia${diffDays>1?'s':''}`;
+    const diffDays = Math.floor(
+      (Date.now() - new Date(dataStr).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const years = Math.floor(diffDays / 365);
+    const months = Math.floor((diffDays % 365) / 30);
+    if (years) return `Há ${years} ano${years > 1 ? "s" : ""}`;
+    if (months) return `Há ${months} mês${months > 1 ? "es" : ""}`;
+    return `Há ${diffDays} dia${diffDays > 1 ? "s" : ""}`;
   }
 
   return (
@@ -175,50 +190,88 @@ export default function SellerProfile() {
               onChange={handleProfileImageChange}
             />
           </>
+
         )}
       </div>
       <div className={styles.profilePage}>
         <div className={styles.profileCardContainer}>
           <div className={styles.profileCard}>
             <div className={styles.cardHeader}>
-              {fornecedor.imagem?.dados
-                ? <img src={`data:${fornecedor.imagem.tipo};base64,${fornecedor.imagem.dados}`} alt="avatar" className={styles.avatar}/>
-                : <img src={avatar_placeholder} alt="avatar" className={styles.avatar}/>
-              }
-              <div className={styles.iconBubble}><i className="fa-regular fa-comments"/></div>
+              {fornecedor.imagem?.dados ? (
+                <img
+                  src={`data:${fornecedor.imagem.tipo};base64,${fornecedor.imagem.dados}`}
+                  alt="avatar"
+                  className={styles.avatar}
+                />
+              ) : (
+                <img
+                  src={avatar_placeholder}
+                  alt="avatar"
+                  className={styles.avatar}
+                />
+              )}
+              <div className={styles.iconBubble}>
+                <i className="fa-regular fa-comments" />
+              </div>
             </div>
             <h2>{fornecedor.nomeFantasia || "Fornecedor"}</h2>
             <div className={styles.infos}>
               <strong>{fornecedor.avaliacao_media ?? "?"}★</strong>
             </div>
-            <p className={styles.since}>{getTempoDesdeCadastro(fornecedor.dataCadastro)}</p>
+            <p className={styles.since}>
+              {getTempoDesdeCadastro(fornecedor.dataCadastro)}
+            </p>
             <button className={styles.btn}>Seguir</button>
             {isOwner && (
-              <button className={styles.registerButton} onClick={()=>navigate("/produtos/novo")}>Cadastrar Produto</button>
+              <button
+                className={styles.registerButton}
+                onClick={() => navigate("/produtos/novo")}
+              >
+                Cadastrar Produto
+              </button>
             )}
           </div>
         </div>
         <div className={styles.productsContainer}>
           <div className={styles.sectionTitle}>
-            <button className={selected==="produtos"?styles.selected:""} onClick={()=>setSelected("produtos")}>Produtos</button>
-            <button className={selected==="sobre"?styles.selected:""} onClick={()=>setSelected("sobre")}>Sobre</button>
+            <button
+              className={selected === "produtos" ? styles.selected : ""}
+              onClick={() => setSelected("produtos")}
+            >
+              Produtos
+            </button>
+            <button
+              className={selected === "sobre" ? styles.selected : ""}
+              onClick={() => setSelected("sobre")}
+            >
+              Sobre
+            </button>
           </div>
           {selected==="produtos" && (
             <div className={styles.productsList}>
               {products.length===0
                 ? <p>Nenhum produto encontrado.</p>
                 : products.map(p=>(
+
                   <div key={p.id_produto} className={styles.productCardWrapper}>
-                    <ProductCard product={p}/>
+                    <ProductCard product={p} />
                     {isOwner && (
                       <div className={styles.cardActions}>
-                        <i className="fa-solid fa-pen-to-square" onClick={()=>openEditModal(p)} title="Editar"/>
-                        <i className="fa-solid fa-trash" onClick={()=>handleDeleteClick(p)} title="Excluir"/>
+                        <i
+                          className="fa-solid fa-pen-to-square"
+                          onClick={() => openEditModal(p)}
+                          title="Editar"
+                        />
+                        <i
+                          className="fa-solid fa-trash"
+                          onClick={() => handleDeleteClick(p)}
+                          title="Excluir"
+                        />
                       </div>
                     )}
                   </div>
                 ))
-              }
+              )}
             </div>
           )}
           {selected==="sobre" && (

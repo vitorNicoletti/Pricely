@@ -8,6 +8,7 @@ const vendedorRouter = require("./routes/vendedor");
 const fornecedorRouter = require("./routes/fornecedor");
 const loginRouter = require('./routes/login');
 const carrinhoRouter = require('./routes/carrinho');
+
 const produtoRoutes   = require('./routes/produto');
 dotenv.config(); // Carrega variáveis do .env
 
