@@ -20,8 +20,8 @@ export default function SellerProfile() {
 
   // estados
   const [fornecedor, setFornecedor] = useState({});
-  const [products, setProducts]       = useState([]);
-  const [selected, setSelected]       = useState("produtos");
+  const [products, setProducts] = useState([]);
+  const [selected, setSelected] = useState("produtos");
 
   // modais
   const [isEditOpen, setIsEditOpen]         = useState(false);
@@ -154,7 +154,7 @@ export default function SellerProfile() {
 
           {selected==="produtos" && (
             <div className={styles.productsList}>
-              {products.length===0
+               {products.length===0
                 ? <p>Nenhum produto encontrado.</p>
                 : products.map(p => (
                   <div key={p.id_produto} className={styles.productCardWrapper}>

@@ -19,7 +19,7 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para lidar com respostas de erro
+// Interceptor para deslogar o usuário se o token for inválido ou expirado
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -30,16 +30,15 @@ api.interceptors.response.use(
       error.response &&
       (error.response.status === 401 || error.response.status === 403)
     ) {
-      handleLogout(); // Esta função precisa ser definida ou importada
+      console.warn("Token expirado ou inválido. Deslogando usuário...");
+      handleLogout();
     }
     return Promise.reject(error);
   }
 );
 
-// Função de logout (pode ser definida em um contexto ou utilitário)
 const handleLogout = () => {
   localStorage.removeItem("authToken");
-  localStorage.removeItem("user"); // Se você também armazena o perfil
+  localStorage.removeItem("user");
 };
-
 export default api;
