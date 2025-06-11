@@ -19,7 +19,6 @@ app.use(express.json());
 app.use('/api/carrinho', carrinhoRouter )
 app.use('/api/produtos', produtoRoutes);
 app.use("/api", catalogoRouter);
-
 app.use("/api/vendedor", vendedorRouter);
 app.use("/api/fornecedor", fornecedorRouter);
 app.use('/api/cadastro',cadastroRouter )
