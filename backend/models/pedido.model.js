@@ -4,6 +4,52 @@ const Compra = require('./compra.model.js');
 const Produtos = require('./produtos.model.js');
 
 const Pedido = {
+
+  /**
+   * Atualiza campos de um pedido existente.
+   * Campos aceitos: rua, numero, complemento, cep, estado.
+   *
+   * @param {number} id_pedido - ID do pedido a ser atualizado.
+   * @param {object} dados - Objeto com os campos a serem atualizados.
+   * @returns {Promise<boolean>} true se atualizou ≥1 linha, false caso contrário.
+   */
+  atualizarPedido: async (id_pedido, dados) => {
+    const camposPermitidos = ['rua', 'numero', 'complemento', 'cep', 'estado'];
+    const camposAtualizar = [];
+    const valores = [];
+
+    for (const campo of camposPermitidos) {
+      if (dados[campo] !== undefined) {
+        camposAtualizar.push(`${campo} = ?`);
+        valores.push(dados[campo]);
+      }
+    }
+
+    if (camposAtualizar.length === 0) {
+      console.warn("Nenhum campo válido para atualizar no pedido.");
+      return false;
+    }
+
+    const sql = `
+      UPDATE pedido
+      SET ${camposAtualizar.join(', ')}
+      WHERE id_pedido = ?
+    `;
+    valores.push(id_pedido);
+
+    try {
+      const result = await new Promise((resolve, reject) => {
+        db.query(sql, valores, (err, res) => {
+          if (err) return reject(err);
+          resolve(res);
+        });
+      });
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error("Erro ao atualizar pedido:", error);
+      return false;
+    }
+  },
   /**
    * Busca o pedido em estado "CARRINHO" para o vendedor,
    * recupera as compras desse pedido e retorna os produtos detalhados.

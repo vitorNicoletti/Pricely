@@ -56,7 +56,7 @@ const Compra = {
    * @param {object} dados - Objeto com os campos a serem atualizados.
    */
   atualizarCompra: async (id_compra, dados) => {
-    const camposPermitidos = ['preco_unidade', 'quantidade', 'frete_pago', 'estado'];
+    const camposPermitidos = ['preco_unidade', 'quantidade', 'frete_pago', 'estado','id_conjunto'];
     const camposAtualizar = [];
     const valores = [];
 
