@@ -1,5 +1,6 @@
 import styles from "./CartConfirmModal.module.css";
 import api from "../../api";
+import { useState } from "react";
 
 function CartConfirmModal({
   open,
@@ -8,9 +9,38 @@ function CartConfirmModal({
   product,
   minimumOrder,
 }) {
+  const [success, setSuccess] = useState(false);
   const quantidade = quantityRef.current?.value || 1;
 
   if (!open) return null;
+
+  async function handleCartConfirm(dividir) {
+    try {
+      await api.post("/carrinho", {
+        id_produto: product.id_produto,
+        quantidade,
+        dividir: dividir ? 1 : 0,
+      });
+      setSuccess(true);
+    } catch (err) {
+      console.error("Erro ao adicionar ao carrinho:", err);
+    }
+  }
+
+  if (success) {
+    return (
+      <div className={styles.modalOverlay}>
+        <div className={styles.modal}>
+          <h2>Produto Adicionado ao Carrinho</h2>
+          <div className={styles.modalContent}>
+            <button className={styles.btn} onClick={onClose}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (quantidade < minimumOrder) {
     return (
@@ -37,18 +67,6 @@ function CartConfirmModal({
         </div>
       </div>
     );
-  }
-  async function handleCartConfirm(dividir) {
-    try {
-      await api.post("/carrinho", {
-        id_produto: product.id_produto,
-        quantidade,
-        dividir: dividir ? 1 : 0,
-      });
-      onClose();
-    } catch (err) {
-      console.error("Erro ao adicionar ao carrinho:", err);
-    }
   }
 
   return (
