@@ -38,7 +38,7 @@ api.interceptors.response.use(
 );
 
 const handleLogout = () => {
-  sessionStorage.removeItem("authToken");
-  sessionStorage.removeItem("user");
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("user");
 };
 export default api;

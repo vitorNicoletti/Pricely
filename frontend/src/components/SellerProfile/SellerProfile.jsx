@@ -10,57 +10,49 @@ export default function SellerProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // configura timeout maior
+  // aumenta timeout para uploads
   api.defaults.timeout = 15000;
 
-  // Só o dono do perfil vê certas ações
+  // verifica dono do perfil
   const stored = localStorage.getItem("user");
   const loggedUser = stored ? JSON.parse(stored) : null;
   const isOwner = loggedUser && String(loggedUser.id_usuario) === id;
 
+  // estados
   const [fornecedor, setFornecedor] = useState({});
   const [products, setProducts] = useState([]);
   const [selected, setSelected] = useState("produtos");
 
-  // 3) Estados para edição/exclusão
-  const [isEditOpen, setIsEditOpen] = useState(false);
+  // modais
+  const [isEditOpen, setIsEditOpen]         = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
-  const [editPreview, setEditPreview] = useState(null);
-  const [editImage, setEditImage] = useState(null);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [editPreview, setEditPreview]       = useState(null);
+  const [editImage, setEditImage]           = useState(null);
+  const [isDeleteOpen, setIsDeleteOpen]     = useState(false);
 
-  // 4) Carrega perfil e produtos (só os do fornecedor)
   useEffect(() => {
-    // perfil
-    if (isOwner) {
-      setFornecedor(loggedUser);
-    } else {
-      api
-        .get(`/fornecedor/${id}`)
-        .then((res) => setFornecedor(res.data))
-        .catch((err) => console.error("Erro ao buscar fornecedor:", err));
-    }
+    // perfil: usa "/fornecedor/me" ou "/fornecedor/:id"
+    const perfilEndpoint = isOwner ? "/fornecedor/me" : `/fornecedor/${id}`;
+    api.get(perfilEndpoint)
+   .then(res => {
+     const data = res.data;
+     setFornecedor({
+       ...data,
+       nomeFantasia: data.nomeFantasia || data.nome_fantasia || "",
+     });
+   })
+   .catch(err => console.error("Erro ao buscar fornecedor:", err));
 
-    // lista de produtos do próprio fornecedor
-    api
-      .get("/")
-      .then((res) => {
-        const meus = res.data.filter(
-          (p) => String(p.id_fornecedor) === String(id)
-        );
-        console.log("Produtos do fornecedor:", res.data);
-        setProducts(res.data);
-      })
-      .catch((err) => console.error("Erro ao buscar produtos:", err));
-  }, [id]);
+    // produtos deste fornecedor
+    api.get(`/produtos/fornecedor/${id}`)
+       .then(res => setProducts(res.data))
+       .catch(err => console.error("Erro ao buscar produtos:", err));
+  }, [id, isOwner]);
 
-  // 5) Abre modal de edição
-  const openEditModal = (product) => {
-    setCurrentProduct({ ...product });
-    if (product.imagem?.dados && product.imagem?.tipo) {
-      setEditPreview(
-        `data:${product.imagem.tipo};base64,${product.imagem.dados}`
-      );
+  const openEditModal = (p) => {
+    setCurrentProduct({ ...p });
+    if (p.imagem?.dados) {
+      setEditPreview(`data:${p.imagem.tipo};base64,${p.imagem.dados}`);
     } else {
       setEditPreview(null);
     }
@@ -68,28 +60,6 @@ export default function SellerProfile() {
     setIsEditOpen(true);
   };
 
-  // 6) Abre modal de exclusão
-  const handleDeleteClick = (product) => {
-    setCurrentProduct(product);
-    setIsDeleteOpen(true);
-  };
-
-  // 7) Confirma exclusão
-  const confirmDelete = () => {
-    api
-      .delete(`/produtos/${currentProduct.id_produto}`)
-      .then(() => {
-        setProducts((prev) =>
-          prev.filter(
-            (p) => String(p.id_produto) !== String(currentProduct.id_produto)
-          )
-        );
-        setIsDeleteOpen(false);
-      })
-      .catch((err) => console.error("Erro ao excluir produto:", err));
-  };
-
-  // 8) Lida com troca de imagem no modal de edição
   const handleImageChangeEdit = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -99,145 +69,109 @@ export default function SellerProfile() {
     reader.readAsDataURL(file);
   };
 
-  // 9) Salva edição
   const handleSaveEdit = () => {
-    const formData = new FormData();
-    formData.append("nome", currentProduct.nome);
-    formData.append("descricao", currentProduct.descricao);
-    formData.append("preco_unidade", currentProduct.preco_unidade);
-    formData.append("estado", currentProduct.estado);
-    if (editImage) formData.append("imagem", editImage);
+    const fd = new FormData();
+    fd.append("nome", currentProduct.nome);
+    fd.append("descricao", currentProduct.descricao);
+    fd.append("preco_unidade", currentProduct.preco_unidade);
+    fd.append("estado", currentProduct.estado);
+    if (editImage) fd.append("imagem", editImage);
 
-    api
-      .put(`/produtos/${currentProduct.id_produto}`, formData)
-      .then(() => {
-        // atualiza lista local
-        setProducts((prev) =>
-          prev.map((p) =>
-            String(p.id_produto) === String(currentProduct.id_produto)
-              ? { ...currentProduct }
-              : p
-          )
-        );
-        setIsEditOpen(false);
-      })
-      .catch((err) => console.error("Erro ao salvar produto:", err));
+    api.put(`/produtos/${currentProduct.id_produto}`, fd)
+       .then(() => {
+         setProducts(prev =>
+           prev.map(p =>
+             String(p.id_produto) === String(currentProduct.id_produto)
+               ? { ...currentProduct }
+               : p
+           )
+         );
+         setIsEditOpen(false);
+       })
+       .catch(err => console.error("Erro ao salvar produto:", err));
   };
 
-  // 10) Auxiliar: tempo desde cadastro
-  function getTempoDesdeCadastro(str) {
-    if (!str) return "";
-    const d = new Date(str);
-    if (isNaN(d)) return "";
-    const dias = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
-    const anos = Math.floor(dias / 365);
-    const meses = Math.floor((dias % 365) / 30);
-    if (anos) return `Há ${anos} ano${anos > 1 ? "s" : ""}`;
-    if (meses) return `Há ${meses} mês${meses > 1 ? "es" : ""}`;
-    return `Há ${dias} dia${dias > 1 ? "s" : ""}`;
+  const handleDeleteClick = (p) => {
+    setCurrentProduct(p);
+    setIsDeleteOpen(true);
+  };
+
+  const confirmDelete = () => {
+    api.delete(`/produtos/${currentProduct.id_produto}`)
+       .then(() => {
+         setProducts(prev =>
+           prev.filter(p => String(p.id_produto) !== String(currentProduct.id_produto))
+         );
+         setIsDeleteOpen(false);
+       })
+       .catch(err => console.error("Erro ao excluir produto:", err));
+  };
+
+  function getTempoDesdeCadastro(dataStr) {
+    if (!dataStr) return "";
+    const diffDays = Math.floor((Date.now() - new Date(dataStr).getTime()) / (1000*60*60*24));
+    const years = Math.floor(diffDays/365);
+    const months = Math.floor((diffDays%365)/30);
+    if (years) return `Há ${years} ano${years>1?'s':''}`;
+    if (months) return `Há ${months} mês${months>1?'es':''}`;
+    return `Há ${diffDays} dia${diffDays>1?'s':''}`;
   }
 
   return (
     <>
       <Header />
-
-      {/* Banner */}
       <div className={styles.backgroundImage}>
-        <h2>
-          <button className={styles.btn}>Coloque Sua Imagem AQUI!</button>
-        </h2>
+        <h2><button className={styles.btn}>Coloque Sua Imagem AQUI!</button></h2>
       </div>
-
       <div className={styles.profilePage}>
-        {/* Cartão perfil */}
         <div className={styles.profileCardContainer}>
           <div className={styles.profileCard}>
             <div className={styles.cardHeader}>
-              {fornecedor.imagem?.dados && fornecedor.imagem?.tipo ? (
-                <img
-                  src={`data:${fornecedor.imagem.tipo};base64,${fornecedor.imagem.dados}`}
-                  alt={`Imagem de ${fornecedor.nomeFantasia}`}
-                  className={styles.avatar}
-                />
-              ) : (
-                <img
-                  src={avatar_placeholder}
-                  alt="Padrão"
-                  className={styles.avatar}
-                />
-              )}
-              <div className={styles.iconBubble}>
-                <i className="fa-regular fa-comments" />
-              </div>
+              {fornecedor.imagem?.dados
+                ? <img src={`data:${fornecedor.imagem.tipo};base64,${fornecedor.imagem.dados}`} alt="avatar" className={styles.avatar}/>
+                : <img src={avatar_placeholder} alt="avatar" className={styles.avatar}/>
+              }
+              <div className={styles.iconBubble}><i className="fa-regular fa-comments"/></div>
             </div>
             <h2>{fornecedor.nomeFantasia || "Fornecedor"}</h2>
             <div className={styles.infos}>
               <strong>{fornecedor.avaliacao_media ?? "?"}★</strong>
               <span>Avaliação</span>
             </div>
-            <p className={styles.since}>
-              {getTempoDesdeCadastro(fornecedor.dataCadastro)}
-            </p>
-
-            {/* Seguir e Cadastrar */}
+            <p className={styles.since}>{getTempoDesdeCadastro(fornecedor.dataCadastro)}</p>
             <button className={styles.btn}>Seguir</button>
             {isOwner && (
-              <button
-                className={styles.registerButton}
-                onClick={() => navigate("/produtos/novo")}
-              >
-                Cadastrar Produto
-              </button>
+              <button className={styles.registerButton} onClick={()=>navigate("/produtos/novo")}>Cadastrar Produto</button>
             )}
           </div>
         </div>
 
-        {/* Produtos / Sobre */}
         <div className={styles.productsContainer}>
           <div className={styles.sectionTitle}>
-            <button
-              className={selected === "produtos" ? styles.selected : ""}
-              onClick={() => setSelected("produtos")}
-            >
-              Produtos
-            </button>
-            <button
-              className={selected === "sobre" ? styles.selected : ""}
-              onClick={() => setSelected("sobre")}
-            >
-              Sobre
-            </button>
+            <button className={selected==="produtos"?styles.selected:""} onClick={()=>setSelected("produtos")}>Produtos</button>
+            <button className={selected==="sobre"?styles.selected:""} onClick={()=>setSelected("sobre")}>Sobre</button>
           </div>
 
-          {selected === "produtos" && (
+          {selected==="produtos" && (
             <div className={styles.productsList}>
-              {products.length === 0 ? (
-                <p>Nenhum produto encontrado.</p>
-              ) : (
-                products.map((p) => (
+               {products.length===0
+                ? <p>Nenhum produto encontrado.</p>
+                : products.map(p => (
                   <div key={p.id_produto} className={styles.productCardWrapper}>
-                    <ProductCard product={p} />
+                    <ProductCard product={p}/>
                     {isOwner && (
                       <div className={styles.cardActions}>
-                        <i
-                          className="fa-solid fa-pen-to-square"
-                          onClick={() => openEditModal(p)}
-                          title="Editar"
-                        />
-                        <i
-                          className="fa-solid fa-trash"
-                          onClick={() => handleDeleteClick(p)}
-                          title="Excluir"
-                        />
+                        <i className="fa-solid fa-pen-to-square" onClick={()=>openEditModal(p)} title="Editar"/>
+                        <i className="fa-solid fa-trash" onClick={()=>handleDeleteClick(p)} title="Excluir"/>
                       </div>
                     )}
                   </div>
                 ))
-              )}
+              }
             </div>
           )}
 
-          {selected === "sobre" && (
+          {selected==="sobre" && (
             <div className={styles.sobreSection}>
               <h3>Sobre o fornecedor</h3>
               <p>{fornecedor.nomeFantasia}</p>
@@ -316,7 +250,11 @@ export default function SellerProfile() {
               </label>
               <label className={styles.modalUploadLabel}>
                 {editPreview ? (
-                  <img src={editPreview} alt="Preview" />
+                  <img
+                    src={editPreview}
+                    alt="Preview"
+                    className={styles.previewImg}
+                  />
                 ) : (
                   "Clique ou arraste para alterar a imagem"
                 )}
