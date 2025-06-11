@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import mastercard from "../../assets/mastercard.svg";
 import amex from "../../assets/amex.svg";
 import visa from "../../assets/visa.svg";
@@ -78,9 +78,37 @@ function Payment() {
   const [cvc, setCvc] = useState("");
   const [expiry, setExpiry] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [selectedAddress, setSelectedAddress] = useState("");
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [newAddressStreet, setNewAddressStreet] = useState("");
+  const [newAddressNumber, setNewAddressNumber] = useState("");
   const [errors, setErrors] = useState({});
+  const [user, setUser] = useState(null);
 
   const cardBrand = getCardBrand(cardNumber.replace(/\s+/g, ""));
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    const userData = localStorage.getItem("user");
+    
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        // Se o usuário tem endereços, seleciona o primeiro por padrão
+        if (parsedUser.addresses && parsedUser.addresses.length > 0) {
+          setSelectedAddress(parsedUser.addresses[0].id || "0");
+        }
+      } catch (error) {
+        console.error("Erro ao parsear dados do usuário:", error);
+      }
+    }
+  }, [navigate]);
 
   const handleCardNumberChange = (e) => {
     const formatted = formatCardNumber(e.target.value);
@@ -102,6 +130,46 @@ function Payment() {
     setPostalCode(formatted);
   };
 
+  const handleAddressChange = (e) => {
+    const value = e.target.value;
+    setSelectedAddress(value);
+    
+    if (value === "new") {
+      setShowNewAddressForm(true);
+    } else {
+      setShowNewAddressForm(false);
+      setNewAddressStreet("");
+      setNewAddressNumber("");
+    }
+  };
+
+  const handleAddNewAddress = () => {
+    if (newAddressStreet.trim() && newAddressNumber.trim()) {
+      // TODO: fazer a requisição para salvar o novo endereço
+      const newAddress = {
+        id: Date.now().toString(), // ID temporário
+        street: newAddressStreet.trim(),
+        number: newAddressNumber.trim(),
+        fullAddress: `${newAddressStreet.trim()}, ${newAddressNumber.trim()}`
+      };
+
+      // Atualiza o usuário local (em um app real, você faria uma requisição para o backend)
+      const updatedUser = {
+        ...user,
+        addresses: [...(user.addresses || []), newAddress]
+      };
+      
+      setUser(updatedUser);
+      setSelectedAddress(newAddress.id);
+      setShowNewAddressForm(false);
+      setNewAddressStreet("");
+      setNewAddressNumber("");
+
+      // Atualiza o localStorage (opcional, dependendo da sua arquitetura)
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -111,6 +179,14 @@ function Payment() {
     if (!isValidCVC(cvc, cardBrand)) newErrors.cvc = "CVC inválido";
     if (!isValidPostalCode(postalCode))
       newErrors.postalCode = "Código postal inválido";
+    if (!selectedAddress) 
+      newErrors.address = "Selecione um endereço";
+    if (showNewAddressForm) {
+      if (!newAddressStreet.trim()) 
+        newErrors.newAddressStreet = "Rua é obrigatória";
+      if (!newAddressNumber.trim()) 
+        newErrors.newAddressNumber = "Número é obrigatório";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -122,6 +198,10 @@ function Payment() {
       navigate("/rastreamento");
     }
   };
+
+  if (!user) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <>
@@ -237,6 +317,65 @@ function Payment() {
               )}
             </div>
           </div>
+
+          {/* Novo campo de endereço */}
+          <div className={style.form_row}>
+            <div style={{ width: "100%" }}>
+              <label>Endereço</label>
+              <select value={selectedAddress} onChange={handleAddressChange}>
+                <option value="">Selecione um endereço</option>
+                {user.addresses && user.addresses.map((address, index) => (
+                  <option key={address.id || index} value={address.id || index}>
+                    {address.fullAddress || `${address.street}, ${address.number}`}
+                  </option>
+                ))}
+                <option value="new">+ Adicionar novo endereço</option>
+              </select>
+              {errors.address && (
+                <span className={style.error}>{errors.address}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Formulário para novo endereço */}
+          {showNewAddressForm && (
+            <div className={style.new_address_form}>
+              <div className={style.form_row}>
+                <div>
+                  <label>Rua</label>
+                  <input
+                    type="text"
+                    placeholder="Nome da rua"
+                    value={newAddressStreet}
+                    onChange={(e) => setNewAddressStreet(e.target.value)}
+                  />
+                  {errors.newAddressStreet && (
+                    <span className={style.error}>{errors.newAddressStreet}</span>
+                  )}
+                </div>
+                <div>
+                  <label>Número</label>
+                  <input
+                    type="text"
+                    placeholder="Número"
+                    value={newAddressNumber}
+                    onChange={(e) => setNewAddressNumber(e.target.value)}
+                  />
+                  {errors.newAddressNumber && (
+                    <span className={style.error}>{errors.newAddressNumber}</span>
+                  )}
+                </div>
+              </div>
+              <button 
+                type="button" 
+                onClick={handleAddNewAddress}
+                className={style.submit_button}
+                disabled={!newAddressStreet.trim() || !newAddressNumber.trim()}
+              >
+                Adicionar Endereço
+              </button>
+            </div>
+          )}
 
           <button type="submit" className={style.submit_button}>
             Enviar Pagamento
