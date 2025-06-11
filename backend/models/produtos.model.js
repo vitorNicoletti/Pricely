@@ -117,7 +117,6 @@ const Produtos = {
     );
     return result.insertId;
   },
-
   /**
    * Atualiza um produto existente.
    * @param {object} data
