@@ -8,7 +8,7 @@ const vendedorRouter = require("./routes/vendedor");
 const fornecedorRouter = require("./routes/fornecedor");
 const loginRouter = require('./routes/login');
 const carrinhoRouter = require('./routes/carrinho');
-
+const avaliacaoRouter = require('./routes/avaliacao')
 const produtoRoutes   = require('./routes/produto');
 dotenv.config(); // Carrega variáveis do .env
 
@@ -24,7 +24,7 @@ app.use("/api/vendedor", vendedorRouter);
 app.use("/api/fornecedor", fornecedorRouter);
 app.use('/api/cadastro',cadastroRouter )
 app.use('/api/login',loginRouter )
-
+app.use("/api/avaliacao",avaliacaoRouter)
 
 
 const PORT = process.env.PORT || 3000;
