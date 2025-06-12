@@ -29,30 +29,23 @@ exports.seguir = async (req, res) => {
   const seguidoId  = Number(req.params.id);
 
   try {
-    console.log("[ctrl.seguir] seguidor=", seguidorId, "seguido=", seguidoId);
-
     if (!(await isVendedor(seguidorId))) {
       return res.status(403).json({ erro: "Somente vendedores podem seguir." });
     }
-    console.log("[ctrl.seguir] é vendedor OK");
 
     if (!(await isFornecedor(seguidoId))) {
       return res.status(404).json({ erro: "Fornecedor não encontrado." });
     }
-    console.log("[ctrl.seguir] fornecedor existe OK");
 
     // Use a versão callback do model (ela já existe),
     // mas você poderia também promisificar esse método.
     Seguindo.seguir(seguidorId, seguidoId, (err, result) => {
       if (err) {
-        console.error("[ctrl.seguir] erro ao inserir:", err);
         return res.status(500).json({ erro: "Erro ao seguir." });
       }
-      console.log("[ctrl.seguir] inserido com sucesso:", result);
       res.json({ followed: true });
     });
   } catch (e) {
-    console.error("[ctrl.seguir] erro interno:", e);
     res.status(500).json({ erro: "Erro interno." });
   }
 };
@@ -63,17 +56,13 @@ exports.unfollow = async (req, res) => {
   const seguidoId  = Number(req.params.id);
 
   try {
-    console.log("[ctrl.unfollow] seguidor=", seguidorId, "seguido=", seguidoId);
     Seguindo.deixarDeSeguir(seguidorId, seguidoId, (err, result) => {
       if (err) {
-        console.error("[ctrl.unfollow] erro ao deletar:", err);
         return res.status(500).json({ erro: "Erro ao deixar de seguir." });
       }
-      console.log("[ctrl.unfollow] deletado com sucesso:", result);
       res.json({ followed: false });
     });
   } catch (e) {
-    console.error("[ctrl.unfollow] erro interno:", e);
     res.status(500).json({ erro: "Erro interno." });
   }
 };
