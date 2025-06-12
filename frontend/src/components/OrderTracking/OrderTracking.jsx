@@ -1,14 +1,40 @@
 import styles from "./OrderTracking.module.css";
 import Footer from "../Footer/Footer";
 import Header from "../Header/Header";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react"; // Adicionado useCallback
 import { useParams } from "react-router-dom";
 import api from "../../api";
+
+import ProductRatingModal from '../RatingModal/ProductRatingModal';
+
+const ORDER_RATED_ITEMS_KEY = 'ratedOrderItems'; // Chave para o localStorage
 
 const OrderTracking = () => {
   const { pedidoId } = useParams();
   const [pedido, setPedido] = useState(null);
   const [error, setError] = useState(null);
+  const [productToRate, setProductToRate] = useState(null);
+
+  // NOVO: Estado para armazenar IDs de compra já avaliadas localmente
+  const [ratedPurchases, setRatedPurchases] = useState(() => {
+    try {
+      const stored = localStorage.getItem(ORDER_RATED_ITEMS_KEY);
+      return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+      console.error("Failed to parse rated items from localStorage", e);
+      return {};
+    }
+  });
+
+  const storedUser = localStorage.getItem("user");
+  const currentUser = storedUser ? JSON.parse(storedUser) : null;
+  const currentUserId = currentUser?.id_usuario;
+
+  // Função para salvar a lista de compras avaliadas no localStorage
+  const saveRatedPurchases = useCallback((updatedRatedPurchases) => {
+    setRatedPurchases(updatedRatedPurchases);
+    localStorage.setItem(ORDER_RATED_ITEMS_KEY, JSON.stringify(updatedRatedPurchases));
+  }, []);
 
   useEffect(() => {
     if (!pedidoId) return;
@@ -21,7 +47,10 @@ const OrderTracking = () => {
         const pedidoFormatado = {
           ...pedido,
           itens: compras.map((compra) => ({
+            id_compra: compra.id_compra,
+            // NÃO MAIS DEPENDEMOS DE ja_avaliado_por_mim do backend
             produto: {
+              id_produto: compra.produto?.id_produto || null,
               nome: compra.produto?.nome || `Produto #${compra.id_produto}`,
               descricao: compra.produto?.descricao || "",
               imagem: compra.produto?.imagem?.dados || null,
@@ -40,7 +69,7 @@ const OrderTracking = () => {
         console.error("Erro ao buscar pedido:", err);
         setError("Não foi possível carregar o pedido.");
       });
-  }, [pedidoId]);
+  }, [pedidoId]); // Removido 'ratedPurchases' da dependência para evitar loop infinito
 
   if (error) {
     return (
@@ -94,13 +123,17 @@ const OrderTracking = () => {
     },
     items:
       pedido.itens?.map((item) => ({
+        id: item.produto?.id_produto || null,
+        id_compra: item.id_compra,
         title: item.produto?.nome || "",
         brand: item.produto?.descricao || "",
         price: `R$${Number(item.preco_unidade).toFixed(2)}`,
         qty: item.quantidade,
         image: item.produto?.imagem,
         imageType: item.produto?.tipoImagem,
-        rating: item.produto?.avaliacao
+        rating: item.produto?.avaliacao,
+        // NOVO: 'isRated' é determinado localmente
+        isRated: ratedPurchases[item.id_compra] === true // Verifica se id_compra está no objeto ratedPurchases
       })) || [],
     summary: {
       price: `R$${totalProdutos.toFixed(2)}`,
@@ -129,9 +162,48 @@ const OrderTracking = () => {
     ENTREGUE: "Entregue"
   };
 
-  const currentStatus = statusMap[orderData.status];
-  const currentStepIndex = steps.findIndex((step) => step.label === currentStatus);
+  const currentStatusLabel = statusMap[orderData.status];
+  const currentStepIndex = steps.findIndex((step) => step.label === currentStatusLabel);
+  const isOrderDelivered = orderData.status === 'ENTREGUE';
 
+  const handleProductRatingSubmit = async (data) => {
+    const { rating, feedback } = data;
+    
+    if (!currentUserId) {
+      alert("Você precisa estar logado para avaliar um produto.");
+      setProductToRate(null);
+      return;
+    }
+
+    if (productToRate && productToRate.id && productToRate.idCompra) {
+      console.log(`Tentando avaliar Produto ID: ${productToRate.id}, Compra ID: ${productToRate.idCompra}, Rating: ${rating}, Texto: "${feedback}"`);
+      try {
+        const response = await api.post(`/avaliacao/produto`, {
+          id_compra: productToRate.idCompra,
+          avaliacao: rating,
+          texto_avaliacao: feedback,
+          id_produto: productToRate.id
+        });
+
+        if (response.status === 201) {
+          alert(`Avaliação de ${rating} estrelas para "${productToRate.name || 'o produto'}" enviada com sucesso!`);
+          // NOVO: Adiciona a compra avaliada ao localStorage
+          const updatedRatedPurchases = { ...ratedPurchases, [productToRate.idCompra]: true };
+          saveRatedPurchases(updatedRatedPurchases);
+        } else {
+          alert(`Erro ao enviar avaliação: ${response.data.message || 'Erro desconhecido.'}`);
+        }
+      } catch (error) {
+        const errorMessage = error.response?.data?.error || error.message;
+        const details = error.response?.data?.detalhes ? ` Detalhes: ${error.response.data.detalhes.join(', ')}` : '';
+        console.error("Erro ao enviar avaliação:", error.response ? error.response.data : error.message);
+        alert(`Erro ao enviar avaliação. Por favor, tente novamente. ${errorMessage}${details}`);
+      }
+      setProductToRate(null);
+    } else {
+      alert("Erro: Dados do produto ou da compra para avaliação incompletos.");
+    }
+  };
 
   return (
     <>
@@ -154,7 +226,7 @@ const OrderTracking = () => {
           {steps.map((step, i) => {
             let stepClass = styles.step;
               if (currentStepIndex === -1) {
-                stepClass = styles.step; // nenhum passo ativo
+                stepClass = styles.step;
               } else if (i < currentStepIndex) {
                 stepClass = styles.stepCompleted;
               } else if (i === currentStepIndex) {
@@ -173,7 +245,13 @@ const OrderTracking = () => {
 
         <div className={styles.items}>
           {orderData.items.map((item, i) => (
-            <OrderItem key={i} {...item} />
+            <OrderItem
+              key={i}
+              {...item}
+              isDelivered={isOrderDelivered}
+              isRated={item.isRated} // isRated agora vem do cálculo local
+              onRateClick={() => setProductToRate({ id: item.id, name: item.title, idCompra: item.id_compra })}
+            />
           ))}
         </div>
 
@@ -241,13 +319,22 @@ const OrderTracking = () => {
           </ul>
         </div>
 
-        <Footer />
       </div>
+
+      {productToRate && (
+        <ProductRatingModal
+          isOpen={!!productToRate}
+          onClose={() => setProductToRate(null)}
+          onSubmit={handleProductRatingSubmit}
+        />
+      )}
+
+      <Footer />
     </>
   );
 };
 
-const OrderItem = ({ title, brand, price, qty, image, imageType, rating }) => (
+const OrderItem = ({ id, id_compra, title, brand, price, qty, image, imageType, rating, isDelivered, isRated, onRateClick }) => (
   <div className={styles.item}>
     <div className={styles.itemLeft}>
       {image && (
@@ -277,6 +364,17 @@ const OrderItem = ({ title, brand, price, qty, image, imageType, rating }) => (
     <div className={styles.itemPrice}>
       <p>{price}</p>
       <p>Qtd: {qty}</p>
+      {/* Condição para mostrar o botão: Entregue E NÃO Avaliado */}
+      {isDelivered && !isRated ? (
+        <button
+          className={styles.rateProductButton}
+          onClick={onRateClick}
+        >
+          Avaliar Produto
+        </button>
+      ) : isDelivered && isRated ? (
+        <span className={styles.ratedText}>Avaliado!</span>
+      ) : null}
     </div>
   </div>
 );

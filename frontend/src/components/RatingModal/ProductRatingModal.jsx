@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
 import styles from './ProductRatingModal.module.css';
 
-const ProductRatingModal = ({ isOpen, onClose, onSubmit }) => {
+// Adicione a prop 'initialFeedback' para o caso de querer preencher o campo com algum texto inicial
+const ProductRatingModal = ({ isOpen, onClose, onSubmit, initialFeedback = '' }) => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+  // NOVO: Estado para o texto da avaliação
+  const [feedback, setFeedback] = useState(initialFeedback);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(rating);
+    // NOVO: onSubmit agora envia o rating E o feedback
+    onSubmit({ rating, feedback });
     setRating(0);
     setHoverRating(0);
+    setFeedback(''); // Reseta o feedback após o envio
   };
 
   return (
@@ -45,6 +50,18 @@ const ProductRatingModal = ({ isOpen, onClose, onSubmit }) => {
                 </span>
               ))}
             </div>
+          </div>
+
+          {/* NOVO: Seção para o campo de texto */}
+          <div className={styles.feedbackSection}> {/* Reutiliza a classe feedbackSection do SupplierExperienceModal */}
+            <p>Compartilhe sua experiência com o produto!</p>
+            <textarea
+              placeholder="Conte-nos mais sobre sua experiência com o produto..."
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              rows="4"
+              className={styles.textarea} // Reutiliza a classe textarea
+            ></textarea>
           </div>
 
           <div className={styles.modalActions}>

@@ -117,3 +117,24 @@
 .submitButton:hover {
   background-color: #FFA000;
 }
+
+.feedbackSection {
+  margin-top: 20px; /* Adicione um espaçamento para separar das estrelas */
+  margin-bottom: 20px;
+}
+
+.feedbackSection p {
+  font-size: 1em;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.textarea {
+  width: calc(100% - 20px); /* Ajusta para o padding */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1em;
+  resize: vertical; /* Permite redimensionar verticalmente */
+  min-height: 80px;
+}
