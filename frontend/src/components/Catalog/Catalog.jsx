@@ -24,7 +24,7 @@ const Catalog = () => {
   //Essa é o correto que vai ser implementado depois
   useEffect(() => {
     api
-      .get("/")
+      .get("/catalogo")
       .then((response) => {
         setProducts(response.data);
       })
