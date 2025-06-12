@@ -3,30 +3,27 @@ import profilePlaceholder from "../../assets/profile_placeholder.png";
 import style from "./ProfileModal.module.css";
 import { useState } from "react";
 
-function ProfileModal() {
+function ProfileModal({ user }) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-
-  // 1) Recupera o perfil do localStorage
-  const stored = localStorage.getItem("user");
-  const user = stored ? JSON.parse(stored) : null;
   const isLogged = !!user;
+  console.log(user)
 
-  // 2) Pegue sempre user.email
-  const displayEmail = user?.email ?? user?.nome_fantasia ?? "Usuário";
+  // 1) Pegue sempre user.email OU nome_fantasia
+  const displayUserName = user?.email ?? user?.nome_fantasia ?? "Usuário";
 
-  // 3) Imagem: fornecedor usa user.imagem; vendedor user.imagemPerfil
+  // 2) Imagem: fornecedor usa user.imagem; vendedor user.imagemPerfil
   const imgData = user?.imagem?.dados ?? user?.imagemPerfil?.dados;
   const imgType = user?.imagem?.tipo ?? user?.imagemPerfil?.tipo;
 
+  // Deslogar
   function sairHandler() {
     // Limpa o localStorage
     localStorage.removeItem("user");
     localStorage.removeItem("authToken");
-
     // Redireciona para a página inicial
     navigate("/");
-    window.location.reload(true)
+    window.location.reload(true);
   }
 
   return (
@@ -54,7 +51,7 @@ function ProfileModal() {
         {isLogged && (
           <>
             {/* agora o email sempre aparece abaixo da foto */}
-            <p className={style.name}>{displayEmail}</p>
+            <p className={style.name}>{displayUserName}</p>
 
             {user.role === "vendedor" && (
               <>
@@ -98,7 +95,11 @@ function ProfileModal() {
           <button className={style.btn} onClick={sairHandler}>
             Sair
           </button>
-          <button className={style.btn} style={{ backgroundColor: "gray" }} onClick={() => setIsOpen(false)}>
+          <button
+            className={style.btn}
+            style={{ backgroundColor: "gray" }}
+            onClick={() => setIsOpen(false)}
+          >
             Cancelar
           </button>
         </div>

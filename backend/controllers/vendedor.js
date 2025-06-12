@@ -1,4 +1,5 @@
 const Vendedor = require("../models/vendedor.model.js");
+const Carteira = require("../models/carteira.model.js");
 
 function getVendedorDetails(req, res) {
   let idUsuario;
@@ -71,7 +72,9 @@ async function updateVendedorProfile(req, res) {
       return res.status(400).json({ erro: e.message });
     }
     if (e.message === "Senha obrigatória para atualizar perfil") {
-      return res.status(400).json({ erro: "Senha obrigatória para atualizar perfil" });
+      return res
+        .status(400)
+        .json({ erro: "Senha obrigatória para atualizar perfil" });
     }
     if (e.message === "Senha incorreta") {
       return res.status(400).json({ erro: "Senha incorreta" });
@@ -79,4 +82,32 @@ async function updateVendedorProfile(req, res) {
     return res.status(500).json({ erro: "Falha ao atualizar perfil" });
   }
 }
-module.exports = { getVendedorDetails, updateVendedorProfile };
+
+async function udpateSaldoCarteira(req, res) {
+  const user = req.user;
+  const value = req.body.amount;
+  if (!user) {
+    return res.status(401).json({ error: "Usuário não autenticado" });
+  }
+
+  try {
+    let updatedRows = Carteira.alterCarteiraBalance(user.id_usuario, value);
+
+    if (updatedRows == 0) {
+      return res
+        .status(404)
+        .json({ error: "Não foi possível adicionar saldo" });
+    }
+
+    return res.json(updatedRows);
+  } catch (err) {
+    console.error("Erro ao Adicionar saldo:", err);
+    return res.status(500).json({ error: "Erro interno no servidor" });
+  }
+}
+
+module.exports = {
+  getVendedorDetails,
+  updateVendedorProfile,
+  udpateSaldoCarteira,
+};

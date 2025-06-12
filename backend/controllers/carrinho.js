@@ -1,70 +1,117 @@
+const Pedido = require("../models/pedido.model");
+const Promocao = require("../models/promocao.model");
+const Usuario = require("../models/usuario.model");
+const Vendedor = require("../models/vendedor.model");
+const bcrypt = require("bcrypt");
+const Compra = require("../models/compra.model");
+const Conjunto = require("../models/conjunto.model");
+const Carteira = require("../models/carteira.model.js");
+const db = require("../db.js");
 
-const Pedido = require('../models/pedido.model');
-const Promocao = require('../models/promocao.model');
-const Usuario = require('../models/usuario.model');
-const Vendedor = require('../models/vendedor.model');
-const bcrypt = require('bcrypt');
-const Compra = require('../models/compra.model');
-const Conjunto = require('../models/conjunto.model');
-const db = require('../db.js');
+async function removerProduto(req, res) {
+  const user = req.user;
+  const { id_produto } = req.body || {};
 
+  if (!user) {
+    return res.status(401).json({ error: "Usuário não autenticado" });
+  }
+
+  if (!id_produto) {
+    return res
+      .status(400)
+      .json({ error: "Parâmetro id_produto é obrigatório" });
+  }
+
+  try {
+    let carrinhoData = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario);
+    carrinhoData = carrinhoData[0];
+    if (
+      !carrinhoData ||
+      !carrinhoData.compras ||
+      !carrinhoData.compras.length
+    ) {
+      return res.status(404).json({ error: "Carrinho vazio ou inexistente" });
+    }
+
+    for (const compra of carrinhoData.compras) {
+      if (compra.id_produto === Number(id_produto)) {
+        const sucesso = await Compra.removerCompra(compra.id_compra);
+
+        if (sucesso) {
+          return res
+            .status(200)
+            .json({ message: "Produto removido do carrinho com sucesso" });
+        } else {
+          return res
+            .status(500)
+            .json({ error: "Erro ao remover o produto do carrinho" });
+        }
+      }
+    }
+
+    return res
+      .status(404)
+      .json({ error: "Produto não encontrado no carrinho" });
+  } catch (err) {
+    console.error("Erro ao remover produto do carrinho:", err);
+    return res.status(500).json({ error: "Erro interno no servidor" });
+  }
+}
 
 async function getCarrinho(req, res) {
   const user = req.user;
   if (!user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
+    return res.status(401).json({ error: "Usuário não autenticado" });
   }
 
   try {
     // Supondo que o método no model se chame getCarrinhoPorIdVendedor
     const carrinhoData = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario);
-    
 
     if (!carrinhoData) {
-      return res.status(404).json({ error: 'Carrinho não encontrado' });
+      return res.status(404).json({ error: "Carrinho não encontrado" });
     }
 
     return res.json(carrinhoData);
   } catch (err) {
-    console.error('Erro ao buscar carrinho:', err);
-    return res.status(500).json({ error: 'Erro interno no servidor' });
+    console.error("Erro ao buscar carrinho:", err);
+    return res.status(500).json({ error: "Erro interno no servidor" });
   }
 }
 
 async function adicionarAoCarrinho(req, res) {
   const user = req.user;
 
-
   let { id_produto, quantidade, dividir } = req.body;
 
   // Verifica se usuário está autenticado
   if (!user) {
-    return res.status(401).json({ error: 'Usuário não autenticado' });
+    return res.status(401).json({ error: "Usuário não autenticado" });
   }
 
   // Validação dos campos
   const erros = [];
-
-
 
   id_produto = Number(id_produto);
   quantidade = Number(quantidade);
   dividir = Number(dividir);
 
   if (!Number.isInteger(id_produto) || id_produto <= 0) {
-    erros.push('id_produto deve ser um número inteiro positivo.');
+    erros.push("id_produto deve ser um número inteiro positivo.");
   }
 
   if (!Number.isInteger(quantidade) || quantidade <= 0) {
-    erros.push('quantidade deve ser um número inteiro positivo.');
+    erros.push("quantidade deve ser um número inteiro positivo.");
   }
 
   if (dividir !== 0 && dividir !== 1) {
-    erros.push('dividir deve ser 0 ou 1.');
+    erros.push("dividir deve ser 0 ou 1.");
   }
 
   if (erros.length > 0) {
-    return res.status(400).json({ error: 'Parâmetros inválidos', detalhes: erros });
+    return res
+      .status(400)
+      .json({ error: "Parâmetros inválidos", detalhes: erros });
   }
   // Verifica promoções se não for dividido
   if (dividir === 0) {
@@ -77,48 +124,54 @@ async function adicionarAoCarrinho(req, res) {
 
   try {
     let carrinhoData = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario);
-    
-    if (!carrinhoData) {
+    carrinhoData = carrinhoData[0];
+    if (!carrinhoData || carrinhoData.length === 0) {
       carrinhoData = await Pedido.createCarrinho(user.id_usuario);
     }
-
-    const carrinhoId = carrinhoData.carrinho?.id_pedido || carrinhoData.id_pedido;
-    if(carrinhoData.compras){
+    const carrinhoId =
+      carrinhoData?.pedido?.id_pedido || carrinhoData?.carrinho?.id_pedido;
+    if (carrinhoData.compras) {
       for (const compra of carrinhoData.compras) {
-        if (compra.id_produto == id_produto) {
-          await Compra.atualizarCompra(compra.id_compra,{
-            quantidade: Number(compra.quantidade) + Number(quantidade)
+        if (compra.id_produto === id_produto) {
+          await Compra.atualizarCompra(compra.id_compra, {
+            quantidade: Number(compra.quantidade) + Number(quantidade),
           });
           return res.status(200).json({
             message: "produto adicionado com sucesso!",
-            id_compra: compra.id_compra
+            id_compra: compra.id_compra,
           });
         }
       }
-
     }
 
-
-    const idCompra = await Pedido.addProduto(carrinhoId, id_produto, quantidade, Number(dividir));
+    const idCompra = await Pedido.addProduto(
+      carrinhoId,
+      id_produto,
+      quantidade,
+      Number(dividir)
+    );
     if (!idCompra) {
-      return res.status(500).json({ message: "Erro interno ao adicionar produto" });
+      return res
+        .status(500)
+        .json({ message: "Erro interno ao adicionar produto" });
     }
 
-    return res.status(200).json({ message: "produto adicionado com sucesso!", id_compra: idCompra });
-
+    return res.status(200).json({
+      message: "produto adicionado com sucesso!",
+      id_compra: idCompra,
+    });
   } catch (err) {
-    console.error('Erro ao adicionar produto ao carrinho:', err);
-    return res.status(500).json({ error: 'Erro interno no servidor' });
+    console.error("Erro ao adicionar produto ao carrinho:", err);
+    return res.status(500).json({ error: "Erro interno no servidor" });
   }
 }
-
 
 async function obterCoordenadasPorEndereco(rua, numero) {
   const endereco = encodeURIComponent(`${rua}, ${numero}`);
   const url = `https://nominatim.openstreetmap.org/search?street=${endereco}&format=json&addressdetails=1&limit=1`;
   try {
     const response = await fetch(url, {
-      headers: { 'User-Agent': 'SeuAppNode/1.0 (seuemail@exemplo.com)' } // Nominatim exige um User-Agent
+      headers: { "User-Agent": "SeuAppNode/1.0 (seuemail@exemplo.com)" }, // Nominatim exige um User-Agent
     });
     const data = await response.json();
     if (data.length === 0) return null;
@@ -126,7 +179,7 @@ async function obterCoordenadasPorEndereco(rua, numero) {
     const { lat, lon } = data[0];
     return { latitude: parseFloat(lat), longitude: parseFloat(lon) };
   } catch (error) {
-    console.error('Erro ao obter coordenadas:', error);
+    console.error("Erro ao obter coordenadas:", error);
     return null;
   }
 }
@@ -154,12 +207,7 @@ function pegarPromocaoPedidoMinimo(res, listaPromocoes) {
 }
 async function finalizarCompra(req, res) {
   const user = req.user;
-  const {
-    senha: senhaConfirmacao,
-    rua,
-    numero,
-    complemento
-  } = req.body;
+  const { senha: senhaConfirmacao, rua, numero, complemento, total } = req.body;
 
   // 1) Autenticação
   if (!user) {
@@ -168,7 +216,11 @@ async function finalizarCompra(req, res) {
 
   // 2) Validação de entrada
   const erros = [];
-  if (!senhaConfirmacao || typeof senhaConfirmacao !== "string" || !senhaConfirmacao.trim()) {
+  if (
+    !senhaConfirmacao ||
+    typeof senhaConfirmacao !== "string" ||
+    !senhaConfirmacao.trim()
+  ) {
     erros.push("Senha é obrigatória.");
   }
   if (!rua || typeof rua !== "string" || !rua.trim()) {
@@ -179,37 +231,79 @@ async function finalizarCompra(req, res) {
     erros.push("Número do endereço deve ser inteiro positivo.");
   }
   if (erros.length) {
-    return res.status(400).json({ message: "Parâmetros inválidos.", detalhes: erros });
+    return res
+      .status(400)
+      .json({ message: "Parâmetros inválidos.", detalhes: erros });
   }
 
   try {
     // 3) Verifica senha
     const [userBanco] = await Usuario.getUserByEmail(user.email);
-    const senhaCorreta = await bcrypt.compare(senhaConfirmacao, userBanco.senha);
+    const senhaCorreta = await bcrypt.compare(
+      senhaConfirmacao,
+      userBanco.senha
+    );
     if (!senhaCorreta) {
       return res.status(400).json({ message: "Senha incorreta." });
     }
 
     // 4) Busca carrinho
-    const carrinhoData = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario);
-    if (!carrinhoData || !Array.isArray(carrinhoData.compras) || !carrinhoData.compras.length) {
-      return res.status(400).json({ message: "Carrinho vazio ou inexistente." });
+    let carrinhoData = await Pedido.getCarrinhoPorIdVendedor(user.id_usuario);
+    carrinhoData = carrinhoData[0];
+    if (
+      !carrinhoData ||
+      !Array.isArray(carrinhoData.compras) ||
+      !carrinhoData.compras.length
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Carrinho vazio ou inexistente." });
+    }
+
+    // Identificar o ID e nome do vendedor (assumindo um pedido de um único vendedor ou pegando o primeiro)
+    let id_vendedor_finalizado = null;
+    let nome_vendedor_finalizado = "Fornecedor"; // Valor padrão
+
+    if (carrinhoData.compras.length > 0) {
+      // É crucial que seu `Pedido.getCarrinhoPorIdVendedor` traga o `id_vendedor` e, idealmente, o `nome` do vendedor
+      // dentro do objeto `produto` de cada `compra`.
+      // Ex: item.produto.id_vendedor e item.produto.vendedor_nome
+      const primeiroProdutoNoCarrinho = carrinhoData.compras[0].produto;
+      if (primeiroProdutoNoCarrinho && primeiroProdutoNoCarrinho.id_vendedor) {
+        id_vendedor_finalizado = primeiroProdutoNoCarrinho.id_vendedor;
+        // Se tiver o nome do vendedor no produto, use-o
+        if (primeiroProdutoNoCarrinho.vendedor_nome) {
+          nome_vendedor_finalizado = primeiroProdutoNoCarrinho.vendedor_nome;
+        } else {
+            // Caso contrário, faça uma busca para obter o nome do vendedor
+            const vendedor = await Vendedor.getVendedorById(id_vendedor_finalizado);
+            if (vendedor) {
+                nome_vendedor_finalizado = vendedor.nome;
+            }
+        }
+      }
     }
 
     // 5) Geocodificação do endereço
     const coords = await obterCoordenadasPorEndereco(rua, numeroInt);
     if (!coords) {
-      return res.status(502).json({ message: "Serviço de mapa indisponível ou endereço não encontrado." });
+      return res.status(502).json({
+        message: "Serviço de mapa indisponível ou endereço não encontrado.",
+      });
     }
     const { latitude: latCentro, longitude: lonCentro } = coords;
 
     // 6) Processa cada compra
     for (const compra of carrinhoData.compras) {
-      const dadosAtualizacao = { estado: 'PAGO' };
+      const dadosAtualizacao = { estado: "PAGO" };
 
       if (Number(compra.dividir) === 1) {
         // busca ou cria conjunto
-        const conjuntosValidos = await Conjunto.buscarPorLocalEIdProduto(lonCentro, latCentro, compra.id_produto);
+        const conjuntosValidos = await Conjunto.buscarPorLocalEIdProduto(
+          lonCentro,
+          latCentro,
+          compra.id_produto
+        );
         let idConjunto;
         if (Array.isArray(conjuntosValidos) && conjuntosValidos.length) {
           idConjunto = conjuntosValidos[0].id_conjunto;
@@ -219,7 +313,10 @@ async function finalizarCompra(req, res) {
         dadosAtualizacao.id_conjunto = idConjunto;
       }
 
-      const okCompra = await Compra.atualizarCompra(compra.id_compra, dadosAtualizacao);
+      const okCompra = await Compra.atualizarCompra(
+        compra.id_compra,
+        dadosAtualizacao
+      );
       if (!okCompra) {
         console.error(`Falha ao atualizar compra ${compra.id_compra}`);
       }
@@ -227,40 +324,78 @@ async function finalizarCompra(req, res) {
 
     // 7) Atualiza dados e estado do pedido
     const dadosPedido = {
-      estado: 'PAGO',
+      estado: "PAGO",
       rua,
       numero: numeroInt,
-      complemento: complemento || null
+      complemento: complemento || null,
     };
-    const okPedido = await Pedido.atualizarPedido(carrinhoData.carrinho.id_pedido, dadosPedido);
+    const okPedido = await Pedido.atualizarPedido(
+      carrinhoData.pedido.id_pedido,
+      dadosPedido
+    );
     if (!okPedido) {
-      console.error(`Falha ao atualizar pedido ${carrinhoData.carrinho.id_pedido}`);
+      console.error(
+        `Falha ao atualizar pedido ${carrinhoData.carrinho.id_pedido}`
+      );
     }
 
-    return res.status(200).json({ message: "Compra finalizada com sucesso." });
+    Carteira.alterCarteiraBalance(user.id_usuario, -total);
 
+    return res.status(200).json({
+      message: "Compra finalizada com sucesso.",
+      id_vendedor: id_vendedor_finalizado, // Retorna o ID do vendedor
+      nome_vendedor: nome_vendedor_finalizado, // Retorna o nome do vendedor
+    });
   } catch (error) {
     console.error("Erro ao finalizar compra:", error);
-    return res.status(500).json({ message: "Erro interno ao finalizar compra." });
+    return res
+      .status(500)
+      .json({ message: "Erro interno ao finalizar compra." });
   }
 }
 
-async function obterCoordenadasPorEndereco(rua, numero) {
-  const endereco = encodeURIComponent(`${rua}, ${numero}`);
-  const url = `https://nominatim.openstreetmap.org/search?street=${endereco}&format=json&limit=1`;
+async function avaliarFornecedor(req, res) {
+  const user = req.user;
+  const { id_fornecedor } = req.params;
+  const { recommend, feedback } = req.body;
+
+  if (!user) {
+    return res.status(401).json({ error: "Usuário não autenticado" });
+  }
+  if (!id_fornecedor) {
+    return res.status(400).json({ error: "ID do fornecedor é obrigatório" });
+  }
+  if (recommend === null || typeof recommend === 'undefined') {
+    return res.status(400).json({ error: "Recomendação é obrigatória (true/false)" });
+  }
+  // Feedback é opcional, então não há validação rigorosa para ele.
+
   try {
-    const response = await fetch(url, { headers: { 'User-Agent': 'SeuAppNode/1.0' } });
-    const data = await response.json();
-    if (!data.length) return null;
-    return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) };
-  } catch (err) {
-    console.error('Erro ao obter coordenadas:', err);
-    return null;
+    // Adicionar logica para registrar a avaliação do fornecedor
+
+
+    const sucessoAvaliacao = await Vendedor.addAvaliacao(
+      Number(id_fornecedor),
+      user.id_usuario,
+      recommend,
+      feedback
+    );
+
+    if (sucessoAvaliacao) {
+      return res.status(200).json({ message: "Avaliação do fornecedor enviada com sucesso!" });
+    } else {
+      return res.status(500).json({ error: "Erro ao registrar avaliação do fornecedor." });
+    }
+  } catch (error) {
+    console.error("Erro ao avaliar fornecedor:", error);
+    return res.status(500).json({ error: "Erro interno no servidor ao avaliar fornecedor." });
   }
 }
 
-
-function dividirCompra(compra){
-  
-}
-module.exports = { getCarrinho, adicionarAoCarrinho, finalizarCompra };
+module.exports = {
+  getCarrinho,
+  adicionarAoCarrinho,
+  finalizarCompra,
+  removerProduto,
+  avaliarFornecedor, // Exporte a nova função
+};

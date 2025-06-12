@@ -16,6 +16,8 @@ function BuyerProfile() {
   const [editImage, setEditImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
 
+  const [maisComprados, setMaisComprados] = useState([]);
+
   const navigate = useNavigate();
 
   const stored = localStorage.getItem("user");
@@ -31,6 +33,68 @@ function BuyerProfile() {
     setBuyer(user);
   }, []);
 
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        const response = await api.get("/vendedor/pedidos");
+
+        const pedidos = response.data.map((entry) => {
+          const { pedido, compras } = entry;
+
+          const totalProdutos = compras.reduce(
+            (sum, item) => sum + item.preco_unidade * item.quantidade,
+            0
+          );
+          const freteTotal = compras.reduce(
+            (sum, item) => sum + (item.frete_pago || 0),
+            0
+          );
+
+          const total = totalProdutos + freteTotal;
+
+          return {
+            ...pedido,
+            compras,
+            total,
+          };
+        });
+
+        // Ordena os pedidos por data decrescente (mais recentes primeiro)
+        const pedidosOrdenados = pedidos.sort(
+          (a, b) => new Date(b.dataCadastro) - new Date(a.dataCadastro)
+        );
+
+        setOrders(pedidosOrdenados);
+
+        // Lógica para identificar os itens mais comprados
+        const contagem = {};
+        pedidos.forEach(({ compras }) => {
+          compras.forEach(({ id_produto, produto }) => {
+            if (!id_produto || !produto) return;
+            if (!contagem[id_produto]) {
+              contagem[id_produto] = { produto, quantidade: 0 };
+            }
+            contagem[id_produto].quantidade += 1;
+          });
+        });
+
+        const maisFrequentes = Object.values(contagem)
+          .sort((a, b) => b.quantidade - a.quantidade)
+          .slice(0, 5); // Top 5
+
+        setMaisComprados(maisFrequentes);
+      } catch (error) {
+        console.error("Erro ao buscar pedidos do vendedor:", error);
+      }
+    }
+
+    if (token) {
+      fetchOrders();
+    }
+  }, [token]);
+
+
+
   if (!buyer) {
     return (
       <>
@@ -44,13 +108,18 @@ function BuyerProfile() {
   }
 
   // --- Dados dinâmicos ---
-  const name = buyer.email.split("@")[0];
+  const name = buyer.nome || buyer.email.split("@")[0];
+
   const balance = buyer.carteira?.saldo ?? 0;
   const lastOrder = orders[0] || null;
-  const totalSaved = orders.reduce(
-    (sum, o) => sum + (o.total * o.desconto) / 100,
-    0
-  );
+
+  const totalSaved = orders.reduce((sum, o) => {
+  if (o.total != null && o.desconto != null) {
+    return sum + (o.total * o.desconto) / 100;
+  }
+    return sum;
+  }, 0);
+
 
   // Preenche editData ao abrir modal
   const handleOpenEdit = () => {
@@ -189,26 +258,46 @@ function BuyerProfile() {
         <section className={styles.section}>
           <h2>Últimos Pedidos</h2>
           <ul className={styles.orderList}>
-            {orders.map((order) => (
-              <li key={order.id_pedido}>
-                <strong>{order.id_pedido}</strong> –{" "}
-                {new Date(order.dataCadastro).toLocaleDateString("pt-BR")} –{" "}
-                {order.total.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}{" "}
-                –{" "}
-                <span className={styles.status}>{order.metodo_pagamento}</span>
-              </li>
-            ))}
-          </ul>
+              {orders
+                .slice() // faz uma cópia para não modificar o state original
+                .sort((a, b) => new Date(b.dataCadastro) - new Date(a.dataCadastro)) // ordem decrescente
+                .map((o) => (
+                  <li
+                    key={o.id_pedido}
+                    onClick={() => navigate(`/pedido/${o.id_pedido}`)}
+                    className={styles.clickableRow}
+                  >
+                    <strong>{o.id_pedido}</strong> –{" "}
+                    {o.dataCadastro
+                      ? new Date(o.dataCadastro).toLocaleDateString("pt-BR")
+                      : "Data inválida"}{" "}
+                    –{" "}
+                    {o.total
+                      ? o.total.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        })
+                      : "—"}{" "}
+                    – <span className={styles.status}>{o.metodo_pagamento || "—"}</span>
+                  </li>
+                ))}
+            </ul>
+
           <button className={styles.btn}>Ver todos os pedidos</button>
         </section>
 
         <section className={styles.section}>
           <h2>Itens que você mais compra</h2>
           <ul className={styles.itemList}>
-            <li>Sem dados</li>
+            {maisComprados.length === 0 ? (
+              <li>Sem dados</li>
+            ) : (
+              maisComprados.map((item, i) => (
+                <li key={i}>
+                  {item.produto?.nome || "Produto sem nome"} (comprado {item.quantidade}x)
+                </li>
+              ))
+            )}
           </ul>
         </section>
 

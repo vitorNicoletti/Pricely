@@ -264,19 +264,14 @@ function PaymentModal({ isOpen, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("botao apertado")
     if (validateForm()) {
-      console.log("form valid")
       const finalAmount = getSelectedAmountValue();
-      console.log("quantidade add ", finalAmount)
       const body = {
         amount: finalAmount,
       };
       await api.put("/vendedor/carteira", body);
       window.location.reload();
       onClose();
-    } else {
-      console.log("form invalido")
     }
   };
 

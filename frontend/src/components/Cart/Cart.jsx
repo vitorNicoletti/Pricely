@@ -26,7 +26,7 @@ const Cart = () => {
   // Novos estados para o modal de avaliação do fornecedor
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
   const [supplierToEvaluateId, setSupplierToEvaluateId] = useState(null);
-  const [supplierToEvaluateName, setSupplierToEvaluateName] = '';
+  const [supplierToEvaluateName, setSupplierToEvaluateName] = useState('');
 
 
   // Extrai todas as compras de todos os pedidos em estado CARRINHO
@@ -123,7 +123,7 @@ const Cart = () => {
 
         console.log("Compra finalizada com sucesso!");
         // Assumimos que a resposta do backend incluirá o ID e nome do vendedor.
-        // O backend precisa garantir que esses esses dados são retornados.
+        // O backend precisa garantir que esses dados são retornados.
         const id_vendedor = response.data.id_vendedor;
         const nome_vendedor = response.data.nome_vendedor;
 
@@ -141,6 +141,7 @@ const Cart = () => {
       } finally {
         // Define o estado de loading como false após a requisição (seja sucesso ou erro)
         setIsLoading(false);
+        navigate("/")
       }
     } else {
       // Abre modal para adicionar saldo
