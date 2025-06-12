@@ -231,6 +231,22 @@ const Cart = () => {
     localStorage.setItem("user", JSON.stringify(updatedUser));
   };
 
+  // Function to fetch user data
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        // Assuming you have an API endpoint to get user details including wallet
+        const response = await api.get("/user/profile"); // <--- REPLACE WITH YOUR ACTUAL USER PROFILE ENDPOINT
+        const updatedUser = response.data;
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados do usuário:", error);
+    }
+  };
+
   useEffect(() => {
     // Verifica se o usuário está logado
     const token = localStorage.getItem("authToken");
@@ -239,20 +255,8 @@ const Cart = () => {
       return;
     }
 
-    // Pega dados do usuário do localStorage
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        // Se o usuário tem endereços, seleciona o primeiro por padrão
-        if (parsedUser.addresses && parsedUser.addresses.length > 0) {
-          setSelectedAddress(parsedUser.addresses[0].id || "0");
-        }
-      } catch (error) {
-        console.error("Erro ao parsear dados do usuário:", error);
-      }
-    }
+    // Pega dados do usuário do localStorage e, em seguida, busca os dados mais recentes
+    fetchUserData();
 
     // Busca os itens do carrinho do Usuario
     const fetchCart = async () => {
@@ -264,7 +268,7 @@ const Cart = () => {
       }
     };
     fetchCart();
-  }, [navigate]);
+  }, [navigate, isPaymentModalOpen]); // Adicione isPaymentModalOpen como dependência
 
   return (
     <>
@@ -475,6 +479,7 @@ const Cart = () => {
         isOpen={isPaymentModalOpen}
         onClose={() => {
           setIsPaymentModalOpen(false);
+          fetchUserData(); // Chamada para atualizar os dados do usuário ao fechar o modal
         }}
       />
       {/* Novo modal de avaliação do fornecedor */}

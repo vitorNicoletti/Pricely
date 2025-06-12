@@ -270,6 +270,9 @@ function PaymentModal({ isOpen, onClose }) {
         amount: finalAmount,
       };
       await api.put("/vendedor/carteira", body);
+      const userData = localStorage.getItem("user");
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
       window.location.reload();
       onClose();
     }
