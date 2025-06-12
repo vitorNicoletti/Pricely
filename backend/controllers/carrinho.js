@@ -260,6 +260,30 @@ async function finalizarCompra(req, res) {
         .json({ message: "Carrinho vazio ou inexistente." });
     }
 
+    // Identificar o ID e nome do vendedor (assumindo um pedido de um único vendedor ou pegando o primeiro)
+    let id_vendedor_finalizado = null;
+    let nome_vendedor_finalizado = "Fornecedor"; // Valor padrão
+
+    if (carrinhoData.compras.length > 0) {
+      // É crucial que seu `Pedido.getCarrinhoPorIdVendedor` traga o `id_vendedor` e, idealmente, o `nome` do vendedor
+      // dentro do objeto `produto` de cada `compra`.
+      // Ex: item.produto.id_vendedor e item.produto.vendedor_nome
+      const primeiroProdutoNoCarrinho = carrinhoData.compras[0].produto;
+      if (primeiroProdutoNoCarrinho && primeiroProdutoNoCarrinho.id_vendedor) {
+        id_vendedor_finalizado = primeiroProdutoNoCarrinho.id_vendedor;
+        // Se tiver o nome do vendedor no produto, use-o
+        if (primeiroProdutoNoCarrinho.vendedor_nome) {
+          nome_vendedor_finalizado = primeiroProdutoNoCarrinho.vendedor_nome;
+        } else {
+            // Caso contrário, faça uma busca para obter o nome do vendedor
+            const vendedor = await Vendedor.getVendedorById(id_vendedor_finalizado);
+            if (vendedor) {
+                nome_vendedor_finalizado = vendedor.nome;
+            }
+        }
+      }
+    }
+
     // 5) Geocodificação do endereço
     const coords = await obterCoordenadasPorEndereco(rua, numeroInt);
     if (!coords) {
@@ -317,7 +341,11 @@ async function finalizarCompra(req, res) {
 
     Carteira.alterCarteiraBalance(user.id_usuario, -total);
 
-    return res.status(200).json({ message: "Compra finalizada com sucesso." });
+    return res.status(200).json({
+      message: "Compra finalizada com sucesso.",
+      id_vendedor: id_vendedor_finalizado, // Retorna o ID do vendedor
+      nome_vendedor: nome_vendedor_finalizado, // Retorna o nome do vendedor
+    });
   } catch (error) {
     console.error("Erro ao finalizar compra:", error);
     return res
@@ -326,29 +354,48 @@ async function finalizarCompra(req, res) {
   }
 }
 
-async function obterCoordenadasPorEndereco(rua, numero) {
-  const endereco = encodeURIComponent(`${rua}, ${numero}`);
-  const url = `https://nominatim.openstreetmap.org/search?street=${endereco}&format=json&limit=1`;
+async function avaliarFornecedor(req, res) {
+  const user = req.user;
+  const { id_fornecedor } = req.params;
+  const { recommend, feedback } = req.body;
+
+  if (!user) {
+    return res.status(401).json({ error: "Usuário não autenticado" });
+  }
+  if (!id_fornecedor) {
+    return res.status(400).json({ error: "ID do fornecedor é obrigatório" });
+  }
+  if (recommend === null || typeof recommend === 'undefined') {
+    return res.status(400).json({ error: "Recomendação é obrigatória (true/false)" });
+  }
+  // Feedback é opcional, então não há validação rigorosa para ele.
+
   try {
-    const response = await fetch(url, {
-      headers: { "User-Agent": "SeuAppNode/1.0" },
-    });
-    const data = await response.json();
-    if (!data.length) return null;
-    return {
-      latitude: parseFloat(data[0].lat),
-      longitude: parseFloat(data[0].lon),
-    };
-  } catch (err) {
-    console.error("Erro ao obter coordenadas:", err);
-    return null;
+    // Adicionar logica para registrar a avaliação do fornecedor
+
+
+    const sucessoAvaliacao = await Vendedor.addAvaliacao(
+      Number(id_fornecedor),
+      user.id_usuario,
+      recommend,
+      feedback
+    );
+
+    if (sucessoAvaliacao) {
+      return res.status(200).json({ message: "Avaliação do fornecedor enviada com sucesso!" });
+    } else {
+      return res.status(500).json({ error: "Erro ao registrar avaliação do fornecedor." });
+    }
+  } catch (error) {
+    console.error("Erro ao avaliar fornecedor:", error);
+    return res.status(500).json({ error: "Erro interno no servidor ao avaliar fornecedor." });
   }
 }
 
-function dividirCompra(compra) {}
 module.exports = {
   getCarrinho,
   adicionarAoCarrinho,
   finalizarCompra,
   removerProduto,
+  avaliarFornecedor, // Exporte a nova função
 };

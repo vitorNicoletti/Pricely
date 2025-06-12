@@ -7,6 +7,7 @@ import styles from "./Cart.module.css";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import PaymentModal from "../Payment/PaymentModal";
+import SupplierExperienceModal from '../SupplierExperienceModal/SupplierExperienceModal'; // Importe o modal aqui
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -20,6 +21,12 @@ const Cart = () => {
   const [newAddressComplement, setNewAddressComplement] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
+
+  // Novos estados para o modal de avaliação do fornecedor
+  const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
+  const [supplierToEvaluateId, setSupplierToEvaluateId] = useState(null);
+  const [supplierToEvaluateName, setSupplierToEvaluateName] = useState('');
+
 
   // Extrai todas as compras de todos os pedidos em estado CARRINHO
   const cartItems = useMemo(() => {
@@ -37,6 +44,10 @@ const Cart = () => {
     if (!cartItems || cartItems.length === 0) {
       return { subtotal: 0, discount: 0, total: 0 };
     }
+
+    let subtotal = 0;
+    let discount = 0;
+
     cartItems.forEach((item) => {
       const preco = item.preco_unidade;
       const qtd = item.quantidade;
@@ -104,12 +115,20 @@ const Cart = () => {
           total,
         };
 
-        await api.post("/carrinho/finalizar", body);
+        const response = await api.post("/carrinho/finalizar", body);
 
-        // Compra finalizada com sucesso
         console.log("Compra finalizada com sucesso!");
-        // Você pode redirecionar ou mostrar uma mensagem de sucesso aqui
-        navigate("/"); // ou qualquer rota que você tenha para sucesso
+        // Assumimos que a resposta do backend incluirá o ID e nome do vendedor.
+        // O backend precisa garantir que esses dados são retornados.
+        const id_vendedor = response.data.id_vendedor;
+        const nome_vendedor = response.data.nome_vendedor;
+
+        // Abre o modal de avaliação do fornecedor
+        setSupplierToEvaluateId(id_vendedor);
+        setSupplierToEvaluateName(nome_vendedor);
+        setIsSupplierModalOpen(true);
+
+
       } catch (error) {
         console.error("Erro ao finalizar compra:", error);
         setErrors({
@@ -121,6 +140,32 @@ const Cart = () => {
       setIsPaymentModalOpen(true);
     }
   };
+
+  const handleSupplierFeedbackSubmit = async ({ recommend, feedback }) => {
+    try {
+      await api.post(`/fornecedor/${supplierToEvaluateId}/avaliar`, {
+        recommend,
+        feedback,
+      });
+      console.log("Avaliação do fornecedor enviada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao enviar avaliação do fornecedor:", error);
+      // Você pode exibir um erro ou apenas logar
+    } finally {
+      setIsSupplierModalOpen(false); // Fecha o modal
+      setSupplierToEvaluateId(null);
+      setSupplierToEvaluateName('');
+      navigate("/"); // Redireciona após enviar (ou fechar) o modal
+    }
+  };
+
+  const handleCloseSupplierModal = () => {
+    setIsSupplierModalOpen(false); // Fecha o modal
+    setSupplierToEvaluateId(null);
+    setSupplierToEvaluateName('');
+    navigate("/"); // Redireciona mesmo se o usuário fechar o modal sem avaliar
+  };
+
 
   const handleAddressChange = (e) => {
     const value = e.target.value;
@@ -418,6 +463,13 @@ const Cart = () => {
         onClose={() => {
           setIsPaymentModalOpen(false);
         }}
+      />
+      {/* Novo modal de avaliação do fornecedor */}
+      <SupplierExperienceModal
+        isOpen={isSupplierModalOpen}
+        onClose={handleCloseSupplierModal}
+        onSubmit={handleSupplierFeedbackSubmit}
+        supplierName={supplierToEvaluateName}
       />
     </>
   );
