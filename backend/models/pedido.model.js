@@ -4,7 +4,64 @@ const Compra = require('./compra.model.js');
 const Produtos = require('./produtos.model.js');
 
 const Pedido = {
+  /**
+   * Busca um único pedido pelo seu ID, com todas as compras detalhadas.
+   * @param {number} id_pedido
+   * @returns {Promise<{pedido: object, compras: object[]} | null>}
+   */
+  getPedidoPorId: async (id_pedido,id_usuario) => {
+    const sqlPedido = `SELECT * FROM pedido WHERE id_pedido = ? AND id_vendedor= ?`;
 
+    // 1) Busca o pedido
+    let pedido;
+    try {
+      const results = await new Promise((resolve, reject) => {
+        db.query(sqlPedido, [id_pedido,id_usuario], (err, rows) => {
+          if (err) return reject(err);
+          resolve(rows);
+        });
+      });
+      if (!results || results.length === 0) return null;
+      pedido = results[0];
+    } catch (err) {
+      console.error(`Erro ao buscar pedido ${id_pedido}:`, err);
+      return null;
+    }
+
+    // 2) Busca as compras deste pedido
+    let comprasDetalhadas = [];
+    try {
+      const listaCompras = await Compra.getCompraPorIdPedido(id_pedido);
+      const comprasArray = Array.isArray(listaCompras)
+        ? listaCompras
+        : listaCompras
+          ? [listaCompras]
+          : [];
+
+      comprasDetalhadas = await Promise.all(
+        comprasArray.map(async (compra) => {
+          let produtoDetalhado = null;
+          try {
+            produtoDetalhado = await Produtos.getById(compra.id_produto);
+          } catch {
+            produtoDetalhado = null;
+          }
+          return {
+            ...compra,
+            produto: produtoDetalhado,
+          };
+        })
+      );
+    } catch (err) {
+      console.error(`Erro ao buscar compras do pedido ${id_pedido}:`, err);
+      comprasDetalhadas = [];
+    }
+
+    return {
+      pedido,
+      compras: comprasDetalhadas,
+    };
+  },
   getPedidoDetalhadoPorEstado: async (idVendedor, estado) => {
     const sql = "SELECT * FROM pedido WHERE id_vendedor = ? AND estado = ?";
 
