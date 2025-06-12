@@ -91,7 +91,7 @@ async function udpateSaldoCarteira(req, res) {
   }
 
   try {
-    let updatedRows = Carteira.addValueToCarteira(user.id_usuario, value);
+    let updatedRows = Carteira.alterCarteiraBalance(user.id_usuario, value);
 
     if (updatedRows == 0) {
       return res
