@@ -10,6 +10,7 @@ const loginRouter = require('./routes/login');
 const carrinhoRouter = require('./routes/carrinho');
 const avaliacaoRouter = require('./routes/avaliacao')
 const produtoRoutes   = require('./routes/produto');
+const seguindoRoutes = require("./routes/seguindo");
 dotenv.config(); // Carrega variáveis do .env
 
 const app = express();
@@ -25,6 +26,7 @@ app.use("/api/fornecedor", fornecedorRouter);
 app.use('/api/cadastro',cadastroRouter )
 app.use('/api/login',loginRouter )
 app.use("/api/avaliacao",avaliacaoRouter)
+app.use("/api/seguindo", seguindoRoutes);
 
 
 const PORT = process.env.PORT || 3000;

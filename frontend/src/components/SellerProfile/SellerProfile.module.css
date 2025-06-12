@@ -377,3 +377,13 @@
   border-radius: 4px;
   margin-bottom: 8px;
 }
+
+.following {
+  background-color: #e28512;
+  color: #333;
+}
+
+.following:hover {
+  background-color: #e28512;
+  transform: none;
+}
