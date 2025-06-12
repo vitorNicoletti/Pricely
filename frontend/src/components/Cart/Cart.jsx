@@ -6,10 +6,11 @@ import api from "../../api";
 import styles from "./Cart.module.css";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import PaymentModal from "../Payment/PaymentModal";
+import SupplierExperienceModal from '../SupplierExperienceModal/SupplierExperienceModal'; // Importe o modal aqui
 
 const Cart = () => {
   const navigate = useNavigate();
-
   const [cartData, setCartData] = useState([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -41,12 +42,14 @@ const Cart = () => {
 
   // Calcula os valores quando cartItems mudar
   const { subtotal, discount, total } = useMemo(() => {
-    if (!cartItems.compras) return { subtotal: 0, discount: 0, total: 0 };
+    if (!cartItems || cartItems.length === 0) {
+      return { subtotal: 0, discount: 0, total: 0 };
+    }
 
     let subtotal = 0;
     let discount = 0;
 
-    cartItems.compras.forEach((item) => {
+    cartItems.forEach((item) => {
       const preco = item.preco_unidade;
       const qtd = item.quantidade;
       const promocoes = item.produto.promocoes || [];
@@ -64,7 +67,6 @@ const Cart = () => {
           (melhorPromo.desc_porcentagem / 100) * (preco * qtd);
         discount += descontoProduto;
       }
-      console.log(promocoes)
     });
 
     const total = subtotal - discount;
@@ -119,6 +121,7 @@ const Cart = () => {
 
         const response = await api.post("/carrinho/finalizar", body);
 
+        console.log("Compra finalizada com sucesso!");
         // Assumimos que a resposta do backend incluirá o ID e nome do vendedor.
         // O backend precisa garantir que esses esses dados são retornados.
         const id_vendedor = response.data.id_vendedor;
@@ -138,7 +141,6 @@ const Cart = () => {
       } finally {
         // Define o estado de loading como false após a requisição (seja sucesso ou erro)
         setIsLoading(false);
-        navigate("/")
       }
     } else {
       // Abre modal para adicionar saldo
@@ -236,11 +238,26 @@ const Cart = () => {
       return;
     }
 
+    // Pega dados do usuário do localStorage
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        // Se o usuário tem endereços, seleciona o primeiro por padrão
+        if (parsedUser.addresses && parsedUser.addresses.length > 0) {
+          setSelectedAddress(parsedUser.addresses[0].id || "0");
+        }
+      } catch (error) {
+        console.error("Erro ao parsear dados do usuário:", error);
+      }
+    }
+
     // Busca os itens do carrinho do Usuario
     const fetchCart = async () => {
       try {
         const response = await api.get("/vendedor/carrinho");
-        setCartItems(response.data);
+        setCartData(response.data);
       } catch (error) {
         console.error("Erro ao buscar itens do carrinho:", error);
       }
@@ -255,7 +272,7 @@ const Cart = () => {
         <h1 className={styles.title}>Seu Carrinho</h1>
 
         <div className={styles.items}>
-          {!cartItems.compras || cartItems.compras.length === 0 ? (
+          {!cartItems || cartItems.length === 0 ? (
             <div className={styles.emptyCart}>
               <h2>Seu carrinho está vazio</h2>
 
@@ -267,8 +284,8 @@ const Cart = () => {
               </button>
             </div>
           ) : (
-            cartItems.compras.map((item) => (
-              <div key={item.id} className={styles.item}>
+            cartItems.map((item) => (
+              <div key={item.id_compra} className={styles.item}>
                 <div className={styles.itemInfo}>
                   <p className={styles.itemTitle}>{item.produto.nome}</p>
                   <p className={styles.itemBrand}>{item.produto.descricao}</p>
@@ -282,7 +299,7 @@ const Cart = () => {
           )}
         </div>
 
-        {cartItems.compras && cartItems.compras.length > 0 && (
+        {cartItems && cartItems.length > 0 && (
           <>
             <div className={styles.summary}>
               <h3>Resumo</h3>
@@ -298,6 +315,135 @@ const Cart = () => {
                 <span>Total</span>
                 <span>R${total.toFixed(2)}</span>
               </p>
+
+              {/* Informações da carteira */}
+              {user?.carteira && (
+                <div className={styles.walletInfo}>
+                  <p>
+                    <span>Saldo da Carteira</span>
+                    <span>R${parseFloat(user.carteira.saldo).toFixed(2)}</span>
+                  </p>
+                  {!saldoSuficiente && (
+                    <p className={styles.insufficientBalance}>
+                      <span>Saldo Insuficiente</span>
+                      <span>
+                        - R$
+                        {(total - parseFloat(user.carteira.saldo)).toFixed(2)}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Seção de Endereço */}
+            <div className={styles.addressSection}>
+              <h3>Endereço de Entrega</h3>
+              <div className={styles.addressSelection}>
+                <select
+                  value={selectedAddress}
+                  onChange={handleAddressChange}
+                  className={styles.card_form}
+                >
+                  <option value="">Selecione um endereço</option>
+                  {user?.addresses &&
+                    user.addresses.map((address, index) => (
+                      <option
+                        key={address.id || index}
+                        value={address.id || index}
+                      >
+                        {address.fullAddress ||
+                          `${address.street}, ${address.number}`}
+                      </option>
+                    ))}
+                  <option value="new">+ Adicionar novo endereço</option>
+                </select>
+                {errors.address && (
+                  <span className={styles.errorMessage}>{errors.address}</span>
+                )}
+              </div>
+
+              {showNewAddressForm && (
+                <div className={styles.newAddressForm}>
+                  <div className={styles.addressInputs}>
+                    <div className={styles.inputGroup}>
+                      <label>Rua</label>
+                      <input
+                        type="text"
+                        placeholder="Nome da rua"
+                        value={newAddressStreet}
+                        onChange={(e) => setNewAddressStreet(e.target.value)}
+                        className={errors.newAddressStreet ? styles.error : ""}
+                      />
+                      {errors.newAddressStreet && (
+                        <span className={styles.errorMessage}>
+                          {errors.newAddressStreet}
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label>Número</label>
+                      <input
+                        type="text"
+                        placeholder="Número"
+                        value={newAddressNumber}
+                        onChange={(e) => setNewAddressNumber(e.target.value)}
+                        className={errors.newAddressNumber ? styles.error : ""}
+                      />
+                      {errors.newAddressNumber && (
+                        <span className={styles.errorMessage}>
+                          {errors.newAddressNumber}
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.inputGroup}>
+                      <label>Complemento (opcional)</label>
+                      <input
+                        type="text"
+                        placeholder="Apto, bloco, etc."
+                        value={newAddressComplement}
+                        onChange={(e) =>
+                          setNewAddressComplement(e.target.value)
+                        }
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddNewAddress}
+                    className={styles.submit_button}
+                    disabled={
+                      !newAddressStreet.trim() || !newAddressNumber.trim()
+                    }
+                  >
+                    Adicionar Endereço
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Seção de Confirmação com Senha */}
+            <div className={styles.passwordSection}>
+              <h3>Confirmar Compra</h3>
+              <div className={styles.passwordInput}>
+                <label>Digite sua senha para confirmar</label>
+                <input
+                  type="password"
+                  placeholder="Sua senha"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setErrors({ ...errors, password: "", general: "" });
+                  }}
+                  className={errors.password ? styles.error : ""}
+                />
+                {errors.password && (
+                  <span className={styles.errorMessage}>{errors.password}</span>
+                )}
+                {errors.general && (
+                  <span className={styles.errorMessage}>{errors.general}</span>
+                )}
+              </div>
             </div>
 
             <div className={styles.actions}>
@@ -324,6 +470,19 @@ const Cart = () => {
 
         <Footer />
       </div>
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+        }}
+      />
+      {/* Novo modal de avaliação do fornecedor */}
+      <SupplierExperienceModal
+        isOpen={isSupplierModalOpen}
+        onClose={handleCloseSupplierModal}
+        onSubmit={handleSupplierFeedbackSubmit}
+        supplierName={supplierToEvaluateName}
+      />
     </>
   );
 };
