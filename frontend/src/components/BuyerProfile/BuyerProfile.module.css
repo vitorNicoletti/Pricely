@@ -159,3 +159,7 @@ h1 {
 .btn:hover {
   background-color: #ff6f00;
 }
+
+.clickableRow {
+  cursor: pointer;
+}
