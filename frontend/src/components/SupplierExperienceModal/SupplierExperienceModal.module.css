@@ -48,49 +48,60 @@
   color: #555;
 }
 
-.recommendationSection,
-.feedbackSection {
+/* Removido: .recommendationSection - ele será substituído por .ratingSection */
+/* Removido: .thumbsContainer */
+/* Removido: .thumbButton */
+/* Removido: .thumbButton.active */
+
+/* Nova seção para a avaliação por estrelas */
+.ratingSection {
+  text-align: center;
   margin-bottom: 20px;
 }
 
-.recommendationSection p,
-.feedbackSection p {
+.ratingSection p {
+  font-size: 1em;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.starsContainer {
+  font-size: 3em; /* Ajuste o tamanho da estrela */
+  color: #ccc; /* Cor da estrela não preenchida */
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  gap: 5px; /* Espaçamento entre as estrelas */
+  margin-top: 15px;
+}
+
+.star {
+  transition: color 0.2s; /* Transição suave para a mudança de cor */
+}
+
+/* Cor para as estrelas selecionadas (clicadas) */
+.star.selected {
+  color: #FFC107; /* Laranja primário para estrelas selecionadas */
+}
+
+/* Cor para as estrelas quando o mouse está em cima (preview) */
+.star.hoverActive {
+  color: #FFA000; /* Laranja mais escuro para o efeito de hover */
+}
+
+
+.feedbackSection { /* Mantido, pois o campo de feedback continua */
+  margin-bottom: 20px;
+}
+
+.feedbackSection p { /* Mantido */
   font-size: 1em;
   color: #555;
   margin-bottom: 10px;
 }
 
-.thumbsContainer {
-  display: flex;
-  gap: 15px;
-}
-
-.thumbButton {
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 50%; 
-  width: 60px;
-  height: 60px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 2em;
-  cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
-}
-
-.thumbButton:hover {
-  background-color: #e0e0e0;
-}
-
-.thumbButton.active {
-  background-color: #FFC107;
-  border-color: #FFA000;
-  color: #fff;
-}
-
 .textarea {
-  width: calc(100% - 20px); 
+  width: calc(100% - 20px);
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -133,5 +144,5 @@
 }
 
 .submitButton:hover {
-  background-color: #FFA000; 
+  background-color: #FFA000;
 }

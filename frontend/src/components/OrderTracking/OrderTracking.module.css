@@ -267,3 +267,19 @@
     flex-direction: column;
   }
 }
+
+.rateProductButton {
+  background-color: #ff8f00; /* Cor de destaque */
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9em;
+  margin-top: 10px; /* Para separar um pouco da quantidade */
+  transition: background-color 0.2s ease;
+}
+
+.rateProductButton:hover {
+  background-color: #ff6f00; /* Cor mais escura no hover */
+}

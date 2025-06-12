@@ -2,16 +2,20 @@ import React, { useState } from 'react';
 import styles from './SupplierExperienceModal.module.css';
 
 const SupplierExperienceModal = ({ isOpen, onClose, onSubmit }) => {
-  const [recommend, setRecommend] = useState(null);
-  const [feedback, setFeedback] = useState('');
+  // Alterado: Agora usamos 'rating' e 'hoverRating' para as estrelas
+  const [rating, setRating] = useState(0); // O valor da avaliação que foi selecionado
+  const [hoverRating, setHoverRating] = useState(0); // O valor da avaliação indicado pelo mouse (hover)
+  const [feedback, setFeedback] = useState(''); // O campo de texto para feedback continua
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ recommend, feedback });
-    setRecommend(null);
-    setFeedback('');
+    // Alterado: onSubmit agora envia o rating e o feedback
+    onSubmit({ rating, feedback });
+    setRating(0); // Reseta o rating
+    setHoverRating(0); // Reseta o hoverRating
+    setFeedback(''); // Reseta o feedback
   };
 
   return (
@@ -23,23 +27,28 @@ const SupplierExperienceModal = ({ isOpen, onClose, onSubmit }) => {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className={styles.recommendationSection}>
-            <p>Você recomenda esse Fornecedor?</p>
-            <div className={styles.thumbsContainer}>
-              <button
-                type="button"
-                className={`${styles.thumbButton} ${recommend === true ? styles.active : ''}`}
-                onClick={() => setRecommend(true)}
-              >
-                👍
-              </button>
-              <button
-                type="button"
-                className={`${styles.thumbButton} ${recommend === false ? styles.active : ''}`}
-                onClick={() => setRecommend(false)}
-              >
-                👎
-              </button>
+          {/* Nova seção para a avaliação por estrelas */}
+          <div className={styles.ratingSection}>
+            <p>Avalie o Fornecedor!</p>
+            <p>De 1 a 5 estrelas.</p>
+            <div
+              className={styles.starsContainer}
+              onMouseLeave={() => setHoverRating(0)} // Reseta hover ao sair do container
+            >
+              {[1, 2, 3, 4, 5].map((star) => (
+                <span
+                  key={star}
+                  className={`${styles.star} ${
+                    star <= rating ? styles.selected : ''
+                  } ${
+                    star <= hoverRating && hoverRating > 0 ? styles.hoverActive : ''
+                  }`}
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHoverRating(star)}
+                >
+                  &#9733; {/* Caractere Unicode para uma estrela */}
+                </span>
+              ))}
             </div>
           </div>
 
