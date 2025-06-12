@@ -7,6 +7,7 @@ function ProfileModal({ user }) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const isLogged = !!user;
+  console.log(user)
 
   // 1) Pegue sempre user.email OU nome_fantasia
   const displayUserName = user?.email ?? user?.nome_fantasia ?? "Usuário";

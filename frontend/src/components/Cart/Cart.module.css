@@ -1,9 +1,8 @@
-
 .container {
   max-width: 1000px;
   margin: 2rem auto;
   padding: 1rem;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   color: #333;
   background: #fff;
 }
@@ -117,6 +116,63 @@
   margin: 100px;
 }
 
+.form_row {
+  display: flex;
+  gap: 10px;
+}
+
+.form_row > * {
+  flex: 1;
+}
+
+.form_row > div {
+  display: flex;
+  flex-direction: column;
+}
+.error {
+  color: red;
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+
+.submit_button {
+  background-color: #ff8f00;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-bottom: 20px;
+}
+
+.submit_button:hover {
+  background-color: #e67e00;
+}
+
+
+.new_address_form {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #f9f9f9;
+  margin-top: 8px;
+}
+
+.card_form {
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: white;
+  width: 100%;
+  box-sizing: border-box;
+  color: #999;
+  margin-top: 6px;
+  margin-bottom: 30px;
+}
+
 /* Responsivo */
 @media (max-width: 768px) {
   .item {
@@ -134,7 +190,8 @@
     align-items: stretch;
   }
 
-  .checkout, .keepBuying {
+  .checkout,
+  .keepBuying {
     width: 100%;
   }
 }
