@@ -53,11 +53,14 @@
 
 .profileWrapper {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .modalWrapper {
+  margin-top: 30px;
   position: absolute;
-  /* margin-top: 320px; */
   z-index: 999;
 }
 

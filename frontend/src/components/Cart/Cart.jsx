@@ -36,7 +36,6 @@ const Cart = () => {
           (melhorPromo.desc_porcentagem / 100) * (preco * qtd);
         discount += descontoProduto;
       }
-      console.log(promocoes)
     });
 
     const total = subtotal - discount;

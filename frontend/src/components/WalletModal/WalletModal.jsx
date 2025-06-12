@@ -1,22 +1,23 @@
-import styles from "./WalletModal.module.css";
-import { useEffect, useState } from "react";
-import api from "../../api";
+import style from "./WalletModal.module.css";
+import { useNavigate } from "react-router-dom";
 
-const WalletModal = ({ onClose, carteira }) => {
-
+const WalletModal = ({ carteira }) => {
+  const navigate = useNavigate();
   return (
-    <div className={styles.modal}>
-      <div className={styles.modalContent}>
-
-        <h2>Minha Carteira</h2>
-        {carteira ? (
-          <div className={styles.walletInfo}>
-            <p><strong>Saldo:</strong> R${carteira.saldo}</p>
-          </div>
-        ) : (
-          <p>Carregando...</p>
-        )}
-      </div>
+    <div className={style.modal}>
+      <h2>Minha Carteira</h2>
+      {carteira ? (
+        <div className={style.walletInfo}>
+          <p>
+            <strong>Saldo:</strong> R${carteira.saldo}
+          </p>
+          <button className={style.btn} onClick={() => navigate("/payment")}>
+            Adicionar Saldo
+          </button>
+        </div>
+      ) : (
+        <p>Carregando...</p>
+      )}
     </div>
   );
 };

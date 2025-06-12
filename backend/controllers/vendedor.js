@@ -26,7 +26,6 @@ function getVendedorDetails(req, res) {
     if (!idUsuario) {
       return res.status(401).json({ message: "Não autorizado." });
     }
-    console.log("tentenado buscar dados do vendedor")
     // Busca detalhes do vendedor por ID
     Vendedor.getById(idUsuario)
       .then((perfil) => {

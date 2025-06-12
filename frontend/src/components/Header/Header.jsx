@@ -4,26 +4,48 @@ import { useNavigate } from "react-router-dom";
 import ProfileModal from "../ProfileModal/ProfileModal.jsx";
 import { useState, useEffect } from "react";
 import WalletModal from "../WalletModal/WalletModal.jsx";
+import api from "../../api.js";
 
 function Header() {
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState({});
-  const [isWalletOpen, setIsWalletOpen] = useState(false); // novo estado
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isWalletOpen, setIsWalletOpen] = useState(false);
 
   const toggleWalletModal = () => {
+    if (!isWalletOpen) {
+      // Se wallet não está aberto, feche o profile antes de abrir wallet
+      setIsProfileOpen(false);
+    }
     setIsWalletOpen(!isWalletOpen);
   };
 
-  const toggleModal = () => {
-    setIsOpen(!isOpen);
+  const toggleProfileModal = () => {
+    if (!isProfileOpen) {
+      // Se profile não está aberto, feche o wallet antes de abrir profile
+      setIsWalletOpen(false);
+    }
+    setIsProfileOpen(!isProfileOpen);
   };
+
   useEffect(() => {
     async function loadUserData() {
-      let userData = localStorage.getItem("user");
-      if (userData) {
-        userData = JSON.parse(userData);
-        setUser(userData);
+      try {
+        // Tenta buscar como vendedor
+        const userResponse = await api.get("/vendedor/me");
+        userResponse.data.role = "vendedor"; // Adiciona a role para identificar o tipo de usuário
+        localStorage.setItem("user", JSON.stringify(userResponse.data));
+        setUser(userResponse.data);
+      } catch (vendedorErr) {
+        try {
+          // Se falhar, tenta buscar como fornecedor
+          const userResponse = await api.get("/fornecedor/me");
+          userResponse.data.role = "fornecedor"; // Adiciona a role para identificar o tipo de usuário
+          localStorage.setItem("user", JSON.stringify(userResponse.data));
+          setUser(userResponse.data);
+        } catch (fornecedorErr) {
+          console.error("Erro ao buscar dados do usuário:", fornecedorErr);
+        }
       }
     }
     loadUserData();
@@ -66,12 +88,12 @@ function Header() {
         </div>
         {/* Profile */}
         <div className={style.profileWrapper}>
-          <button className={style.icons_btn} onClick={toggleModal}>
+          <button className={style.icons_btn} onClick={toggleProfileModal}>
             <i className="fa-regular fa-user" />
           </button>
-          {isOpen && (
+          {isProfileOpen && (
             <div className={style.modalWrapper}>
-              <ProfileModal onClose={toggleModal} user={user} />
+              <ProfileModal user={user} />
             </div>
           )}
         </div>

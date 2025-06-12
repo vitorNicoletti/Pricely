@@ -31,8 +31,6 @@ api.interceptors.response.use(
       (error.response.status === 401 || error.response.status === 403)
     ) {
       console.warn("Token expirado ou inválido. Deslogando usuário...");
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("user");
       handleLogout();
     }
     return Promise.reject(error);
