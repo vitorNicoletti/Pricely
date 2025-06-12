@@ -256,15 +256,9 @@ function PaymentModal({ isOpen, onClose }) {
     if (!isValidCVC(cvc, cardBrand)) newErrors.cvc = "CVC inválido";
     if (!isValidPostalCode(postalCode))
       newErrors.postalCode = "Código postal inválido";
-    if (!selectedAddress) newErrors.address = "Selecione um endereço";
-    if (showNewAddressForm) {
-      if (!newAddressStreet.trim())
-        newErrors.newAddressStreet = "Rua é obrigatória";
-      if (!newAddressNumber.trim())
-        newErrors.newAddressNumber = "Número é obrigatório";
-    }
-
+    
     setErrors(newErrors);
+    console.log(newErrors)
     return Object.keys(newErrors).length === 0;
   };
 
@@ -276,6 +270,9 @@ function PaymentModal({ isOpen, onClose }) {
         amount: finalAmount,
       };
       await api.put("/vendedor/carteira", body);
+      const userData = localStorage.getItem("user");
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
       window.location.reload();
       onClose();
     }

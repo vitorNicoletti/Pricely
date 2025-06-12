@@ -155,7 +155,7 @@ const OrderTracking = () => {
 
   const statusMap = {
     CARRINHO: "Em espera",
-    CONFIRMADO: "Pedido Confirmado",
+    PAGO: "Pedido Confirmado",
     PROCESSANDO: "Enviado",
     ENVIADO: "Enviado",
     ENTREGA: "Saiu para entrega",

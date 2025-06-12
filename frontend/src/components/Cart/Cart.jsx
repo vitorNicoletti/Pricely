@@ -7,7 +7,8 @@ import styles from "./Cart.module.css";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import PaymentModal from "../Payment/PaymentModal";
-import SupplierExperienceModal from '../SupplierExperienceModal/SupplierExperienceModal'; // Importe o modal aqui
+import SupplierExperienceModal from '../SupplierExperienceModal/SupplierExperienceModal';
+import WalletConfirmationModal from "../WalletConfirmationModal/WalletConfirmationModal";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -21,12 +22,12 @@ const Cart = () => {
   const [newAddressComplement, setNewAddressComplement] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Novos estados para o modal de avaliação do fornecedor
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
   const [supplierToEvaluateId, setSupplierToEvaluateId] = useState(null);
   const [supplierToEvaluateName, setSupplierToEvaluateName] = useState('');
-
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
 
   // Extrai todas as compras de todos os pedidos em estado CARRINHO
   const cartItems = useMemo(() => {
@@ -39,23 +40,22 @@ const Cart = () => {
     return allCompras;
   }, [cartData]);
 
-  // Calcula os valores quando cartItems mudar
-  const { subtotal, discount, total } = useMemo(() => {
+  // MODIFICADO: Calcula os valores, agora incluindo a taxa
+  const { subtotal, discount, taxa, total } = useMemo(() => {
     if (!cartItems || cartItems.length === 0) {
-      return { subtotal: 0, discount: 0, total: 0 };
+      return { subtotal: 0, discount: 0, taxa: 0, total: 0 };
     }
 
-    let subtotal = 0;
-    let discount = 0;
+    let subtotalCalculado = 0;
+    let discountCalculado = 0;
 
     cartItems.forEach((item) => {
       const preco = item.preco_unidade;
       const qtd = item.quantidade;
       const promocoes = item.produto.promocoes || [];
 
-      subtotal += preco * qtd;
+      subtotalCalculado += preco * qtd;
 
-      // Ordena promoções da maior para a menor quantidade para pegar a mais vantajosa
       const promocoesValidas = promocoes
         .filter((promo) => qtd >= promo.quantidade)
         .sort((a, b) => b.quantidade - a.quantidade);
@@ -64,80 +64,92 @@ const Cart = () => {
         const melhorPromo = promocoesValidas[0];
         const descontoProduto =
           (melhorPromo.desc_porcentagem / 100) * (preco * qtd);
-        discount += descontoProduto;
+        discountCalculado += descontoProduto;
       }
     });
 
-    const total = subtotal - discount;
+    // NOVO: Cálculo da taxa de 5% sobre o subtotal
+    const taxaCalculada = subtotalCalculado * 0.05;
 
-    return { subtotal, discount, total };
+    // NOVO: O total agora inclui a taxa
+    const totalCalculado = subtotalCalculado + taxaCalculada - discountCalculado;
+
+    return {
+      subtotal: subtotalCalculado,
+      discount: discountCalculado,
+      taxa: taxaCalculada,
+      total: totalCalculado
+    };
   }, [cartItems]);
 
-  // Verifica se o saldo é suficiente
+  // Verifica se o saldo é suficiente (a lógica não muda)
   const saldoSuficiente = useMemo(() => {
     if (!user?.carteira?.saldo || !total) return false;
     return parseFloat(user.carteira.saldo) >= total;
   }, [user, total]);
 
+  // MODIFICADO: A função agora é async e valida a senha antes de abrir o modal
   const handleFinalizarCompra = async () => {
-    if (saldoSuficiente) {
-      // Verifica se tem endereço selecionado
-      if (!selectedAddress) {
-        setErrors({ address: "Selecione um endereço para entrega" });
-        return;
-      }
-
-      // Verifica se tem senha
-      if (!password.trim()) {
-        setErrors({ password: "Digite sua senha para confirmar a compra" });
-        return;
-      }
-
-      try {
-        // Busca o endereço selecionado
-        let selectedAddressData;
-        if (user?.addresses) {
-          selectedAddressData = user.addresses.find(
-            (addr) => (addr.id || addr.index) === selectedAddress
-          );
-        }
-
-        if (!selectedAddressData) {
-          setErrors({ address: "Endereço selecionado não encontrado" });
-          return;
-        }
-
-        const body = {
-          senha: password,
-          rua: selectedAddressData.street,
-          numero: selectedAddressData.number,
-          complemento: selectedAddressData.complement || "",
-          total,
-        };
-
-        const response = await api.post("/carrinho/finalizar", body);
-
-        console.log("Compra finalizada com sucesso!");
-        // Assumimos que a resposta do backend incluirá o ID e nome do vendedor.
-        // O backend precisa garantir que esses dados são retornados.
-        const id_vendedor = response.data.id_vendedor;
-        const nome_vendedor = response.data.nome_vendedor;
-
-        // Abre o modal de avaliação do fornecedor
-        setSupplierToEvaluateId(id_vendedor);
-        setSupplierToEvaluateName(nome_vendedor);
-        setIsSupplierModalOpen(true);
-
-
-      } catch (error) {
-        console.error("Erro ao finalizar compra:", error);
-        setErrors({
-          general: "Erro ao finalizar compra. Verifique sua senha.",
-        });
-      }
-    } else {
-      // Abre modal para adicionar saldo
+    setErrors({});
+    if (!saldoSuficiente) {
       setIsPaymentModalOpen(true);
+      return;
+    }
+
+
+    //Validações de campos
+    if (!selectedAddress) {
+      setErrors(prev => ({ ...prev, address: "Selecione um endereço para entrega" }));
+      return;
+    }
+    if (!password.trim()) {
+      setErrors(prev => ({ ...prev, password: "Digite sua senha para confirmar a compra" }));
+      return;
+    }
+
+    //Verifica a senha no backend antes de prosseguir
+    setIsConfirmationModalOpen(true);
+  };
+
+  // MODIFICADO: A mensagem de erro foi generalizada
+  const executePurchase = async () => {
+
+    try {
+      const selectedAddressData = user.addresses.find(
+        (addr) => (addr.id || addr.index) === selectedAddress
+      );
+
+      if (!selectedAddressData) {
+        setErrors({ address: "Endereço selecionado não encontrado" });
+        setIsLoading(false);
+        return;
+      }
+
+      const body = {
+        senha: password, // A senha ainda é enviada para a transação final
+        rua: selectedAddressData.street,
+        numero: selectedAddressData.number,
+        complemento: selectedAddressData.complement || "",
+        total,
+      };
+
+      const response = await api.post("/carrinho/finalizar", body);
+      const { id_vendedor, nome_vendedor } = response.data;
+
+      setIsConfirmationModalOpen(false);
+      setSupplierToEvaluateId(id_vendedor);
+      setSupplierToEvaluateName(nome_vendedor);
+      setIsSupplierModalOpen(true);
+
+    } catch (error) {
+      console.error("Erro ao finalizar compra:", error);
+      // Mensagem de erro mais genérica, já que a senha foi validada antes
+      setErrors({
+        general: "Ocorreu um erro ao processar sua compra. Tente novamente.",
+      });
+      setIsConfirmationModalOpen(false); // Fecha o modal de confirmação em caso de erro
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -202,9 +214,8 @@ const Cart = () => {
       street: newAddressStreet.trim(),
       number: newAddressNumber.trim(),
       complement: newAddressComplement.trim(),
-      fullAddress: `${newAddressStreet.trim()}, ${newAddressNumber.trim()}${
-        newAddressComplement.trim() ? `, ${newAddressComplement.trim()}` : ""
-      }`,
+      fullAddress: `${newAddressStreet.trim()}, ${newAddressNumber.trim()}${newAddressComplement.trim() ? `, ${newAddressComplement.trim()}` : ""
+        }`,
     };
 
     const updatedUser = {
@@ -223,6 +234,22 @@ const Cart = () => {
     localStorage.setItem("user", JSON.stringify(updatedUser));
   };
 
+  // Function to fetch user data
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (token) {
+        // Assuming you have an API endpoint to get user details including wallet
+        const response = await api.get("/vendedor/me"); // <--- REPLACE WITH YOUR ACTUAL USER PROFILE ENDPOINT
+        const updatedUser = response.data;
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados do usuário:", error);
+    }
+  };
+
   useEffect(() => {
     // Verifica se o usuário está logado
     const token = localStorage.getItem("authToken");
@@ -231,20 +258,8 @@ const Cart = () => {
       return;
     }
 
-    // Pega dados do usuário do localStorage
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        // Se o usuário tem endereços, seleciona o primeiro por padrão
-        if (parsedUser.addresses && parsedUser.addresses.length > 0) {
-          setSelectedAddress(parsedUser.addresses[0].id || "0");
-        }
-      } catch (error) {
-        console.error("Erro ao parsear dados do usuário:", error);
-      }
-    }
+    // Pega dados do usuário do localStorage e, em seguida, busca os dados mais recentes
+    fetchUserData();
 
     // Busca os itens do carrinho do Usuario
     const fetchCart = async () => {
@@ -256,7 +271,7 @@ const Cart = () => {
       }
     };
     fetchCart();
-  }, [navigate]);
+  }, [navigate, isPaymentModalOpen]); // Adicione isPaymentModalOpen como dependência
 
   return (
     <>
@@ -294,19 +309,25 @@ const Cart = () => {
 
         {cartItems && cartItems.length > 0 && (
           <>
+            {/* MODIFICADO: JSX do resumo para incluir a taxa */}
             <div className={styles.summary}>
               <h3>Resumo</h3>
               <p>
                 <span>Subtotal</span>
-                <span>R${subtotal.toFixed(2)}</span>
+                <span>R$ {subtotal.toFixed(2)}</span>
+              </p>
+              {/* NOVO: Exibição da taxa */}
+              <p>
+                <span>Taxa de Serviço (5%)</span>
+                <span className={styles.taxValue}>+ R$ {taxa.toFixed(2)}</span>
               </p>
               <p>
                 <span>Desconto</span>
-                <span>- R${discount.toFixed(2)}</span>
+                <span className={styles.discountValue}>- R$ {discount.toFixed(2)}</span>
               </p>
               <p className={styles.total}>
                 <span>Total</span>
-                <span>R${total.toFixed(2)}</span>
+                <span>R$ {total.toFixed(2)}</span>
               </p>
 
               {/* Informações da carteira */}
@@ -352,7 +373,7 @@ const Cart = () => {
                   <option value="new">+ Adicionar novo endereço</option>
                 </select>
                 {errors.address && (
-                  <span className={styles.errorMessage}>{errors.address}</span>
+                  <span className={styles.error}>{errors.address}</span>
                 )}
               </div>
 
@@ -369,7 +390,7 @@ const Cart = () => {
                         className={errors.newAddressStreet ? styles.error : ""}
                       />
                       {errors.newAddressStreet && (
-                        <span className={styles.errorMessage}>
+                        <span className={styles.error}>
                           {errors.newAddressStreet}
                         </span>
                       )}
@@ -384,7 +405,7 @@ const Cart = () => {
                         className={errors.newAddressNumber ? styles.error : ""}
                       />
                       {errors.newAddressNumber && (
-                        <span className={styles.errorMessage}>
+                        <span className={styles.error}>
                           {errors.newAddressNumber}
                         </span>
                       )}
@@ -431,10 +452,10 @@ const Cart = () => {
                   className={errors.password ? styles.error : ""}
                 />
                 {errors.password && (
-                  <span className={styles.errorMessage}>{errors.password}</span>
+                  <span className={styles.error}>{errors.password}</span>
                 )}
                 {errors.general && (
-                  <span className={styles.errorMessage}>{errors.general}</span>
+                  <span className={styles.error}>{errors.general}</span>
                 )}
               </div>
             </div>
@@ -443,8 +464,14 @@ const Cart = () => {
               <button
                 className={styles.checkout}
                 onClick={handleFinalizarCompra}
+                // O 'isLoading' agora desabilitará o botão enquanto o modal estiver aberto e processando
+                disabled={isLoading}
               >
-                {saldoSuficiente ? "Finalizar Compra" : "Adicionar Saldo"}
+                {saldoSuficiente
+                  ? isLoading
+                    ? "Processando..." // Este estado é gerenciado pelo modal agora
+                    : "Finalizar Compra"
+                  : "Adicionar Saldo"}
               </button>
               <button
                 className={styles.keepBuying}
@@ -462,6 +489,7 @@ const Cart = () => {
         isOpen={isPaymentModalOpen}
         onClose={() => {
           setIsPaymentModalOpen(false);
+          fetchUserData(); // Chamada para atualizar os dados do usuário ao fechar o modal
         }}
       />
       {/* Novo modal de avaliação do fornecedor */}
@@ -470,6 +498,16 @@ const Cart = () => {
         onClose={handleCloseSupplierModal}
         onSubmit={handleSupplierFeedbackSubmit}
         supplierName={supplierToEvaluateName}
+      />
+      <WalletConfirmationModal
+        isOpen={isConfirmationModalOpen}
+        onClose={() => setIsConfirmationModalOpen(false)}
+        onConfirm={() => {
+          executePurchase();
+          setIsLoading(true)
+        }}
+        total={total}
+        isLoading={isLoading}
       />
     </>
   );
