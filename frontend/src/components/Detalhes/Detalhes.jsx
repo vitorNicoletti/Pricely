@@ -11,27 +11,30 @@ import CartConfirmModal from "../CartConfirmModal/CartConfirmModal";
 import avatar_placeholder from "../../assets/profile_placeholder.png";
 import seller_profile_style from "../SellerProfile/SellerProfile.module.css";
 
-import { useNavigate } from "react-router-dom";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 
 function Detalhes() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const quantityRef = useRef();
+
   const [product, setProduct] = useState(null);
   const [fornecedor, setFornecedor] = useState(null);
   const [showCartModal, setShowCartModal] = useState(false);
-  const quantityRef = useRef();
 
   const stored = localStorage.getItem("user");
   const user = stored ? JSON.parse(stored) : null;
   const isLogged = !!user;
 
-  const navigate = useNavigate();
+  // follow state
+  const [isVendor, setIsVendor] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const minimumOrder = product?.quantidade_minima || 50;
 
   useEffect(() => {
-    const fetchData = async () => {
+    async function fetchData() {
       try {
         const productRes = await api.get(`/catalogo/${id}`);
         setProduct(productRes.data);
@@ -44,9 +47,37 @@ function Detalhes() {
       } catch (err) {
         console.error("Erro ao buscar produto:", err);
       }
-    };
+    }
     fetchData();
   }, [id]);
+
+  useEffect(() => {
+    if (!fornecedor) return;
+    const isOwner = user && String(user.id_usuario) === String(fornecedor.id_usuario);
+
+    // verifica se logado é vendedor
+    if (isLogged && !isOwner) {
+      api.get("vendedor/me")
+         .then(() => setIsVendor(true))
+         .catch(() => setIsVendor(false));
+    }
+
+    // verifica status de seguir
+    api.get(`/seguindo/${fornecedor.id_usuario}`)
+       .then(res => setIsFollowing(res.data.followed))
+       .catch(err => console.error("Erro ao consultar follow:", err));
+  }, [fornecedor, isLogged, user]);
+
+  const toggleFollow = () => {
+    if (!fornecedor) return;
+    const fid = fornecedor.id_usuario;
+    const req = isFollowing
+      ? api.delete(`/seguindo/${fid}`)
+      : api.post(`/seguindo/${fid}`);
+
+    req.then(res => setIsFollowing(res.data.followed))
+       .catch(err => console.error("Erro ao (des)seguir:", err));
+  };
 
   function handleAddToCartClick() {
     if (!isLogged) {
@@ -67,7 +98,7 @@ function Detalhes() {
             className={style.iconeFavorito}
           />
           <div className={style.produtoImagemContainer}>
-            {product?.imagem.dados && product?.imagem.tipo && (
+            {product?.imagem.dados && (
               <img
                 className={style.produtoImagem}
                 src={`data:${product.imagem.tipo};base64,${product.imagem.dados}`}
@@ -93,9 +124,7 @@ function Detalhes() {
             />
             <button
               className={style.btn}
-              onClick={() => {
-                handleAddToCartClick();
-              }}
+              onClick={handleAddToCartClick}
             >
               Adicionar ao Carrinho
             </button>
@@ -125,16 +154,14 @@ function Detalhes() {
                   {fornecedor?.nome_fantasia}
                 </h3>
                 <div className={style.botoesFornecedor}>
-                  <button
-                    className={style.btn}
-                    onClick={() => {
-                      alert(
-                        "Funcionalidade de seguir fornecedor ainda não implementada."
-                      );
-                    }}
-                  >
-                    Seguir
-                  </button>
+                  {isVendor && (
+                    <button
+                      className={style.btn}
+                      onClick={toggleFollow}
+                    >
+                      {isFollowing ? "Seguindo ✓" : "Seguir"}
+                    </button>
+                  )}
                   <button
                     className={style.btn}
                     onClick={() =>
@@ -294,5 +321,4 @@ function Detalhes() {
     </>
   );
 }
-
 export default Detalhes;

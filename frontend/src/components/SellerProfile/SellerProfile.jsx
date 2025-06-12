@@ -7,73 +7,101 @@ import styles from "./SellerProfile.module.css";
 import api from "../../api";
 
 export default function SellerProfile() {
-  const { id } = useParams();
-  const navigate = useNavigate();
 
-  // aumenta timeout para uploads
-  api.defaults.timeout = 15000;
+  const { id }     = useParams();      // id do fornecedor visitado
+  const navigate   = useNavigate();
+  api.defaults.timeout = 15000;        // aumenta timeout para uploads
 
-  // verifica dono do perfil
-  const stored = localStorage.getItem("user");
-  const loggedUser = stored ? JSON.parse(stored) : null;
-  const isOwner = loggedUser && String(loggedUser.id_usuario) === id;
+  // usuário logado
+  const stored      = localStorage.getItem("user");
+  const loggedUser  = stored ? JSON.parse(stored) : null;
+  const isOwner     = loggedUser && String(loggedUser.id_usuario) === id;
 
-  // estados
-  const [fornecedor, setFornecedor] = useState({});
-  const [products, setProducts] = useState([]);
-  const [selected, setSelected] = useState("produtos");
+  
+  const [isVendor,       setIsVendor]       = useState(false);   
+  const [fornecedor,     setFornecedor]     = useState({});
+  const [products,       setProducts]       = useState([]);
+  const [selected,       setSelected]       = useState("produtos");
 
-  // ref para `<input type=file>`
-  const fileInputRef = useRef(null);
+  // follow
+  const [isFollowing,    setIsFollowing]    = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
 
-  // modais de edição/exclusão produto
-  const [isEditOpen, setIsEditOpen] = useState(false);
+  // modais e upload imagem
+  const fileInputRef     = useRef(null);
+  const [isEditOpen,     setIsEditOpen]     = useState(false);
+  const [isDeleteOpen,   setIsDeleteOpen]   = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
-  const [editPreview, setEditPreview] = useState(null);
-  const [editImage, setEditImage] = useState(null);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [editPreview,    setEditPreview]    = useState(null);
+  const [editImage,      setEditImage]      = useState(null);
 
-  // busca perfil e produtos ao montar
   useEffect(() => {
-    const perfilEndpoint = isOwner ? "/fornecedor/me" : `/fornecedor/${id}`;
-
     const token = localStorage.getItem("authToken");
     if (!token) {
       navigate("/login");
       return;
     }
-    api
-      .get(perfilEndpoint)
-      .then((res) => {
-        const data = res.data;
-        setFornecedor({
-          ...data,
-          nomeFantasia: data.nomeFantasia || data.nome_fantasia || "",
-        });
-      })
-      .catch((err) => console.error("Erro ao buscar fornecedor:", err));
 
-    // produtos deste fornecedor
-    api
-      .get(`/produtos/fornecedor/${id}`)
-      .then((res) => setProducts(res.data))
-      .catch((err) => console.error("Erro ao buscar produtos:", err));
+    // 1) Verificar se usuário logado é vendedor.
+    if (loggedUser && !isOwner) {
+      api.get("/vendedor/me")
+         .then(() => setIsVendor(true))
+         .catch(() => setIsVendor(false));       
+    }
+
+    // 2) Perfil do fornecedor
+    const endpoint = isOwner ? "/fornecedor/me" : `/fornecedor/${id}`;
+    api.get(endpoint)
+       .then(res => setFornecedor({
+         ...res.data,
+         nomeFantasia: res.data.nomeFantasia || res.data.nome_fantasia || ""
+       }))
+       .catch(err => console.error("Erro ao buscar fornecedor:", err));
+
+    // 3) Produtos do fornecedor
+    api.get(`/produtos/fornecedor/${id}`)
+       .then(res => setProducts(res.data))
+       .catch(err => console.error("Erro ao buscar produtos:", err));
+
+    // 4) Sempre buscar status e total de seguidores
+   api.get(`seguindo/${id}`)
+      .then(res => {
+        setIsFollowing(res.data.followed);
+        setFollowersCount(res.data.total);
+      })
+      .catch(err => console.error("Erro ao consultar follow:", err));
   }, [id, isOwner]);
 
-  // abre dialog de upload de perfil
-  const handleChooseProfile = () => {
-    fileInputRef.current?.click();
+  /* --------------------------------------------------
+     Ações – Seguir / Deixar de seguir
+  --------------------------------------------------*/
+  const toggleFollow = () => {
+    const req = isFollowing
+      ? api.delete(`/seguindo/${id}`)
+      : api.post  (`/seguindo/${id}`);
+
+    req.then(res => {
+         setIsFollowing(res.data.followed);
+         setFollowersCount(prev =>
+           res.data.followed ? prev + 1 : prev - 1
+         );
+       })
+       .catch(err => console.error("Erro ao (des)seguir:", err));
   };
 
-  // lida com mudança de imagem de perfil
+  /* --------------------------------------------------
+     Upload / alteração de imagem de perfil
+  --------------------------------------------------*/
+  const handleChooseProfile = () => fileInputRef.current?.click();
+
   const handleProfileImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // preview local
+    // preview imediato
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64Data = reader.result.split(',')[1];
+      const base64Data = reader.result.split(",")[1];
       setFornecedor(prev => ({
         ...prev,
         imagem: { tipo: file.type, dados: base64Data }
@@ -81,31 +109,30 @@ export default function SellerProfile() {
     };
     reader.readAsDataURL(file);
 
-    // upload ao servidor
-    const formData = new FormData();
-    formData.append("imagemPerfil", file);
+    // upload
+    const fd = new FormData();
+    fd.append("imagemPerfil", file);
     try {
-      await api.put("/fornecedor/me", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      await api.put("/fornecedor/me", fd, {
+        headers: { "Content-Type": "multipart/form-data" }
       });
     } catch (err) {
       console.error("Erro ao atualizar imagem de perfil:", err);
     }
   };
 
-  // abre modal de edição de produto
+  /* --------------------------------------------------
+     CRUD de Produto
+  --------------------------------------------------*/
   const openEditModal = (p) => {
     setCurrentProduct({ ...p });
     if (p.imagem?.dados) {
       setEditPreview(`data:${p.imagem.tipo};base64,${p.imagem.dados}`);
-    } else {
-      setEditPreview(null);
-    }
+    } else setEditPreview(null);
     setEditImage(null);
     setIsEditOpen(true);
   };
 
-  // change imagem no modal edição
   const handleImageChangeEdit = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -115,63 +142,61 @@ export default function SellerProfile() {
     reader.readAsDataURL(file);
   };
 
-  // salva edição no servidor
   const handleSaveEdit = () => {
     const fd = new FormData();
-    fd.append("nome", currentProduct.nome);
-    fd.append("descricao", currentProduct.descricao);
+    fd.append("nome",          currentProduct.nome);
+    fd.append("descricao",     currentProduct.descricao);
     fd.append("preco_unidade", currentProduct.preco_unidade);
-    fd.append("estado", currentProduct.estado);
+    fd.append("estado",        currentProduct.estado);
     if (editImage) fd.append("imagem", editImage);
 
-    api
-      .put(`/produtos/${currentProduct.id_produto}`, fd)
-      .then(() => {
-        setProducts((prev) =>
-          prev.map((p) =>
-            String(p.id_produto) === String(currentProduct.id_produto)
-              ? { ...currentProduct }
-              : p
-          )
-        );
-        setIsEditOpen(false);
-      })
-      .catch((err) => console.error("Erro ao salvar produto:", err));
+    api.put(`/produtos/${currentProduct.id_produto}`, fd)
+       .then(() => {
+         setProducts(prev =>
+           prev.map(p =>
+             String(p.id_produto) === String(currentProduct.id_produto)
+               ? { ...currentProduct }
+               : p
+           )
+         );
+         setIsEditOpen(false);
+       })
+       .catch(err => console.error("Erro ao salvar produto:", err));
   };
 
-  // abre modal exclusão
   const handleDeleteClick = (p) => {
     setCurrentProduct(p);
     setIsDeleteOpen(true);
   };
 
-  // confirma exclusão
   const confirmDelete = () => {
-    api
-      .delete(`/produtos/${currentProduct.id_produto}`)
-      .then(() => {
-        setProducts((prev) =>
-          prev.filter(
-            (p) => String(p.id_produto) !== String(currentProduct.id_produto)
-          )
-        );
-        setIsDeleteOpen(false);
-      })
-      .catch((err) => console.error("Erro ao excluir produto:", err));
+    api.delete(`/produtos/${currentProduct.id_produto}`)
+       .then(() => {
+         setProducts(prev =>
+           prev.filter(p =>
+             String(p.id_produto) !== String(currentProduct.id_produto)
+           )
+         );
+         setIsDeleteOpen(false);
+       })
+       .catch(err => console.error("Erro ao excluir produto:", err));
   };
 
-  // formata tempo desde cadastro
-  function getTempoDesdeCadastro(dataStr) {
+  /* --------------------------------------------------
+     Utils
+  --------------------------------------------------*/
+  const getTempoDesdeCadastro = (dataStr) => {
     if (!dataStr) return "";
     const diffDays = Math.floor(
       (Date.now() - new Date(dataStr).getTime()) / (1000 * 60 * 60 * 24)
     );
-    const years = Math.floor(diffDays / 365);
+    const years  = Math.floor(diffDays / 365);
     const months = Math.floor((diffDays % 365) / 30);
-    if (years) return `Há ${years} ano${years > 1 ? "s" : ""}`;
+    if (years)  return `Há ${years} ano${years > 1 ? "s" : ""}`;
     if (months) return `Há ${months} mês${months > 1 ? "es" : ""}`;
     return `Há ${diffDays} dia${diffDays > 1 ? "s" : ""}`;
-  }
+  };
+
 
   return (
     <>
@@ -186,11 +211,10 @@ export default function SellerProfile() {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              style={{ display: 'none' }}
+              style={{ display: "none" }}
               onChange={handleProfileImageChange}
             />
           </>
-
         )}
       </div>
       <div className={styles.profilePage}>
@@ -221,7 +245,18 @@ export default function SellerProfile() {
             <p className={styles.since}>
               {getTempoDesdeCadastro(fornecedor.dataCadastro)}
             </p>
-            <button className={styles.btn}>Seguir</button>
+            {!isOwner && isVendor && (
+              <button
+                className={`${styles.btn} ${isFollowing ? styles.following : ""}`}
+                onClick={toggleFollow}
+              >
+                {isFollowing ? "Seguindo ✓" : "Seguir"}
+              </button>
+            )}
+            {/* contador seguidores (todo perfil) */}
+            <p>{followersCount} seguidores</p>
+
+            {/* cadastrar produto (apenas fornecedor dono) */}
             {isOwner && (
               <button
                 className={styles.registerButton}
@@ -232,6 +267,7 @@ export default function SellerProfile() {
             )}
           </div>
         </div>
+
         <div className={styles.productsContainer}>
           <div className={styles.sectionTitle}>
             <button
@@ -247,14 +283,17 @@ export default function SellerProfile() {
               Sobre
             </button>
           </div>
-          {selected==="produtos" && (
-            <div className={styles.productsList}>
-               {products.length===0
-                ? <p>Nenhum produto encontrado.</p>
-                : products.map(p=>(
 
+          {/* ---- Lista de produtos ---- */}
+          {selected === "produtos" && (
+            <div className={styles.productsList}>
+              {products.length === 0 ? (
+                <p>Nenhum produto encontrado.</p>
+              ) : (
+                products.map(p => (
                   <div key={p.id_produto} className={styles.productCardWrapper}>
                     <ProductCard product={p} />
+
                     {isOwner && (
                       <div className={styles.cardActions}>
                         <i
@@ -271,10 +310,12 @@ export default function SellerProfile() {
                     )}
                   </div>
                 ))
-              }
+              )}
             </div>
           )}
-          {selected==="sobre" && (
+
+          {/* ---- Seção Sobre ---- */}
+          {selected === "sobre" && (
             <div className={styles.sobreSection}>
               <h3>Sobre o fornecedor</h3>
               <p>{fornecedor.nomeFantasia}</p>
@@ -283,30 +324,118 @@ export default function SellerProfile() {
         </div>
       </div>
 
+      {/* ---------- Modal Editar Produto ---------- */}
       {isEditOpen && (
-        <div className={styles.modalOverlay} onClick={()=>setIsEditOpen(false)}>
-          <div className={styles.modal} onClick={e=>e.stopPropagation()}>
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setIsEditOpen(false)}
+        >
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <h2>Editar Produto</h2>
-            <form onSubmit={e=>{e.preventDefault();handleSaveEdit()}}>
-              <label>Nome:<input type="text" value={currentProduct.nome} onChange={e=>setCurrentProduct({...currentProduct,nome:e.target.value})}/></label>
-              <label>Descrição:<textarea value={currentProduct.descricao} onChange={e=>setCurrentProduct({...currentProduct,descricao:e.target.value})}/></label>
-              <label>Preço:<input type="number" step="0.01" value={currentProduct.preco_unidade} onChange={e=>setCurrentProduct({...currentProduct,preco_unidade:e.target.value})}/></label>
-              <label>Estado:<select value={currentProduct.estado} onChange={e=>setCurrentProduct({...currentProduct,estado:e.target.value})}><option value="novo">Novo</option><option value="usado">Usado</option></select></label>
-              <label className={styles.modalUploadLabel}>
-                {editPreview? <img src={editPreview} alt="Preview" className={styles.previewImg}/> : "Clique ou arraste para alterar a imagem"}
-                <input type="file" accept="image/*" onChange={handleImageChangeEdit}/>
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                handleSaveEdit();
+              }}
+            >
+              <label>
+                Nome:
+                <input
+                  type="text"
+                  value={currentProduct.nome}
+                  onChange={e =>
+                    setCurrentProduct({ ...currentProduct, nome: e.target.value })
+                  }
+                />
               </label>
-              <div className={styles.modalButtons}><button type="submit">Salvar</button><button type="button" onClick={()=>setIsEditOpen(false)}>Cancelar</button></div>
+
+              <label>
+                Descrição:
+                <textarea
+                  value={currentProduct.descricao}
+                  onChange={e =>
+                    setCurrentProduct({
+                      ...currentProduct,
+                      descricao: e.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Preço:
+                <input
+                  type="number"
+                  step="0.01"
+                  value={currentProduct.preco_unidade}
+                  onChange={e =>
+                    setCurrentProduct({
+                      ...currentProduct,
+                      preco_unidade: e.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                Estado:
+                <select
+                  value={currentProduct.estado}
+                  onChange={e =>
+                    setCurrentProduct({
+                      ...currentProduct,
+                      estado: e.target.value,
+                    })
+                  }
+                >
+                  <option value="novo">Novo</option>
+                  <option value="usado">Usado</option>
+                </select>
+              </label>
+
+              <label className={styles.modalUploadLabel}>
+                {editPreview ? (
+                  <img
+                    src={editPreview}
+                    alt="Preview"
+                    className={styles.previewImg}
+                  />
+                ) : (
+                  "Clique ou arraste para alterar a imagem"
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChangeEdit}
+                />
+              </label>
+
+              <div className={styles.modalButtons}>
+                <button type="submit">Salvar</button>
+                <button type="button" onClick={() => setIsEditOpen(false)}>
+                  Cancelar
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* ---------- Modal Excluir Produto ---------- */}
       {isDeleteOpen && (
-        <div className={styles.modalOverlay} onClick={()=>setIsDeleteOpen(false)}>
-          <div className={styles.modal} onClick={e=>e.stopPropagation()}>
-            <p>Tem certeza que deseja excluir o produto <strong>{currentProduct?.nome}</strong>?</p>
-            <div className={styles.modalButtons}><button onClick={confirmDelete}>Sim, Excluir</button><button onClick={()=>setIsDeleteOpen(false)}>Cancelar</button></div>
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setIsDeleteOpen(false)}
+        >
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <p>
+              Tem certeza que deseja excluir o produto{" "}
+              <strong>{currentProduct?.nome}</strong>?
+            </p>
+            <div className={styles.modalButtons}>
+              <button onClick={confirmDelete}>Sim, Excluir</button>
+              <button onClick={() => setIsDeleteOpen(false)}>Cancelar</button>
+            </div>
           </div>
         </div>
       )}
