@@ -270,6 +270,17 @@ input[type="number"] {
   text-align: center;
 }
 
+
+.following {
+  background-color: orange;     
+  color: white;               
+}
+
+
+.following:hover {
+  background-color: orange;
+}
+
 @media (max-width: 768px) {
   .produtoInfo {
     flex-direction: column;

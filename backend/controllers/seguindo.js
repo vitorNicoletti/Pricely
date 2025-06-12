@@ -84,7 +84,6 @@ exports.status = async (req, res) => {
   const seguidoId  = Number(req.params.id);
 
   try {
-    console.log("[ctrl.status] seguidor=", seguidorId, "seguido=", seguidoId);
     const followed = await new Promise((resolve, reject) =>
       Seguindo.estaSeguindo(seguidorId, seguidoId, (err, isF) =>
         err ? reject(err) : resolve(isF)
@@ -95,10 +94,8 @@ exports.status = async (req, res) => {
         err ? reject(err) : resolve(t)
       )
     );
-    console.log("[ctrl.status] followed=", followed, "total=", total);
     res.json({ followed, total });
   } catch (e) {
-    console.error("[ctrl.status] erro interno:", e);
     res.status(500).json({ erro: "Erro ao consultar." });
   }
 };
