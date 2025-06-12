@@ -131,8 +131,6 @@ const Cart = () => {
         setSupplierToEvaluateId(id_vendedor);
         setSupplierToEvaluateName(nome_vendedor);
         setIsSupplierModalOpen(true);
-
-
       } catch (error) {
         console.error("Erro ao finalizar compra:", error);
         setErrors({
@@ -141,7 +139,6 @@ const Cart = () => {
       } finally {
         // Define o estado de loading como false após a requisição (seja sucesso ou erro)
         setIsLoading(false);
-        navigate("/")
       }
     } else {
       // Abre modal para adicionar saldo
@@ -210,9 +207,8 @@ const Cart = () => {
       street: newAddressStreet.trim(),
       number: newAddressNumber.trim(),
       complement: newAddressComplement.trim(),
-      fullAddress: `${newAddressStreet.trim()}, ${newAddressNumber.trim()}${
-        newAddressComplement.trim() ? `, ${newAddressComplement.trim()}` : ""
-      }`,
+      fullAddress: `${newAddressStreet.trim()}, ${newAddressNumber.trim()}${newAddressComplement.trim() ? `, ${newAddressComplement.trim()}` : ""
+        }`,
     };
 
     const updatedUser = {
