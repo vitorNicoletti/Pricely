@@ -60,6 +60,7 @@ button:focus {
   width: 100%;
   box-sizing: border-box;
   color: #999;
+  margin-top: 6px;
 }
 
 .card_form input::placeholder {
