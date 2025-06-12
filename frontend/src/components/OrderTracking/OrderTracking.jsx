@@ -1,107 +1,110 @@
-import api from "../../api";
 import styles from "./OrderTracking.module.css";
 import Footer from "../Footer/Footer";
 import Header from "../Header/Header";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import api from "../../api"; 
 
 const OrderTracking = () => {
-  const [cartItems, setCartItems] = useState({});
-  const navigate = useNavigate();
-
-  const [cartData, setCartData] = useState(null);
+  const { pedidoId } = useParams();
+  const [pedido, setPedido] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-    const fetchCart = async () => {
-      try {
-        const response = await api.get("/vendedor/carrinho");
-        setCartData(response.data);
-      } catch (error) {
-        console.error("Erro ao buscar itens do carrinho:", error);
-      }
-    };
-    fetchCart();
-  }, [navigate]);
+    if (!pedidoId) return;
 
-  if (!cartData) {
+    api
+      .get(`/vendedor/pedido/${pedidoId}`)
+      .then((res) => setPedido(res.data))
+      .catch((err) => {
+        console.error("Erro ao buscar pedido:", err);
+        setError("Não foi possível carregar o pedido.");
+      });
+  }, [pedidoId]);
+
+  if (error) {
     return (
       <>
         <Header />
         <div className={styles.container}>
-          <p>Carregando...</p>
+          <p>{error}</p>
         </div>
         <Footer />
       </>
     );
   }
 
-  // Se o estado da compra for CARRINHO, não mostra nada
-  // if (cartData.carrinho?.estado === "CARRINHO") {
-  //   return null;
-  // }
+  if (!pedido) {
+    return (
+      <>
+        <Header />
+        <div className={styles.container}>
+          <p>Carregando pedido #{pedidoId}...</p>
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
-  // Mapeia os dados do backend para o formato esperado
+  // Cálculo do total e estrutura de dados
+  const total = pedido.itens?.reduce(
+    (sum, i) => sum + i.preco_unidade * i.quantidade,
+    0
+  ) || 0;
+
   const orderData = {
-    id: cartData.carrinho.id_pedido,
-    orderDate: cartData.carrinho.dataCadastro,
-    payment: cartData.carrinho.metodo_pagamento,
-    status: cartData.compras?.[0]?.estado || "",
+    id: pedido.id_pedido,
+    orderDate: pedido.dataCadastro,
+    payment: pedido.metodo_pagamento,
+    status: pedido.estado,
     address: {
-      street: cartData.carrinho.rua || "",
-      city: cartData.carrinho.cep || "",
-      phone: "",
+      street: pedido.rua || "",
+      cep: pedido.cep || "",
+      phone: pedido.telefone || "", // se disponível
     },
-    items:
-      cartData.compras?.map((item) => ({
-        title: item.produto?.nome || "",
-        brand: item.produto?.descricao || "",
-        price: `R$${Number(item.preco_unidade).toFixed(2)}`,
-        qty: item.quantidade,
-      })) || [],
+    items: pedido.itens?.map((item) => ({
+      title: item.produto?.nome || "",
+      brand: item.produto?.descricao || "",
+      price: `R$${Number(item.preco_unidade).toFixed(2)}`,
+      qty: item.quantidade,
+    })) || [],
     summary: {
-      price: `R$${cartData.compras
-        ?.reduce((sum, i) => sum + i.preco_unidade * i.quantidade, 0)
-        .toFixed(2)}`,
-      discount: cartData.carrinho.desconto
-        ? `- R$${Number(cartData.carrinho.desconto).toFixed(2)}`
+      price: `R$${total.toFixed(2)}`,
+      discount: pedido.desconto
+        ? `- R$${Number(pedido.desconto).toFixed(2)}`
         : "- R$0.00",
       delivery: "R$0.00",
       tax: "+R$0.00",
       sharedSave: "-R$0.00",
-      total: `R$${cartData.compras
-        ?.reduce((sum, i) => sum + i.preco_unidade * i.quantidade, 0)
-        .toFixed(2)}`,
+      total: `R$${total.toFixed(2)}`,
     },
   };
 
-  // Atualiza steps e status conforme estado da compra
   const steps = [
     { label: "Pedido Confirmado", icon: "check_circle" },
     { label: "Enviado", icon: "inventory_2" },
     { label: "Saiu para entrega", icon: "local_shipping" },
     { label: "Entregue", icon: "home" },
   ];
+
   const statusMap = {
     CONFIRMADO: "Pedido Confirmado",
     ENVIADO: "Enviado",
-    ENTREGUE: "Entregue",
     ENTREGA: "Saiu para entrega",
+    ENTREGUE: "Entregue",
   };
+
   const currentStatus = statusMap[orderData.status] || "Pedido Confirmado";
-  const currentStepIndex = steps.findIndex(
-    (step) => step.label === currentStatus
+  const currentStepIndex = Math.max(
+    steps.findIndex((step) => step.label === currentStatus),
+    0
   );
 
   return (
     <>
       <Header />
       <div className={styles.container}>
-        {/* Cabeçalho do pedido */}
+        {/* Cabeçalho */}
         <div className={styles.header}>
           <div>
             <h1>ID do pedido: {orderData.id}</h1>
@@ -111,10 +114,6 @@ const OrderTracking = () => {
                 {new Date(orderData.orderDate).toLocaleDateString()}
               </strong>
             </p>
-            {/* <p className={styles.deliveryEstimate}>
-              Estimativa de chegada:{" "}
-              {new Date(orderData.deliveryEstimate).toLocaleDateString()}
-            </p> */}
           </div>
           <button className={styles.trackButton}>Track order</button>
         </div>
@@ -144,7 +143,7 @@ const OrderTracking = () => {
           ))}
         </div>
 
-        {/* Pagamento e Entrega */}
+        {/* Informações de pagamento e entrega */}
         <div className={styles.grid}>
           <div>
             <h3>Pagamento</h3>
@@ -157,14 +156,14 @@ const OrderTracking = () => {
               <br />
               {orderData.address.street}
               <br />
-              {orderData.address.city}
+              CEP: {orderData.address.cep}
               <br />
-              {orderData.address.phone}
+              {orderData.address.phone || "Telefone não informado"}
             </p>
           </div>
         </div>
 
-        {/* Resumo do pedido */}
+        {/* Resumo */}
         <div className={styles.summary}>
           <h3>Resumo do pedido</h3>
           <p>
@@ -215,6 +214,7 @@ const OrderTracking = () => {
   );
 };
 
+// Componente para exibir item individual
 const OrderItem = ({ title, brand, price, qty }) => (
   <div className={styles.item}>
     <div className={styles.itemInfo}>
