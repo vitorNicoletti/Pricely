@@ -22,6 +22,7 @@
   justify-content: center;
   justify-items: center;
   align-items: center;
+  margin-right: 40px;
 }
 .navbar a {
   text-decoration: none;
@@ -52,12 +53,14 @@
 
 .profileWrapper {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .modalWrapper {
+  margin-top: 30px;
   position: absolute;
-  margin-top: 20px;
-  left:-100px;
   z-index: 999;
 }
 
