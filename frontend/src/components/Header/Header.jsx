@@ -81,7 +81,7 @@ function Header() {
             <div className={style.modalWrapper}>
               <WalletModal
                 onClose={toggleWalletModal}
-                carteira={user.carteira}
+                carteira={user?.carteira}
               />
             </div>
           )}
