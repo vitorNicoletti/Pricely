@@ -31,6 +31,43 @@ function BuyerProfile() {
     setBuyer(user);
   }, []);
 
+useEffect(() => {
+  async function fetchOrders() {
+    try {
+      const response = await api.get("/vendedor/pedidos");
+      console.log("Pedidos recebidos (brutos):", response.data);
+
+      const pedidos = response.data.map((entry) => {
+        const { pedido, compras } = entry;
+
+        // Calcula o total = soma de (preco_unidade × quantidade) + frete_total
+        const totalProdutos = compras.reduce(
+          (sum, item) => sum + item.preco_unidade * item.quantidade,
+          0
+        );
+        const freteTotal = compras.reduce((sum, item) => sum + (item.frete_pago || 0), 0);
+        const total = totalProdutos + freteTotal;
+
+        return {
+          ...pedido,
+          compras,
+          total,
+        };
+      });
+
+      console.log("✅ Pedidos transformados:", pedidos);
+      setOrders(pedidos);
+    } catch (error) {
+      console.error("❌ Erro ao buscar pedidos do vendedor:", error);
+    }
+  }
+
+  if (token) {
+    fetchOrders();
+  }
+}, [token]);
+
+
   if (!buyer) {
     return (
       <>
@@ -189,16 +226,24 @@ function BuyerProfile() {
         <section className={styles.section}>
           <h2>Últimos Pedidos</h2>
           <ul className={styles.orderList}>
-            {orders.map((order) => (
-              <li key={order.id_pedido}>
-                <strong>{order.id_pedido}</strong> –{" "}
-                {new Date(order.dataCadastro).toLocaleDateString("pt-BR")} –{" "}
-                {order.total.toLocaleString("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                })}{" "}
+            {orders.map((o) => (
+              <li
+                key={o.id_pedido}
+                onClick={() => navigate(`/pedido/${o.id_pedido}`)}
+                className={styles.clickableRow} // você pode estilizar com hover/cursor pointer
+              >
+                <strong>{o.id_pedido}</strong> –{" "}
+                {o.dataCadastro
+                  ? new Date(o.dataCadastro).toLocaleDateString("pt-BR")
+                  : "Data inválida"}{" "}
                 –{" "}
-                <span className={styles.status}>{order.metodo_pagamento}</span>
+                {o.total
+                  ? o.total.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })
+                  : "—"}{" "}
+                – <span className={styles.status}>{o.metodo_pagamento || "—"}</span>
               </li>
             ))}
           </ul>
