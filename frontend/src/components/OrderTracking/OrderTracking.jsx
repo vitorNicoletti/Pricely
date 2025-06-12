@@ -87,7 +87,9 @@ const OrderTracking = () => {
     { label: "Entregue", icon: "home" },
   ];
   const statusMap = {
-    CONFIRMADO: "Pedido Confirmado",
+    CARRINHO: "Em espera",
+    PAGO: "Pedido Confirmado",
+    PROCESSANDO: "Enviado",
     ENVIADO: "Enviado",
     ENTREGUE: "Entregue",
     ENTREGA: "Saiu para entrega",
