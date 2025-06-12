@@ -249,7 +249,7 @@ export default function SellerProfile() {
           </div>
           {selected==="produtos" && (
             <div className={styles.productsList}>
-              {products.length===0
+               {products.length===0
                 ? <p>Nenhum produto encontrado.</p>
                 : products.map(p=>(
 

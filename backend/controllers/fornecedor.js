@@ -10,6 +10,7 @@ async function getFornecedorDetails(req, res) {
 
     // se veio “me”, troca pelo id do token
     if (id === "me") {
+      console.log("Buscando perfil do fornecedor logado");
       if (!req.user || !req.user.id_usuario) {
         return res.status(401).json({ message: "Não autenticado." });
       }

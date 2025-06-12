@@ -27,7 +27,6 @@ function Header() {
     }
     setIsProfileOpen(!isProfileOpen);
   };
-
   useEffect(() => {
     async function loadUserData() {
       try {
