@@ -1,9 +1,20 @@
 const express = require("express");
 const router = express.Router();
 
-const {getCarrinho, adicionarAoCarrinho} = require("../controllers/carrinho.js")
-const {autenticarToken} = require('../middlewares/auth')
-// Rota que pega o carrinho do vendedor logado:
-router.get('/',autenticarToken,getCarrinho)
-router.post('/',autenticarToken,adicionarAoCarrinho)
-module.exports = router
+const {
+  getCarrinho,
+  adicionarAoCarrinho,
+  finalizarCompra,
+  removerProduto
+} = require("../controllers/carrinho.js");
+
+const { autenticarToken } = require('../middlewares/auth');
+
+// Middleware global: será aplicado a todas as rotas abaixo
+router.use(autenticarToken);
+
+router.post('/', adicionarAoCarrinho);
+router.post('/finalizar', finalizarCompra);
+router.delete('/', removerProduto);
+
+module.exports = router;

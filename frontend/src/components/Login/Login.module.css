@@ -4,9 +4,10 @@
   padding: 0;
 }
 
-body, html {
+body,
+html {
   height: 100%;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .loginContainer {
@@ -17,7 +18,6 @@ body, html {
   align-items: center;
   justify-content: center;
 }
-
 
 .loginCard {
   width: 420px;
@@ -62,7 +62,8 @@ label {
   display: block;
 }
 
-input[type="text"], input[type="password"] {
+input[type="text"],
+input[type="password"] {
   width: 100%;
   padding: 12px;
   margin-top: 6px;
@@ -103,7 +104,7 @@ input[type="text"], input[type="password"] {
   border-radius: 10px;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .divider {
@@ -142,4 +143,26 @@ input[type="text"], input[type="password"] {
   color: red;
   font-size: 14px;
   margin-bottom: 10px;
+}
+
+.loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingModal {
+  background: #fff;
+  color: #f7931e;
+  padding: 2.5rem 3.5rem;
+  border-radius: 18px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.18);
+  text-align: center;
 }

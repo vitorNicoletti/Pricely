@@ -1,22 +1,22 @@
-.payment-container {
+.payment_container {
   max-width: 720px;
   margin: 60px auto;
   padding: 20px;
   background-color: white;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.payment-mode,
-.payment-methods {
+.payment_mode,
+.payment_methods {
   display: flex;
   gap: 12px;
   margin-bottom: 20px;
 }
 
-.payment-mode button,
-.payment-methods button {
+.payment_mode button,
+.payment_methods button {
   flex: 1;
   padding: 14px;
   border: 2px solid #ddd;
@@ -33,8 +33,8 @@
   transition: all 0.2s ease-in-out;
 }
 
-.payment-mode button.active,
-.payment-methods button.active {
+.payment_mode button.active,
+.payment_methods button.active {
   border-color: #0070f3;
   background-color: #e6f0ff;
 }
@@ -43,15 +43,15 @@ button:focus {
   outline: none;
 }
 
-.card-form {
+.card_form {
   display: flex;
   flex-direction: column;
   gap: 16px;
   text-align: left;
 }
 
-.card-form input,
-.card-form select {
+.card_form input,
+.card_form select {
   padding: 12px;
   font-size: 14px;
   border: 1px solid #ccc;
@@ -60,9 +60,10 @@ button:focus {
   width: 100%;
   box-sizing: border-box;
   color: #999;
+  margin-top: 6px;
 }
 
-.card-form input::placeholder {
+.card_form input::placeholder {
   color: #999;
 }
 
@@ -75,30 +76,30 @@ label {
   font-size: 15px;
 }
 
-.form-row {
+.form_row {
   display: flex;
   gap: 10px;
 }
 
-.form-row > * {
+.form_row > * {
   flex: 1;
 }
 
-.form-row > div {
+.form_row > div {
   display: flex;
   flex-direction: column;
 }
 
-.card-input-wrapper {
+.card_input_wrapper {
   position: relative;
 }
 
-.card-input-wrapper input {
+.card_input_wrapper input {
   padding-right: 60px;
   margin-top: -10px;
 }
 
-.card-icons {
+.card_icons {
   position: absolute;
   right: 10px;
   top: 50%;
@@ -108,7 +109,7 @@ label {
   align-items: center;
 }
 
-.card-icons img {
+.card_icons img {
   width: 24px;
   height: auto;
 }
@@ -119,9 +120,18 @@ label {
   margin-top: 4px;
 }
 
-.card-form input:focus,
-.card-form select:focus {
+.card_form input:focus,
+.card_form select:focus {
   outline: none;
   border-color: #0070f3;
   box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
+}
+
+.submit_button {
+  background-color: #ff8f00;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
 }

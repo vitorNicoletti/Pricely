@@ -9,17 +9,48 @@ import Footer from "../Footer/Footer";
 
 const Cart = () => {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState([]);
+  const [cartData, setCartData] = useState([]);
+
+  // Extrai todas as compras de todos os pedidos em estado CARRINHO
+  const cartItems = useMemo(() => {
+    const allCompras = [];
+    cartData.forEach((pedidoData) => {
+      if (pedidoData.pedido?.estado === "CARRINHO" && pedidoData.compras) {
+        allCompras.push(...pedidoData.compras);
+      }
+    });
+    return allCompras;
+  }, [cartData]);
 
   // Calcula os valores quando cartItems mudar
   const { subtotal, discount, total } = useMemo(() => {
-    if (!cartItems.compras) return { subtotal: 0, discount: 0, total: 0 };
+    if (!cartItems || cartItems.length === 0) {
+      return { subtotal: 0, discount: 0, total: 0 };
+    }
 
-    const subtotal = cartItems.compras.reduce(
-      (acc, item) => acc + item.preco_unidade * item.quantidade,
-      0
-    );
-    const discount = 0.1 * subtotal; // 10% de desconto
+    let subtotal = 0;
+    let discount = 0;
+
+    cartItems.forEach((item) => {
+      const preco = item.preco_unidade;
+      const qtd = item.quantidade;
+      const promocoes = item.produto.promocoes || [];
+
+      subtotal += preco * qtd;
+
+      // Ordena promoções da maior para a menor quantidade para pegar a mais vantajosa
+      const promocoesValidas = promocoes
+        .filter((promo) => qtd >= promo.quantidade)
+        .sort((a, b) => b.quantidade - a.quantidade);
+
+      if (promocoesValidas.length > 0) {
+        const melhorPromo = promocoesValidas[0];
+        const descontoProduto =
+          (melhorPromo.desc_porcentagem / 100) * (preco * qtd);
+        discount += descontoProduto;
+      }
+    });
+
     const total = subtotal - discount;
 
     return { subtotal, discount, total };
@@ -37,7 +68,7 @@ const Cart = () => {
     const fetchCart = async () => {
       try {
         const response = await api.get("/vendedor/carrinho");
-        setCartItems(response.data);
+        setCartData(response.data);
       } catch (error) {
         console.error("Erro ao buscar itens do carrinho:", error);
       }
@@ -52,7 +83,7 @@ const Cart = () => {
         <h1 className={styles.title}>Seu Carrinho</h1>
 
         <div className={styles.items}>
-          {!cartItems.compras || cartItems.compras.length === 0 ? (
+          {!cartItems || cartItems.length === 0 ? (
             <div className={styles.emptyCart}>
               <h2>Seu carrinho está vazio</h2>
 
@@ -64,8 +95,8 @@ const Cart = () => {
               </button>
             </div>
           ) : (
-            cartItems.compras.map((item) => (
-              <div key={item.id} className={styles.item}>
+            cartItems.map((item) => (
+              <div key={item.id_compra} className={styles.item}>
                 <div className={styles.itemInfo}>
                   <p className={styles.itemTitle}>{item.produto.nome}</p>
                   <p className={styles.itemBrand}>{item.produto.descricao}</p>
@@ -79,7 +110,7 @@ const Cart = () => {
           )}
         </div>
 
-        {cartItems.compras && cartItems.compras.length > 0 && (
+        {cartItems && cartItems.length > 0 && (
           <>
             <div className={styles.summary}>
               <h3>Resumo</h3>

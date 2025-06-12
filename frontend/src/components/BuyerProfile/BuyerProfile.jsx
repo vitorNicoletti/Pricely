@@ -18,28 +18,17 @@ function BuyerProfile() {
 
   const navigate = useNavigate();
 
+  const stored = localStorage.getItem("user");
+  const token = localStorage.getItem("authToken");
+  const user = stored ? JSON.parse(stored) : null;
+
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
     if (!token) {
       console.error("Nenhum token de autenticação encontrado.");
       navigate("/");
     }
-    async function fetchData() {
-      try {
-        // 1) Buscar perfil do vendedor
-        const profileResponse = await api.get("/vendedor/me");
-        setBuyer(profileResponse.data);
 
-        // 2) Buscar pedidos do vendedor
-        const ordersResponse = await api.get(
-          `/vendedor/${profileResponse.data.id_usuario}/pedidos`
-        );
-        setOrders(ordersResponse.data);
-      } catch (err) {
-        console.error("Erro ao buscar dados:", err);
-      }
-    }
-    fetchData();
+    setBuyer(user);
   }, []);
 
   if (!buyer) {

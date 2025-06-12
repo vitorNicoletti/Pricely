@@ -1,5 +1,3 @@
-DROP DATABASE IF EXISTS `Pricely`;
-
 -- MySQL Workbench Forward Engineering
 
 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
@@ -97,6 +95,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`fornecedor` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb3;
 
+
 -- -----------------------------------------------------
 -- Table `Pricely`.`avaliacao_fornecedor`
 -- -----------------------------------------------------
@@ -138,6 +137,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`produto` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
+
 
 -- -----------------------------------------------------
 -- Table `Pricely`.`avaliacao_produto`
@@ -211,6 +211,8 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`pedido` (
     REFERENCES `Pricely`.`vendedor` (`id_usuario`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb3;
+
+
 -- -----------------------------------------------------
 -- Table `Pricely`.`conjunto`
 -- -----------------------------------------------------
@@ -223,6 +225,8 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`conjunto` (
   PRIMARY KEY (`id_conjunto`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb3;
+
+
 -- -----------------------------------------------------
 -- Table `Pricely`.`compra`
 -- -----------------------------------------------------
@@ -237,6 +241,7 @@ CREATE TABLE IF NOT EXISTS `Pricely`.`compra` (
   `id_avaliacao_fornecedor` INT NULL DEFAULT NULL,
   `id_avaliacao_produto` INT NULL DEFAULT NULL,
   `id_conjunto` INT NULL DEFAULT NULL,
+  `dividir` TINYINT NULL,
   PRIMARY KEY (`id_compra`),
   INDEX `fk_compra_1_idx` (`id_pedido` ASC) VISIBLE,
   INDEX `fk_compra_2_idx` (`id_produto` ASC) VISIBLE,

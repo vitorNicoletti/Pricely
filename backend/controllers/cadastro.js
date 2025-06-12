@@ -1,6 +1,7 @@
 const Usuario = require("../models/usuario.model");
 const Vendedor = require("../models/vendedor.model");
 const Fornecedor = require("../models/fornecedor.model");
+const Carteira = require("../models/carteira.model");
 
 /**
  * POST /api/cadastro/vendedor
@@ -36,11 +37,19 @@ async function createVendedor(req, res) {
   let usuarioId;
   try {
     usuarioId = await Vendedor.createVendedor(email, senha, cpfCnpj, telefone);
+    try {
+      carteiraId = await Carteira.createCarteira(usuarioId);
+    } catch (carteiraErr) {
+      console.error("Erro ao criar carteira", carteiraErr);
+      return res.status(500).json({
+        erro: "Erro ao tentar se comunicar com o banco, tente novamente mais tarde",
+      });
+    }
   } catch (err) {
     console.error("Erro ao criar vendedor:", err);
-    return res
-      .status(500)
-      .json({ erro: "Erro ao tentar se comunicar com o banco, tente novamente mais tarde" });
+    return res.status(500).json({
+      erro: "Erro ao tentar se comunicar com o banco, tente novamente mais tarde",
+    });
   }
 
   // Retorna mensagem de sucesso
@@ -127,7 +136,9 @@ async function createFornecedor(req, res) {
       repCpf,
       repTelefone,
     });
-    return res.status(200).json({ mensagem: "Fornecedor adicionado com sucesso" });
+    return res
+      .status(200)
+      .json({ mensagem: "Fornecedor adicionado com sucesso" });
   } catch (err) {
     console.error("Erro ao cadastrar fornecedor:", err);
     return res.status(500).json({ erro: "Erro ao cadastrar fornecedor" });
@@ -168,21 +179,10 @@ function validarCNPJ(cnpj) {
   const base = cnpj.substring(0, 12).split("").map(Number);
   const digitosOriginais = cnpj.substring(12).split("").map(Number);
   const digito1 = calcularDigito(base, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
-  const digito2 = calcularDigito([...base, digito1], [
-    6,
-    5,
-    4,
-    3,
-    2,
-    9,
-    8,
-    7,
-    6,
-    5,
-    4,
-    3,
-    2,
-  ]);
+  const digito2 = calcularDigito(
+    [...base, digito1],
+    [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+  );
   return digitosOriginais[0] === digito1 && digitosOriginais[1] === digito2;
 }
 

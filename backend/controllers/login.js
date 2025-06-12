@@ -70,5 +70,4 @@ function validarCPF(cpf) {
 function validarEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
-
 module.exports = {login}

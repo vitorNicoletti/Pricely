@@ -155,6 +155,7 @@ function Detalhes() {
 
       {showCartModal && (
         <CartConfirmModal
+          userRole={user.role}
           open={showCartModal}
           onClose={() => setShowCartModal(false)}
           quantityRef={quantityRef}
@@ -163,7 +164,7 @@ function Detalhes() {
         />
       )}
 
-      {/* <div className={style.avaliacoesSection}>
+      <div className={style.avaliacoesSection}>
           <h3>Últimas Avaliações</h3>
           <div className={style.avaliacoes}>
             <div className={style.avaliacao}>
@@ -289,7 +290,7 @@ function Detalhes() {
               </div>
             </div>
           </div>
-        </div> */}
+        </div>
 
       <Footer />
     </>

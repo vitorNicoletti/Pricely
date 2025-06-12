@@ -121,6 +121,36 @@
   border: 1px solid #ddd;
 }
 
+.itemLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.itemImage {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.rating {
+  margin-top: 0.25rem;
+  display: flex;
+  gap: 2px;
+}
+
+.rating .material-icons {
+  font-size: 18px;
+  color: #ccc;
+}
+
+.rating .filled {
+  color: #fbc02d;
+}
+
+
 .itemInfo {
   max-width: 70%;
 }
@@ -172,10 +202,6 @@
   font-weight: bold;
   font-size: 1.2rem;
   color: #000;
-}
-
-.green {
-  color: #2e7d32;
 }
 
 .help {

@@ -6,7 +6,7 @@ const Fornecedor = require("../models/fornecedor.model.js");
  */
 async function getFornecedorDetails(req, res) {
   try {
-    let id = req.params.id || req.query.id || "me"; // pega o id do parâmetro ou da query, ou usa "me"
+    let id = req.params.id || req.query.id || "me";
 
     // se veio “me”, troca pelo id do token
     if (id === "me") {
@@ -59,7 +59,7 @@ async function updateFornecedorProfile(req, res) {
       repTelefone:        body.repTelefone
     };
 
-    // campos da tabela `usuario` (via Vendedor.updateProfile)
+    // campos da tabela `usuario`
     const userDados = {
       email:    body.email,
       telefone: body.telefone,
@@ -78,8 +78,8 @@ async function updateFornecedorProfile(req, res) {
       userDados.documentoTipo   = doc.mimetype;
     }
 
-    // 1) atualiza dados em `usuario` via Vendedor.updateProfile
-    await require("./vendedor.js").updateProfile(req.user.id_usuario, userDados);
+    // 1) atualiza dados em `usuario`
+    await Fornecedor.updateUser(req.user.id_usuario, userDados);
     // 2) atualiza dados em `fornecedor`
     await Fornecedor.updateProfile(req.user.id_usuario, campos);
 
