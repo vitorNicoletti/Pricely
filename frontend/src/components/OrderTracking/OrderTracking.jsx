@@ -121,7 +121,7 @@ const OrderTracking = () => {
   ];
 
   const statusMap = {
-    CARRINHO: "Pedido Confirmado",
+    CARRINHO: "Em espera",
     CONFIRMADO: "Pedido Confirmado",
     PROCESSANDO: "Enviado",
     ENVIADO: "Enviado",
@@ -129,11 +129,9 @@ const OrderTracking = () => {
     ENTREGUE: "Entregue"
   };
 
-  const currentStatus = statusMap[orderData.status] || "Pedido Confirmado";
-  const currentStepIndex = Math.max(
-    steps.findIndex((step) => step.label === currentStatus),
-    0
-  );
+  const currentStatus = statusMap[orderData.status];
+  const currentStepIndex = steps.findIndex((step) => step.label === currentStatus);
+
 
   return (
     <>
@@ -155,9 +153,13 @@ const OrderTracking = () => {
         <div className={styles.steps}>
           {steps.map((step, i) => {
             let stepClass = styles.step;
-            if (i < currentStepIndex) stepClass = styles.stepCompleted;
-            else if (i === currentStepIndex) stepClass = styles.stepActive;
-
+              if (currentStepIndex === -1) {
+                stepClass = styles.step; // nenhum passo ativo
+              } else if (i < currentStepIndex) {
+                stepClass = styles.stepCompleted;
+              } else if (i === currentStepIndex) {
+                stepClass = styles.stepActive;
+              }
             return (
               <div key={i} className={stepClass}>
                 <span className={`material-icons ${styles.icon}`}>
