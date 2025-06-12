@@ -4,13 +4,16 @@ const multer = require("multer");
 const {getCarrinho,get} = require("../controllers/carrinho")
 const { autenticarToken } = require("../middlewares/auth.js");
 const {getVendedorDetails,updateVendedorProfile} = require("../controllers/vendedor.js");
-const {getPedidos} = require("../controllers/pedido.js")
+const {getPedidos,getPedidoByID} = require("../controllers/pedido.js")
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 
 
 router.get("/pedidos",autenticarToken,getPedidos)
+
+router.get("/pedidos/:id",autenticarToken,getPedidoByID)
+
 // Rota que pega o carrinho do vendedor logado:
 router.get('/carrinho',autenticarToken,getCarrinho)
 
