@@ -3,7 +3,7 @@ import Footer from "../Footer/Footer";
 import Header from "../Header/Header";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import api from "../../api"; 
+import api from "../../api";
 
 const OrderTracking = () => {
   const { pedidoId } = useParams();
@@ -14,8 +14,28 @@ const OrderTracking = () => {
     if (!pedidoId) return;
 
     api
-      .get(`/vendedor/pedido/${pedidoId}`)
-      .then((res) => setPedido(res.data))
+      .get(`/vendedor/pedidos/${pedidoId}`)
+      .then((res) => {
+        const { pedido, compras } = res.data;
+
+        const pedidoFormatado = {
+          ...pedido,
+          itens: compras.map((compra) => ({
+            produto: {
+              nome: compra.produto?.nome || `Produto #${compra.id_produto}`,
+              descricao: compra.produto?.descricao || "",
+              imagem: compra.produto?.imagem?.dados || null,
+              tipoImagem: compra.produto?.imagem?.tipo || null,
+              avaliacao: compra.produto?.avaliacao_media || 0
+            },
+            preco_unidade: compra.preco_unidade,
+            quantidade: compra.quantidade,
+            frete_pago: compra.frete_pago || 0
+          }))
+        };
+
+        setPedido(pedidoFormatado);
+      })
       .catch((err) => {
         console.error("Erro ao buscar pedido:", err);
         setError("Não foi possível carregar o pedido.");
@@ -46,11 +66,19 @@ const OrderTracking = () => {
     );
   }
 
-  // Cálculo do total e estrutura de dados
-  const total = pedido.itens?.reduce(
+  const totalProdutos = pedido.itens?.reduce(
     (sum, i) => sum + i.preco_unidade * i.quantidade,
     0
   ) || 0;
+
+  const totalFrete = pedido.itens?.reduce(
+    (sum, i) => sum + (i.frete_pago || 0),
+    0
+  ) || 0;
+
+  const taxa = totalProdutos * 0.02;
+
+  const totalFinal = totalProdutos + totalFrete + taxa - (pedido.desconto || 0);
 
   const orderData = {
     id: pedido.id_pedido,
@@ -59,39 +87,46 @@ const OrderTracking = () => {
     status: pedido.estado,
     address: {
       street: pedido.rua || "",
+      number: pedido.numero || "",
+      complement: pedido.complemento || "",
       cep: pedido.cep || "",
-      phone: pedido.telefone || "", // se disponível
+      phone: pedido.telefone || ""
     },
-    items: pedido.itens?.map((item) => ({
-      title: item.produto?.nome || "",
-      brand: item.produto?.descricao || "",
-      price: `R$${Number(item.preco_unidade).toFixed(2)}`,
-      qty: item.quantidade,
-    })) || [],
+    items:
+      pedido.itens?.map((item) => ({
+        title: item.produto?.nome || "",
+        brand: item.produto?.descricao || "",
+        price: `R$${Number(item.preco_unidade).toFixed(2)}`,
+        qty: item.quantidade,
+        image: item.produto?.imagem,
+        imageType: item.produto?.tipoImagem,
+        rating: item.produto?.avaliacao
+      })) || [],
     summary: {
-      price: `R$${total.toFixed(2)}`,
+      price: `R$${totalProdutos.toFixed(2)}`,
       discount: pedido.desconto
         ? `- R$${Number(pedido.desconto).toFixed(2)}`
         : "- R$0.00",
-      delivery: "R$0.00",
-      tax: "+R$0.00",
-      sharedSave: "-R$0.00",
-      total: `R$${total.toFixed(2)}`,
-    },
+      delivery: `+ R$${totalFrete.toFixed(2)}`,
+      tax: `+ R$${taxa.toFixed(2)}`,
+      total: `R$${totalFinal.toFixed(2)}`
+    }
   };
 
   const steps = [
     { label: "Pedido Confirmado", icon: "check_circle" },
     { label: "Enviado", icon: "inventory_2" },
     { label: "Saiu para entrega", icon: "local_shipping" },
-    { label: "Entregue", icon: "home" },
+    { label: "Entregue", icon: "home" }
   ];
 
   const statusMap = {
+    CARRINHO: "Pedido Confirmado",
     CONFIRMADO: "Pedido Confirmado",
+    PROCESSANDO: "Enviado",
     ENVIADO: "Enviado",
     ENTREGA: "Saiu para entrega",
-    ENTREGUE: "Entregue",
+    ENTREGUE: "Entregue"
   };
 
   const currentStatus = statusMap[orderData.status] || "Pedido Confirmado";
@@ -104,7 +139,6 @@ const OrderTracking = () => {
     <>
       <Header />
       <div className={styles.container}>
-        {/* Cabeçalho */}
         <div className={styles.header}>
           <div>
             <h1>ID do pedido: {orderData.id}</h1>
@@ -118,7 +152,6 @@ const OrderTracking = () => {
           <button className={styles.trackButton}>Track order</button>
         </div>
 
-        {/* Etapas do pedido */}
         <div className={styles.steps}>
           {steps.map((step, i) => {
             let stepClass = styles.step;
@@ -136,14 +169,12 @@ const OrderTracking = () => {
           })}
         </div>
 
-        {/* Itens do pedido */}
         <div className={styles.items}>
           {orderData.items.map((item, i) => (
             <OrderItem key={i} {...item} />
           ))}
         </div>
 
-        {/* Informações de pagamento e entrega */}
         <div className={styles.grid}>
           <div>
             <h3>Pagamento</h3>
@@ -154,8 +185,14 @@ const OrderTracking = () => {
             <p>
               Endereço
               <br />
-              {orderData.address.street}
+              {orderData.address.street}, {orderData.address.number}
               <br />
+              {orderData.address.complement && (
+                <>
+                  {orderData.address.complement}
+                  <br />
+                </>
+              )}
               CEP: {orderData.address.cep}
               <br />
               {orderData.address.phone || "Telefone não informado"}
@@ -163,7 +200,6 @@ const OrderTracking = () => {
           </div>
         </div>
 
-        {/* Resumo */}
         <div className={styles.summary}>
           <h3>Resumo do pedido</h3>
           <p>
@@ -182,17 +218,12 @@ const OrderTracking = () => {
             <span>Taxa</span>
             <span>{orderData.summary.tax}</span>
           </p>
-          <p className={styles.green}>
-            <span>Economia por rachar</span>
-            <span>{orderData.summary.sharedSave}</span>
-          </p>
           <p className={styles.total}>
             <span>Total</span>
             <span>{orderData.summary.total}</span>
           </p>
         </div>
 
-        {/* Ajuda */}
         <div className={styles.help}>
           <h3>Precisa de ajuda?</h3>
           <ul>
@@ -214,12 +245,32 @@ const OrderTracking = () => {
   );
 };
 
-// Componente para exibir item individual
-const OrderItem = ({ title, brand, price, qty }) => (
+const OrderItem = ({ title, brand, price, qty, image, imageType, rating }) => (
   <div className={styles.item}>
-    <div className={styles.itemInfo}>
-      <p className={styles.itemTitle}>{title}</p>
-      <p className={styles.itemBrand}>{brand}</p>
+    <div className={styles.itemLeft}>
+      {image && (
+        <img
+          src={`data:${imageType};base64,${image}`}
+          alt={title}
+          className={styles.itemImage}
+        />
+      )}
+      <div className={styles.itemInfo}>
+        <p className={styles.itemTitle}>{title}</p>
+        <p className={styles.itemBrand}>{brand}</p>
+        {rating > 0 && (
+          <div className={styles.rating}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <span
+                key={i}
+                className={`material-icons ${i < rating ? styles.filled : ""}`}
+              >
+                star
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
     <div className={styles.itemPrice}>
       <p>{price}</p>
