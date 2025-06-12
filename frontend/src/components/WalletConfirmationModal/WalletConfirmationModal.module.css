@@ -1,0 +1,82 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: #fff;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 450px;
+  text-align: center;
+}
+
+.modalContent h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 1.4rem;
+}
+
+.modalContent p {
+  margin-bottom: 10px;
+  line-height: 1.6;
+  color: #555;
+}
+
+.totalValue {
+  color: #2e7d32; /* Um verde escuro para destacar o valor */
+  font-weight: bold;
+}
+
+.modalActions {
+  margin-top: 25px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.confirmButton {
+  background-color: #f7931e;
+  color: white;
+}
+
+.confirmButton:hover:not(:disabled) {
+  background-color: #f7931e;
+  transform: translateY(-2px);
+}
+
+.cancelButton {
+  background-color: #f44336; /* Vermelho */
+  color: white;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: #e53935;
+  transform: translateY(-2px);
+}
