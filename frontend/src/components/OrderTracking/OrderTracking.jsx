@@ -186,7 +186,7 @@ const OrderTracking = () => {
         });
 
         if (response.status === 201) {
-          alert(`Avaliação de ${rating} estrelas para "${productToRate.name || 'o produto'}" enviada com sucesso!`);
+          // alert(`Avaliação de ${rating} estrelas para "${productToRate.name || 'o produto'}" enviada com sucesso!`);
           // NOVO: Adiciona a compra avaliada ao localStorage
           const updatedRatedPurchases = { ...ratedPurchases, [productToRate.idCompra]: true };
           saveRatedPurchases(updatedRatedPurchases);
