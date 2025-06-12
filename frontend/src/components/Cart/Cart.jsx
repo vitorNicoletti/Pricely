@@ -237,7 +237,7 @@ const Cart = () => {
       const token = localStorage.getItem("authToken");
       if (token) {
         // Assuming you have an API endpoint to get user details including wallet
-        const response = await api.get("/user/profile"); // <--- REPLACE WITH YOUR ACTUAL USER PROFILE ENDPOINT
+        const response = await api.get("/vendedor/me"); // <--- REPLACE WITH YOUR ACTUAL USER PROFILE ENDPOINT
         const updatedUser = response.data;
         setUser(updatedUser);
         localStorage.setItem("user", JSON.stringify(updatedUser));
