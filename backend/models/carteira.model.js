@@ -10,6 +10,16 @@ const Carteira = {
     const [result] = await db.promise().query(sql, [id_usuario]);
     return result.insertId;
   },
+
+  /**
+   * Adiciona Saldo a uma Carteira
+   */
+  addValueToCarteira: async (id_usuario, valor) => {
+    const sql =
+      "UPDATE	carteira SET saldo = saldo + ?, ultima_atualizacao = NOW() where	id_usuario = ?;";
+    const [result] = await db.promise().query(sql, [valor, id_usuario]);
+    return result.affectedRows;
+  },
 };
 
 module.exports = Carteira;

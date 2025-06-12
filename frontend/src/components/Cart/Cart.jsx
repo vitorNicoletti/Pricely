@@ -6,10 +6,12 @@ import api from "../../api";
 import styles from "./Cart.module.css";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import PaymentModal from "../Payment/PaymentModal";
 
 const Cart = () => {
   const navigate = useNavigate();
   const [cartData, setCartData] = useState([]);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   // Extrai todas as compras de todos os pedidos em estado CARRINHO
   const cartItems = useMemo(() => {
@@ -49,30 +51,6 @@ const Cart = () => {
           (melhorPromo.desc_porcentagem / 100) * (preco * qtd);
         discount += descontoProduto;
       }
-    });
-
-    let subtotal = 0;
-    let discount = 0;
-
-    cartItems.compras.forEach((item) => {
-      const preco = item.preco_unidade;
-      const qtd = item.quantidade;
-      const promocoes = item.produto.promocoes || [];
-
-      subtotal += preco * qtd;
-
-      // Ordena promoções da maior para a menor quantidade para pegar a mais vantajosa
-      const promocoesValidas = promocoes
-        .filter((promo) => qtd >= promo.quantidade)
-        .sort((a, b) => b.quantidade - a.quantidade);
-
-      if (promocoesValidas.length > 0) {
-        const melhorPromo = promocoesValidas[0];
-        const descontoProduto =
-          (melhorPromo.desc_porcentagem / 100) * (preco * qtd);
-        discount += descontoProduto;
-      }
-      console.log(promocoes)
     });
 
     const total = subtotal - discount;
@@ -155,7 +133,9 @@ const Cart = () => {
             <div className={styles.actions}>
               <button
                 className={styles.checkout}
-                onClick={() => navigate("/payment")}
+                onClick={() => {
+                  setIsPaymentModalOpen(true);
+                }}
               >
                 Finalizar Compra
               </button>
@@ -171,6 +151,12 @@ const Cart = () => {
 
         <Footer />
       </div>
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+        }}
+      />
     </>
   );
 };
