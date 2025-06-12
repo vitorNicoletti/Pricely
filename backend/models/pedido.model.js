@@ -124,9 +124,69 @@ const Pedido = {
     return await Pedido.getPedidoDetalhadoPorEstado(idVendedor, 'CARRINHO');
   },
 
-  getPedidosPorIdVendedor: async (idVendedor) => {
-    return await Pedido.getPedidoDetalhadoPorEstado(idVendedor, 'PAGO');
+  /*Fiz aqui mas testem se não quebrou nada*/
+
+  getPedidosExcetoCarrinho: async (idVendedor) => {
+    const sql = "SELECT * FROM pedido WHERE id_vendedor = ? AND estado != 'CARRINHO'";
+
+    try {
+      const pedidos = await new Promise((resolve, reject) => {
+        db.query(sql, [idVendedor], (err, rows) => {
+          if (err) return reject(err);
+          resolve(rows);
+        });
+      });
+
+      if (!pedidos || pedidos.length === 0) return [];
+
+      const pedidosDetalhados = await Promise.all(
+        pedidos.map(async (pedido) => {
+          let comprasDetalhadas = [];
+
+          try {
+            const listaCompras = await Compra.getCompraPorIdPedido(pedido.id_pedido);
+            const comprasArray = Array.isArray(listaCompras)
+              ? listaCompras
+              : listaCompras
+                ? [listaCompras]
+                : [];
+
+            comprasDetalhadas = await Promise.all(
+              comprasArray.map(async (compra) => {
+                let produtoDetalhado = null;
+                try {
+                  produtoDetalhado = await Produtos.getById(compra.id_produto);
+                } catch {
+                  produtoDetalhado = null;
+                }
+                return {
+                  ...compra,
+                  produto: produtoDetalhado,
+                };
+              })
+            );
+          } catch (err) {
+            console.error("Erro ao buscar compras:", err);
+          }
+
+          return {
+            pedido,
+            compras: comprasDetalhadas,
+          };
+        })
+      );
+
+      return pedidosDetalhados;
+    } catch (err) {
+      console.error(`Erro ao buscar pedidos do vendedor (exceto carrinho):`, err);
+      return [];
+    }
   },
+
+  getPedidosPorIdVendedor: async (idVendedor) => {
+  return await Pedido.getPedidosExcetoCarrinho(idVendedor);
+},
+
   /**
    * Atualiza campos de um pedido existente.
    * Campos aceitos: rua, numero, complemento, cep, estado.
