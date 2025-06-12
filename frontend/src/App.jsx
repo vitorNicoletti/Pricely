@@ -24,7 +24,7 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/fornecedor/:id" element={<SellerProfile />} />
         <Route path="/cart" element={<Cart />} />
-        <Route path="/rastreamento" element={<OrderTracking />} />
+        <Route path="/pedido/:pedidoId" element={<OrderTracking />} />
         <Route path="/vendedor" element={<BuyerProfile />} />
         <Route path="/produtos/novo" element={<ProductRegistration />} />
       </Routes>
