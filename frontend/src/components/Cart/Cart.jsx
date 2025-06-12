@@ -27,10 +27,6 @@ const Cart = () => {
     if (!cartItems || cartItems.length === 0) {
       return { subtotal: 0, discount: 0, total: 0 };
     }
-
-    let subtotal = 0;
-    let discount = 0;
-
     cartItems.forEach((item) => {
       const preco = item.preco_unidade;
       const qtd = item.quantidade;
